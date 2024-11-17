@@ -1,0 +1,39 @@
+{
+  "brand": "",
+  "section": "",
+  "shapeType": "lead, secondary, third, filler",
+  "geometricBounds": {
+    "width": 0.0,
+    "height": 0.0
+  },
+  "textComponents": [
+    {
+      "type": "head,intro,body", 
+      "words": 0,
+      "characters": 0,
+      "frames": [
+        {
+          "geometricBounds": {
+            "x": 0.0,
+            "y": 0.0,
+            "width": 0.0,
+            "height": 0.0
+          },
+          "columns": 0,
+          "words": 0,
+          "characters": 0    
+        }
+      ]
+    }
+  ],
+  "imageComponents": [
+    {
+      "geometricBounds": {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 0.0,
+        "height": 0.0
+      }
+    }
+  ]
+}
