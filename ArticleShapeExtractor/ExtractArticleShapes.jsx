@@ -74,14 +74,17 @@ function exportArticlesAsSnippets() {
 
                 //Add frame to JSON
                 if (frame.elementLabel == "graphic") {
+                    
                     articleShapeJson.imageComponents.push({
                         "geometricBounds": {
                             "x": frame.geometricBounds[1] - outerBounds.topLeftX,
                             "y": frame.geometricBounds[0] - outerBounds.topLeftY,
                             "width": frame.geometricBounds[3] - frame.geometricBounds[1],
                             "height": frame.geometricBounds[2] - frame.geometricBounds[0]
-                        }
+                        },
+                        "textWrapMode": getTextWrapMode(frame)                        
                     });
+                                        
                 } else {
                     var textStats = getTextStatisticsWithoutOverset(frame);
                     textComponent.frames.push({
@@ -93,7 +96,9 @@ function exportArticlesAsSnippets() {
                         },
                         "columns": frame.textFramePreferences.textColumnCount,
                         "words": textStats.wordCount,
-                        "characters": textStats.charCount
+                        "characters": textStats.charCount,
+                        "textWrapMode": getTextWrapMode(frame),
+                        "text": textStats.text
                     });
                     textComponent.words += textStats.wordCount;
                     textComponent.characters += textStats.charCount;
@@ -162,7 +167,7 @@ function saveJsonToDisk(jsonData, filePath) {
 /**
  * Get the word count and character count of a text frame, excluding overset text.
  * @param {TextFrame} textFrame - The text frame to analyze.
- * @returns {Object} - An object containing word count and character count without overset.
+ * @returns {Object} - An object containing word count, character count and text without overset.
  */
 function getTextStatisticsWithoutOverset(textFrame) {
     if (!textFrame || !textFrame.isValid) {
@@ -174,14 +179,16 @@ function getTextStatisticsWithoutOverset(textFrame) {
     var visibleText = textFrame.lines;
     var wordCount = 0;
     var charCount = 0;
+    var text = "";
 
     // Loop through visible lines to count words and characters
     for (var i = 0; i < visibleText.length; i++) {
         wordCount += visibleText[i].words.length;
         charCount += visibleText[i].characters.length;
+        text += visibleText[i].contents;
     }
 
-    return { wordCount: wordCount, charCount: charCount };
+    return { wordCount: wordCount, charCount: charCount, text: text };
 }
 
 
@@ -272,6 +279,36 @@ function getThreadedFrames(textFrame) {
     }
 
     return threadedFrames;
+}
+
+/**
+ * Get the text wrap settings of a selected frame, including the text wrap mode as a string.
+ * @param {Object} frame - The InDesign frame object (e.g., TextFrame, GraphicFrame).
+ * @returns {String} - Name of the text wrap mode
+ */
+function getTextWrapMode(frame) {
+    if (!frame || !frame.isValid) {
+        alert("Invalid frame.");
+        return null;
+    }
+
+    var textWrapPrefs = frame.textWrapPreferences;
+
+    if (textWrapPrefs.textWrapMode == TextWrapModes.NONE) {
+        return "none"
+    } else if  (textWrapPrefs.textWrapMode == TextWrapModes.NONE) {
+        return "none"
+    } else if  (textWrapPrefs.textWrapMode == TextWrapModes.BOUNDING_BOX_TEXT_WRAP) {
+        return "bounding_box"
+    } else if  (textWrapPrefs.textWrapMode == TextWrapModes.SHAPE_TEXT_WRAP) {
+        return "contour"
+    } else if  (textWrapPrefs.textWrapMode == TextWrapModes.JUMP_OBJECT_TEXT_WRAP) {
+        return "jump_object"
+    } else if  (textWrapPrefs.textWrapMode == TextWrapModes.JUMP_TO_NEXT_COLUMN_TEXT_WRAP) {
+        return "jump_to_next_column"
+    } else {
+        return ""
+    }
 }
 
 // Call the function
