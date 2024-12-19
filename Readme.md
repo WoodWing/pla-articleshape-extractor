@@ -14,4 +14,4 @@ After (re)starting InDesign the main menu has an Extract article shapes menu is 
 - Select a folder to export the shapes to
 - For each Indesign article a idms, jpg and json file is created
 
-The extracted Article Shapes can be converted to a Print Layout Automation csv/xls using this [link]()
+The extracted Article Shapes can be converted to a Print Layout Automation csv/xls using this [link](https://woodwing.github.io/pla-articleshape-extractor/create-pla-config.html)
