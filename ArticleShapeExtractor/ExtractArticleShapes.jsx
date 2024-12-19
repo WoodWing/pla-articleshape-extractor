@@ -20,12 +20,20 @@ function exportArticlesAsSnippets() {
         return;
     }
 
+    //Get the category object of the layout
+    var category = app.entSession.getCategory(doc.entMetaData.get("Core_Publication"), doc.entMetaData.get("Core_Section"), doc.entMetaData.get("Core_Issue"));
+    var publication = app.entSession.getPublication(doc.entMetaData.get("Core_Publication"));
+
     // Loop through each article
     for (var i = 0; i < doc.articles.length; i++) {
+        
         var article = doc.articles[i];
+        
         var articleShapeJson = {
-            "brandName": doc.entMetaData.get("Core_Publication"),
-            "section": doc.entMetaData.get("Core_Section"),
+            "brandName": publication.name,
+            "brandId": publication.id,
+            "sectionName": category.name,
+            "sectionId": category.id,
             "shapeType": article.name,
             "geometricBounds": {
                 "width": 0,
@@ -36,7 +44,7 @@ function exportArticlesAsSnippets() {
         }
 
         // Define the filename based on the article name
-        var baseFileName = folder.fsName + "/" + article.name + ' ' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version");
+        var baseFileName = folder.fsName + "/" + article.name + ' ' + (i + 1) + ' ' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version");
         var snippetFile = File(baseFileName + ".idms");
         var imgFile = File(baseFileName + ".jpg");
         var jsonFileName = baseFileName + ".json"
@@ -46,6 +54,7 @@ function exportArticlesAsSnippets() {
         var elements = article.articleMembers.everyItem().getElements();
         var outerBounds = getOuterboundOfArticleShape(elements);
 
+
         for (var j = 0; j < elements.length; j++) {
             var element = elements[j];
             var threadedFrames;
@@ -54,7 +63,9 @@ function exportArticlesAsSnippets() {
             if (element.itemRef.elementLabel == "graphic") {
                 threadedFrames = [element.itemRef];
             } else {
+                
                 threadedFrames = getThreadedFrames(element.itemRef);
+                
                 var textComponent = {
                     "type": element.itemRef.elementLabel,
                     "words": 0,
@@ -106,19 +117,20 @@ function exportArticlesAsSnippets() {
             }
         }
 
+        
         articleShapeJson.geometricBounds.width = outerBounds.bottomRightX - outerBounds.topLeftX;
         articleShapeJson.geometricBounds.height = outerBounds.bottomRightY - outerBounds.topLeftY;
 
-
         // Export the article's page items
-        if (pageItems.length > 0) {
+        if (pageItems.length > 1) {
             //Export as snippet
             doc.select(pageItems);
             doc.exportPageItemsSelectionToSnippet(snippetFile);
 
             // Export as image
-            var group = doc.groups.add(pageItems);
             try {
+                var group = doc.groups.add(pageItems);
+    
                 // Define JPEG export options
                 app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.HIGH;
                 app.jpegExportPreferences.exportResolution = 300; // Set resolution to 300 DPI
@@ -133,7 +145,6 @@ function exportArticlesAsSnippets() {
             //Export JSON
             saveJsonToDisk(articleShapeJson, jsonFileName);
         }
-
     }
 
     alert("All articles have been exported as snippets.");

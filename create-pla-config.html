@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON File Upload and Table Display</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .input-container {
+            margin-bottom: 20px;
+        }
+        .input-container div {
+            margin-bottom: 10px; /* Adds spacing between each row */
+        }
+        .input-container label {
+            display: block; /* Makes label appear above the input field */
+            margin-bottom: 5px; /* Adds spacing between label and input */
+        }
+        input[type="file"], input[type="number"], input[type="text"] {
+            padding: 5px;
+            width: 300px; /* Makes input fields take up full width */
+            box-sizing: border-box; /* Ensures padding is included in the width */
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Convert article shape JSON files to csv/xls</h1>
+    
+
+    <h2>1. Configuration</h2>
+    <div class="input-container">
+        <div>
+            <label for="columnWidth">Column Width:</label>
+            <input type="number" id="columnWidth" placeholder="Enter column width" />
+        </div>
+
+        <div>
+            <label for="rowHeight">Row Height:</label>
+            <input type="number" id="rowHeight" placeholder="Enter row height" />
+        </div>
+
+        <div>
+            <label for="bodyComponentRegex">Body component regex (default: body):</label>
+            <input type="text" id="bodyComponentRegex" placeholder="Enter regex for body components" />
+        </div>
+    </div>
+
+    <h2>2. JSON files</h2>
+    <input type="file" id="fileInput" multiple accept=".json" />
+
+    <h2>3. Article Shape Data</h2>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>name</th>
+                <th>section</th>
+                <th>width</th>
+                <th>height</th>
+                <th>shape_type</th>
+                <th>body_length</th>
+                <th>quote_count</th>
+                <th>image_count</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <button class="btn" id="copyButton">Copy Article Shapes</button>
+
+    <script>
+        // Function to store column width, row height, and regex for body components in localStorage with prefix
+        function storePreferences() {
+            const columnWidth = document.getElementById('columnWidth').value;
+            const rowHeight = document.getElementById('rowHeight').value;
+            const bodyComponentRegex = document.getElementById('bodyComponentRegex').value || 'body'; // Default to 'body'
+
+            localStorage.setItem('create-pla-config-columnWidth', columnWidth);
+            localStorage.setItem('create-pla-config-rowHeight', rowHeight);
+            localStorage.setItem('create-pla-config-bodyComponentRegex', bodyComponentRegex);
+        }
+
+        // Function to load column width, row height, and regex for body components from localStorage with prefix
+        function loadPreferences() {
+            const columnWidth = localStorage.getItem('create-pla-config-columnWidth');
+            const rowHeight = localStorage.getItem('create-pla-config-rowHeight');
+            const bodyComponentRegex = localStorage.getItem('create-pla-config-bodyComponentRegex') || 'body'; // Default to 'body' if not found
+            
+            if (columnWidth) {
+                document.getElementById('columnWidth').value = columnWidth;
+            }
+            if (rowHeight) {
+                document.getElementById('rowHeight').value = rowHeight;
+            }
+            if (bodyComponentRegex) {
+                document.getElementById('bodyComponentRegex').value = bodyComponentRegex;
+            }
+        }
+
+        // Set up event listeners to store values in localStorage when they change
+        document.getElementById('columnWidth').addEventListener('input', storePreferences);
+        document.getElementById('rowHeight').addEventListener('input', storePreferences);
+        document.getElementById('bodyComponentRegex').addEventListener('input', storePreferences);
+
+        // Load preferences from localStorage on page load
+        loadPreferences();
+
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect, false);
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            const tableBody = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
+            const columnWidthInput = document.getElementById('columnWidth').value;
+            const rowHeightInput = document.getElementById('rowHeight').value;
+            const bodyComponentRegexInput = new RegExp(document.getElementById('bodyComponentRegex').value, 'i'); // Case-insensitive regex
+
+            tableBody.innerHTML = ''; // Clear existing table data
+
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
+
+                        let bodyLength = 0;
+                        let quoteCount = 0;
+                        let imageCount = 0;
+                        let shapeType = 0;
+                        let width = Math.ceil(jsonData.geometricBounds.width / columnWidthInput);
+                        let height = Math.ceil(jsonData.geometricBounds.height / rowHeightInput);
+                        let section = jsonData.sectionId;
+
+                        // Determine shape_type based on filename
+                        if (file.name.toLowerCase().includes("lead")) {
+                            shapeType = 1;
+                        } else if (file.name.toLowerCase().includes("secondary")) {
+                            shapeType = 2;
+                        } else if (file.name.toLowerCase().includes("third")) {
+                            shapeType = 3;
+                        } else if (file.name.toLowerCase().includes("filler")) {
+                            shapeType = 4;
+                        }
+
+                        // Remove the '.json' from the file name
+                        const fileNameWithoutExtension = file.name.replace('.json', '');
+
+                        // Count components in the JSON data using regex
+                        if (jsonData.textComponents) {
+                            jsonData.textComponents.forEach(textComponent => {
+                                if (bodyComponentRegexInput.test(textComponent.type)) {
+                                    bodyLength += textComponent.characters;
+                                }
+                                if (textComponent.type === "quote") {
+                                    quoteCount++;
+                                }
+                            });
+                        }
+
+                        if (jsonData.imageComponents) {
+                            imageCount = jsonData.imageComponents.length;
+                        }
+
+                        // Add row to table
+                        const row = tableBody.insertRow();
+                        row.insertCell(0).textContent = fileNameWithoutExtension; // Display name without '.json'
+                        row.insertCell(1).textContent = section;
+                        row.insertCell(2).textContent = width;
+                        row.insertCell(3).textContent = height;
+                        row.insertCell(4).textContent = shapeType;
+                        row.insertCell(5).textContent = bodyLength;
+                        row.insertCell(6).textContent = quoteCount;
+                        row.insertCell(7).textContent = imageCount;
+                    } catch (err) {
+                        console.error('Error parsing JSON:', err);
+                    }
+                };
+                
+                reader.readAsText(file);
+            });
+        }
+
+        // Copy table data to clipboard
+        document.getElementById('copyButton').addEventListener('click', function() {
+            const table = document.getElementById('dataTable');
+            let tableData = '';
+            
+            // Loop through all rows of the table (excluding the header)
+            for (let i = 0; i < table.rows.length; i++) {
+                if (i === 0) continue; // Skip header row
+
+                const row = table.rows[i];
+                const rowData = [];
+                for (let j = 0; j < row.cells.length; j++) {
+                    rowData.push(row.cells[j].textContent);
+                }
+                tableData += rowData.join('\t') + '\n';
+            }
+
+            // Copy to clipboard
+            const textArea = document.createElement('textarea');
+            textArea.value = tableData.trim();
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            alert('Article Shapes copied to clipboard');
+        });
+    </script>
+
+</body>
+</html>

@@ -13,3 +13,5 @@ After (re)starting InDesign the main menu has an Extract article shapes menu is 
 - Select "Extract article shapes" from the WoodWing Studio menu
 - Select a folder to export the shapes to
 - For each Indesign article a idms, jpg and json file is created
+
+The extracted Article Shapes can be converted to a Print Layout Automation csv/xls using this [link]()
