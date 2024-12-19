@@ -1,6 +1,8 @@
-{
-  "brand": "",
-  "section": "",
+{    
+  "brandName": "WW News",
+  "brandId": "1",
+  "sectionName": "News",
+  "sectionId": "1",
   "shapeType": "lead, secondary, third, filler",
   "geometricBounds": {
     "width": 0.0,
