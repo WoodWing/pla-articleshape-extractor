@@ -1,8 +1,8 @@
 {    
-  "brandName": "WW News",
-  "brandId": "1",
-  "sectionName": "News",
-  "sectionId": "1",
+  "brandName": "",
+  "brandId": "",
+  "sectionName": "",
+  "sectionId": "",
   "shapeType": "lead, secondary, third, filler",
   "geometricBounds": {
     "width": 0.0,
@@ -10,7 +10,7 @@
   },
   "textComponents": [
     {
-      "type": "head,intro,body", 
+      "type": "head,intro,body,qoute,caption", 
       "words": 0,
       "characters": 0,
       "frames": [
@@ -23,8 +23,9 @@
           },
           "columns": 0,
           "words": 0,
-          "characters": 0    
-        }
+          "characters": 0,
+          "textWrapMode": "none, bounding_box, contour, jump_object,jump_to_next_column"
+        }        
       ]
     }
   ],
@@ -35,7 +36,8 @@
         "y": 0.0,
         "width": 0.0,
         "height": 0.0
-      }
+      },
+      "textWrapMode": "none, bounding_box, contour, jump_object,jump_to_next_column"
     }
   ]
 }

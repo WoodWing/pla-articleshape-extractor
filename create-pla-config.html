@@ -156,21 +156,10 @@
                         let bodyLength = 0;
                         let quoteCount = 0;
                         let imageCount = 0;
-                        let shapeType = 0;
+                        let shapeType = jsonData.shapeTypeId;
                         let width = Math.ceil(jsonData.geometricBounds.width / columnWidthInput);
                         let height = Math.ceil(jsonData.geometricBounds.height / rowHeightInput);
                         let section = jsonData.sectionId;
-
-                        // Determine shape_type based on filename
-                        if (file.name.toLowerCase().includes("lead")) {
-                            shapeType = 1;
-                        } else if (file.name.toLowerCase().includes("secondary")) {
-                            shapeType = 2;
-                        } else if (file.name.toLowerCase().includes("third")) {
-                            shapeType = 3;
-                        } else if (file.name.toLowerCase().includes("filler")) {
-                            shapeType = 4;
-                        }
 
                         // Remove the '.json' from the file name
                         const fileNameWithoutExtension = file.name.replace('.json', '');

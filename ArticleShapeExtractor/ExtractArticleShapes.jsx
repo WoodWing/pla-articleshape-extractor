@@ -28,122 +28,143 @@ function exportArticlesAsSnippets() {
     for (var i = 0; i < doc.articles.length; i++) {
         
         var article = doc.articles[i];
+        var shapeTypeName = "";
+        var shapeTypeId = -1;
+
+        if (article.name.toLowerCase().indexOf("lead") != -1) {
+            shapeTypeName = "lead";
+            shapeTypeId = "1";
+        } else if (article.name.toLowerCase().indexOf("secondary") != -1) {
+            shapeTypeName = "secondary";
+            shapeTypeId = "2";
+        } else if (article.name.toLowerCase().indexOf("third") != -1) {
+            shapeTypeName = "third";
+            shapeTypeId = "3";
+        } else if (article.name.toLowerCase().indexOf("filler") != -1) {
+            shapeTypeName = "filler";
+            shapeTypeId = "4";
+        } else {
+            alert ("InDesign Article [" + article.name + "] skipped because the name does not include lead, secondary, third or filler");
+        }       
         
-        var articleShapeJson = {
-            "brandName": publication.name,
-            "brandId": publication.id,
-            "sectionName": category.name,
-            "sectionId": category.id,
-            "shapeType": article.name,
-            "geometricBounds": {
-                "width": 0,
-                "height": 0
-            },
-            "textComponents": [],
-            "imageComponents": []
-        }
-
-        // Define the filename based on the article name
-        var baseFileName = folder.fsName + "/" + article.name + ' ' + (i + 1) + ' ' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version");
-        var snippetFile = File(baseFileName + ".idms");
-        var imgFile = File(baseFileName + ".jpg");
-        var jsonFileName = baseFileName + ".json"
-
-        // Collect all associated page items for the article
-        var pageItems = [];
-        var elements = article.articleMembers.everyItem().getElements();
-        var outerBounds = getOuterboundOfArticleShape(elements);
-
-
-        for (var j = 0; j < elements.length; j++) {
-            var element = elements[j];
-            var threadedFrames;
-
-            //Create an array with all thread frames (images dont have threaded frames)
-            if (element.itemRef.elementLabel == "graphic") {
-                threadedFrames = [element.itemRef];
-            } else {
-                
-                threadedFrames = getThreadedFrames(element.itemRef);
-                
-                var textComponent = {
-                    "type": element.itemRef.elementLabel,
-                    "words": 0,
-                    "characters": 0,
-                    "frames": [
-                    ]
-                };
-                articleShapeJson.textComponents.push(textComponent);
+        if (shapeTypeId > 0) {
+            var articleShapeJson = {
+                "brandName": publication.name,
+                "brandId": publication.id,
+                "sectionName": category.name,
+                "sectionId": category.id,
+                "shapeTypeName": shapeTypeName,
+                "shapeTypeId": shapeTypeId,
+                "geometricBounds": {
+                    "width": 0,
+                    "height": 0
+                },
+                "textComponents": [],
+                "imageComponents": []
             }
-
-            for (var k = 0; k < threadedFrames.length; k++) {
-                frame = threadedFrames[k];
-
-                //Ensure elements have the right z-index
-                pageItems.push(frame);
-                frame.sendToBack();
-
-                //Add frame to JSON
-                if (frame.elementLabel == "graphic") {
-                    
-                    articleShapeJson.imageComponents.push({
-                        "geometricBounds": {
-                            "x": frame.geometricBounds[1] - outerBounds.topLeftX,
-                            "y": frame.geometricBounds[0] - outerBounds.topLeftY,
-                            "width": frame.geometricBounds[3] - frame.geometricBounds[1],
-                            "height": frame.geometricBounds[2] - frame.geometricBounds[0]
-                        },
-                        "textWrapMode": getTextWrapMode(frame)                        
-                    });
-                                        
+    
+            // Define the filename based on the article name
+            var baseFileName = folder.fsName + "/" + shapeTypeName + ' ' + (i + 1) + ' ' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version");
+            var snippetFile = File(baseFileName + ".idms");
+            var imgFile = File(baseFileName + ".jpg");
+            var jsonFileName = baseFileName + ".json"
+    
+            // Collect all associated page items for the article
+            var pageItems = [];
+            var elements = article.articleMembers.everyItem().getElements();
+            var outerBounds = getOuterboundOfArticleShape(elements);
+    
+    
+            for (var j = 0; j < elements.length; j++) {
+                var element = elements[j];
+                var threadedFrames;
+    
+                //Create an array with all thread frames (images dont have threaded frames)
+                if (element.itemRef.elementLabel == "graphic") {
+                    threadedFrames = [element.itemRef];
                 } else {
-                    var textStats = getTextStatisticsWithoutOverset(frame);
-                    textComponent.frames.push({
-                        "geometricBounds": {
-                            "x": frame.geometricBounds[1] - outerBounds.topLeftX,
-                            "y": frame.geometricBounds[0] - outerBounds.topLeftY,
-                            "width": frame.geometricBounds[3] - frame.geometricBounds[1],
-                            "height": frame.geometricBounds[2] - frame.geometricBounds[0]
-                        },
-                        "columns": frame.textFramePreferences.textColumnCount,
-                        "words": textStats.wordCount,
-                        "characters": textStats.charCount,
-                        "textWrapMode": getTextWrapMode(frame),
-                        "text": textStats.text
-                    });
-                    textComponent.words += textStats.wordCount;
-                    textComponent.characters += textStats.charCount;
+                    
+                    threadedFrames = getThreadedFrames(element.itemRef);
+                    
+                    var textComponent = {
+                        "type": element.itemRef.elementLabel,
+                        "words": 0,
+                        "characters": 0,
+                        "frames": [
+                        ]
+                    };
+                    articleShapeJson.textComponents.push(textComponent);
+                }
+    
+                for (var k = 0; k < threadedFrames.length; k++) {
+                    frame = threadedFrames[k];
+    
+                    //Ensure elements have the right z-index
+                    pageItems.push(frame);
+                    frame.sendToBack();
+    
+                    //Add frame to JSON
+                    if (frame.elementLabel == "graphic") {
+                        
+                        articleShapeJson.imageComponents.push({
+                            "geometricBounds": {
+                                "x": frame.geometricBounds[1] - outerBounds.topLeftX,
+                                "y": frame.geometricBounds[0] - outerBounds.topLeftY,
+                                "width": frame.geometricBounds[3] - frame.geometricBounds[1],
+                                "height": frame.geometricBounds[2] - frame.geometricBounds[0]
+                            },
+                            "textWrapMode": getTextWrapMode(frame)                        
+                        });
+                                            
+                    } else {
+                        var textStats = getTextStatisticsWithoutOverset(frame);
+                        textComponent.frames.push({
+                            "geometricBounds": {
+                                "x": frame.geometricBounds[1] - outerBounds.topLeftX,
+                                "y": frame.geometricBounds[0] - outerBounds.topLeftY,
+                                "width": frame.geometricBounds[3] - frame.geometricBounds[1],
+                                "height": frame.geometricBounds[2] - frame.geometricBounds[0]
+                            },
+                            "columns": frame.textFramePreferences.textColumnCount,
+                            "words": textStats.wordCount,
+                            "characters": textStats.charCount,
+                            "textWrapMode": getTextWrapMode(frame),
+                            "text": textStats.text
+                        });
+                        textComponent.words += textStats.wordCount;
+                        textComponent.characters += textStats.charCount;
+                    }
                 }
             }
-        }
-
-        
-        articleShapeJson.geometricBounds.width = outerBounds.bottomRightX - outerBounds.topLeftX;
-        articleShapeJson.geometricBounds.height = outerBounds.bottomRightY - outerBounds.topLeftY;
-
-        // Export the article's page items
-        if (pageItems.length > 1) {
-            //Export as snippet
-            doc.select(pageItems);
-            doc.exportPageItemsSelectionToSnippet(snippetFile);
-
-            // Export as image
-            try {
-                var group = doc.groups.add(pageItems);
     
-                // Define JPEG export options
-                app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.HIGH;
-                app.jpegExportPreferences.exportResolution = 300; // Set resolution to 300 DPI
-                group.exportFile(ExportFormat.JPG, imgFile);
-            } catch (e) {
-                alert("Error exporting the snippet: " + e.message);
-            } finally {
-                // Ungroup the items after export
-                group.ungroup();
+            
+            articleShapeJson.geometricBounds.width = outerBounds.bottomRightX - outerBounds.topLeftX;
+            articleShapeJson.geometricBounds.height = outerBounds.bottomRightY - outerBounds.topLeftY;
+    
+            // Export the article's page items
+            if (pageItems.length > 1) {
+                //Export as snippet
+                doc.select(pageItems);
+                doc.exportPageItemsSelectionToSnippet(snippetFile);
+    
+                // Export as image
+                try {
+                    var group = doc.groups.add(pageItems);
+        
+                    // Define JPEG export options
+                    app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.HIGH;
+                    app.jpegExportPreferences.exportResolution = 300; // Set resolution to 300 DPI
+                    group.exportFile(ExportFormat.JPG, imgFile);
+                } catch (e) {
+                    alert("Error exporting the snippet: " + e.message);
+                } finally {
+                    // Ungroup the items after export
+                    group.ungroup();
+                }
+    
+                //Export JSON
+                saveJsonToDisk(articleShapeJson, jsonFileName);
             }
-
-            //Export JSON
-            saveJsonToDisk(articleShapeJson, jsonFileName);
         }
     }
 
