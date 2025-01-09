@@ -95,6 +95,11 @@
             <label for="bodyComponentRegex">Body component regex (default: body):</label>
             <input type="text" id="bodyComponentRegex" placeholder="Enter regex for body components" />
         </div>
+       
+        <div>
+            <label for="quoteComponentRegex">Quote component regex (default: quote):</label>
+            <input type="text" id="quoteComponentRegex" placeholder="Enter regex for quote components" />
+        </div>        
     </div>
 
     <h2>2. JSON files</h2>
@@ -127,10 +132,12 @@
             const columnWidth = document.getElementById('columnWidth').value;
             const rowHeight = document.getElementById('rowHeight').value;
             const bodyComponentRegex = document.getElementById('bodyComponentRegex').value || 'body'; // Default to 'body'
+            const quoteComponentRegex = document.getElementById('quoteComponentRegex').value || 'quote'; // Default to 'quote'
 
             localStorage.setItem('create-pla-config-columnWidth', columnWidth);
             localStorage.setItem('create-pla-config-rowHeight', rowHeight);
             localStorage.setItem('create-pla-config-bodyComponentRegex', bodyComponentRegex);
+            localStorage.setItem('create-pla-config-quoteComponentRegex', quoteComponentRegex);
         }
 
         // Function to load column width, row height, and regex for body components from localStorage with prefix
@@ -138,6 +145,7 @@
             const columnWidth = localStorage.getItem('create-pla-config-columnWidth');
             const rowHeight = localStorage.getItem('create-pla-config-rowHeight');
             const bodyComponentRegex = localStorage.getItem('create-pla-config-bodyComponentRegex') || 'body'; // Default to 'body' if not found
+            const quoteComponentRegex = localStorage.getItem('create-pla-config-quoteComponentRegex') || 'quote'; // Default to 'body' if not found
 
             if (columnWidth) {
                 document.getElementById('columnWidth').value = columnWidth;
@@ -148,12 +156,16 @@
             if (bodyComponentRegex) {
                 document.getElementById('bodyComponentRegex').value = bodyComponentRegex;
             }
+            if (quoteComponentRegex) {
+                document.getElementById('quoteComponentRegex').value = quoteComponentRegex;
+            }            
         }
 
         // Set up event listeners to store values in localStorage when they change
         document.getElementById('columnWidth').addEventListener('input', storePreferences);
         document.getElementById('rowHeight').addEventListener('input', storePreferences);
         document.getElementById('bodyComponentRegex').addEventListener('input', storePreferences);
+        document.getElementById('quoteComponentRegex').addEventListener('input', storePreferences);
 
         // Load preferences from localStorage on page load
         loadPreferences();
@@ -168,7 +180,8 @@
             const tableBody = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
             const columnWidthInput = document.getElementById('columnWidth').value;
             const rowHeightInput = document.getElementById('rowHeight').value;
-            const bodyComponentRegexInput = new RegExp(document.getElementById('bodyComponentRegex').value, 'i'); // Case-insensitive regex
+            const bodyComponentRegExp = new RegExp(document.getElementById('bodyComponentRegex').value, 'i'); // Case-insensitive regex
+            const quoteComponentRegExp = new RegExp(document.getElementById('quoteComponentRegex').value, 'i'); // Case-insensitive regex
 
             tableBody.innerHTML = ''; // Clear existing table data
 
@@ -193,10 +206,9 @@
                         // Count components in the JSON data using regex
                         if (jsonData.textComponents) {
                             jsonData.textComponents.forEach(textComponent => {
-                                if (bodyComponentRegexInput.test(textComponent.type)) {
+                                if (bodyComponentRegExp.test(textComponent.type)) {
                                     bodyLength += textComponent.characters;
-                                }
-                                if (textComponent.type === "quote") {
+                                } else if (quoteComponentRegExp.test(textComponent.type)) {
                                     quoteCount++;
                                 }
                             });
