@@ -13,7 +13,7 @@ var aseStartup = aseStartup ||
 		_actions = [];
 
 		var aseSriptFolder = app.activeScript.parent.parent;
-		aseSriptFolder.changePath('ArticleShapeExtractor');
+		aseSriptFolder.changePath('Scripts Panel/ArticleShapeExtractor');
 		if(!aseSriptFolder.exists)
 			throw("Configuration error: ArticleShapeExtractor scripts cannot be located.");
 

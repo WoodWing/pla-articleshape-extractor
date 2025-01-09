@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,36 +10,55 @@
             font-family: Arial, sans-serif;
             padding: 20px;
         }
+
         table {
             border-collapse: collapse;
             width: 100%;
             margin-top: 20px;
         }
-        table, th, td {
+
+        table,
+        th,
+        td {
             border: 1px solid black;
         }
-        th, td {
+
+        th,
+        td {
             padding: 8px;
             text-align: left;
         }
+
         th {
             background-color: #f2f2f2;
         }
+
         .input-container {
             margin-bottom: 20px;
         }
+
         .input-container div {
-            margin-bottom: 10px; /* Adds spacing between each row */
+            margin-bottom: 10px;
+            /* Adds spacing between each row */
         }
+
         .input-container label {
-            display: block; /* Makes label appear above the input field */
-            margin-bottom: 5px; /* Adds spacing between label and input */
+            display: block;
+            /* Makes label appear above the input field */
+            margin-bottom: 5px;
+            /* Adds spacing between label and input */
         }
-        input[type="file"], input[type="number"], input[type="text"] {
+
+        input[type="file"],
+        input[type="number"],
+        input[type="text"] {
             padding: 5px;
-            width: 300px; /* Makes input fields take up full width */
-            box-sizing: border-box; /* Ensures padding is included in the width */
+            width: 300px;
+            /* Makes input fields take up full width */
+            box-sizing: border-box;
+            /* Ensures padding is included in the width */
         }
+
         .btn {
             padding: 10px 20px;
             background-color: #4CAF50;
@@ -47,15 +67,17 @@
             cursor: pointer;
             margin-top: 20px;
         }
+
         .btn:hover {
             background-color: #45a049;
         }
     </style>
 </head>
+
 <body>
 
     <h1>Convert article shape JSON files to csv/xls</h1>
-    
+
 
     <h2>1. Configuration</h2>
     <div class="input-container">
@@ -97,6 +119,7 @@
     </table>
 
     <button class="btn" id="copyButton">Copy Article Shapes</button>
+    <button class="btn" id="downloadCsvButton">Download as CSV</button>
 
     <script>
         // Function to store column width, row height, and regex for body components in localStorage with prefix
@@ -115,7 +138,7 @@
             const columnWidth = localStorage.getItem('create-pla-config-columnWidth');
             const rowHeight = localStorage.getItem('create-pla-config-rowHeight');
             const bodyComponentRegex = localStorage.getItem('create-pla-config-bodyComponentRegex') || 'body'; // Default to 'body' if not found
-            
+
             if (columnWidth) {
                 document.getElementById('columnWidth').value = columnWidth;
             }
@@ -135,7 +158,10 @@
         // Load preferences from localStorage on page load
         loadPreferences();
 
+        // Attach event handlers
         document.getElementById('fileInput').addEventListener('change', handleFileSelect, false);
+        document.getElementById('copyButton').addEventListener('click', copytoClipboard);
+        document.getElementById('downloadCsvButton').addEventListener('click', downloadTableAsCSV);
 
         function handleFileSelect(event) {
             const files = event.target.files;
@@ -149,7 +175,7 @@
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
 
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     try {
                         const jsonData = JSON.parse(e.target.result);
 
@@ -194,16 +220,49 @@
                         console.error('Error parsing JSON:', err);
                     }
                 };
-                
+
                 reader.readAsText(file);
             });
         }
 
-        // Copy table data to clipboard
-        document.getElementById('copyButton').addEventListener('click', function() {
+        // Function to download the table as CSV
+        function downloadTableAsCSV() {
+            const table = document.getElementById('dataTable');
+            let csvData = [];
+
+            // Get header row
+            const headerRow = [];
+            for (let i = 0; i < table.rows[0].cells.length; i++) {
+                headerRow.push('"' + table.rows[0].cells[i].textContent + '"'); // Wrap header in double quotes
+            }
+            csvData.push(headerRow.join(';'));
+
+            // Get data rows
+            for (let i = 1; i < table.rows.length; i++) {
+                const row = table.rows[i];
+                const rowData = [];
+                for (let j = 0; j < row.cells.length; j++) {
+                    // Wrap cell content in double quotes and remove double quotes inside the cell
+                    rowData.push('"' + row.cells[j].textContent.replace(/"/g, '') + '"');
+                }
+                csvData.push(rowData.join(';'));
+            }
+
+            // Convert to CSV string
+            const csvString = csvData.join('\n');
+
+            // Create a blob and download the file
+            const blob = new Blob([csvString], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'article_shapes.csv';
+            link.click();
+        }
+
+        function copytoClipboard() {
             const table = document.getElementById('dataTable');
             let tableData = '';
-            
+
             // Loop through all rows of the table (excluding the header)
             for (let i = 0; i < table.rows.length; i++) {
                 if (i === 0) continue; // Skip header row
@@ -225,8 +284,11 @@
             document.body.removeChild(textArea);
 
             alert('Article Shapes copied to clipboard');
-        });
+        }
+
+
     </script>
 
 </body>
+
 </html>
