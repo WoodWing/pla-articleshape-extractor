@@ -1,3 +1,3 @@
 //@include "IndesignArticleLibrary.inc.jsx";
 
-createNewArticleWithSelectedFrames("Filler");
+addOrRenameInDesignArticle("Filler");
