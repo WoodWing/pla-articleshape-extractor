@@ -1,6 +1,19 @@
 #target 'InDesign'
-
 //@include "Json.inc.jsx";
+
+//Settings used if the layout is not stored in Studio
+var fallBackSettings = {
+    "publication": {
+        "name": "WW News",
+        "id": "1",
+    },
+    "category": {
+        "name": "News",
+        "id": "1",
+    },
+}
+
+
 
 // Function to export all InDesign articles as snippets
 function exportArticlesAsSnippets() {
@@ -18,11 +31,16 @@ function exportArticlesAsSnippets() {
     if (!folder) {
         alert("No folder selected. Export cancelled.");
         return;
-    }
+    }     
 
     //Get the category object of the layout
-    var category = app.entSession.getCategory(doc.entMetaData.get("Core_Publication"), doc.entMetaData.get("Core_Section"), doc.entMetaData.get("Core_Issue"));
-    var publication = app.entSession.getPublication(doc.entMetaData.get("Core_Publication"));
+    try {
+        var publication = app.entSessions.getPublication(doc.entMetaData.get("Core_Publication"));            
+        var category = app.entSession.getCategory(doc.entMetaData.get("Core_Publication"), doc.entMetaData.get("Core_Section"), doc.entMetaData.get("Core_Issue"));
+    } catch (error) {
+        var publication = fallBackSettings.publication;
+        var category = fallBackSettings.category;
+    }   
 
     // Loop through each article
     for (var i = 0; i < doc.articles.length; i++) {
@@ -63,8 +81,24 @@ function exportArticlesAsSnippets() {
                 "imageComponents": []
             }
     
-            // Define the filename based on the article name
-            var baseFileName = folder.fsName + "/" + shapeTypeName + ' ' + (i + 1) + ' ' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version");
+            // Create a unique filename
+            var baseFileName = folder.fsName + "/" + doc.name + ' ' + shapeTypeName + ' ' + (i + 1);
+            try {
+                //Get Studio version and ID
+                baseFileName = baseFileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';   
+            } catch (error) {
+                //Use path of layout to make file name unique
+                if (doc.saved) {
+                    var suffix = doc.filePath.absoluteURI;
+                    while ((suffix.indexOf("~") != -1) || (suffix.indexOf("\\") != -1) || (suffix.indexOf("/") != -1)) {
+                        suffix = suffix.replace ("~", "").replace("\\","-").replace("/","-");
+                    }
+                    
+                    baseFileName = baseFileName + ' (' + suffix + ")";   
+                }
+            }
+            alert (baseFileName);
+             
             var snippetFile = File(baseFileName + ".idms");
             var imgFile = File(baseFileName + ".jpg");
             var jsonFileName = baseFileName + ".json"
@@ -85,14 +119,22 @@ function exportArticlesAsSnippets() {
                 } else {
                     
                     threadedFrames = getThreadedFrames(element.itemRef);
-                    
+
                     var textComponent = {
                         "type": element.itemRef.elementLabel,
                         "words": 0,
                         "characters": 0,
+                        "firstParagraphStyle": "",
                         "frames": [
                         ]
                     };
+
+                    //Add the name of the first paragraph style used in the chain of threaded frames
+                    if (threadedFrames[0].paragraphs.length > 0) {
+                        textComponent.firstParagraphStyle = threadedFrames[0].paragraphs[0].appliedParagraphStyle.name
+                    }
+
+                    //Add the shape 
                     articleShapeJson.textComponents.push(textComponent);
                 }
     
@@ -104,8 +146,7 @@ function exportArticlesAsSnippets() {
                     frame.sendToBack();
     
                     //Add frame to JSON
-                    if (frame.elementLabel == "graphic") {
-                        
+                    if (frame.elementLabel == "graphic") {                        
                         articleShapeJson.imageComponents.push({
                             "geometricBounds": {
                                 "x": frame.geometricBounds[1] - outerBounds.topLeftX,
