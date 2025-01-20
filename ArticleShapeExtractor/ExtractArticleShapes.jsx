@@ -1,4 +1,3 @@
-#target 'InDesign'
 //@include "Json.inc.jsx";
 
 //Settings used if the layout is not stored in Studio
@@ -12,7 +11,6 @@ var fallBackSettings = {
         "id": "1",
     },
 }
-
 
 
 // Function to export all InDesign articles as snippets
@@ -31,20 +29,20 @@ function exportArticlesAsSnippets() {
     if (!folder) {
         alert("No folder selected. Export cancelled.");
         return;
-    }     
+    }
 
     //Get the category object of the layout
     try {
-        var publication = app.entSessions.getPublication(doc.entMetaData.get("Core_Publication"));            
+        var publication = app.entSessions.getPublication(doc.entMetaData.get("Core_Publication"));
         var category = app.entSession.getCategory(doc.entMetaData.get("Core_Publication"), doc.entMetaData.get("Core_Section"), doc.entMetaData.get("Core_Issue"));
     } catch (error) {
         var publication = fallBackSettings.publication;
         var category = fallBackSettings.category;
-    }   
+    }
 
     // Loop through each article
     for (var i = 0; i < doc.articles.length; i++) {
-        
+
         var article = doc.articles[i];
         var shapeTypeName = "";
         var shapeTypeId = -1;
@@ -62,9 +60,9 @@ function exportArticlesAsSnippets() {
             shapeTypeName = "filler";
             shapeTypeId = "4";
         } else {
-            alert ("InDesign Article [" + article.name + "] skipped because the name does not include lead, secondary, third or filler");
-        }       
-        
+            alert("InDesign Article [" + article.name + "] skipped because the name does not include lead, secondary, third or filler");
+        }
+
         if (shapeTypeId > 0) {
             var articleShapeJson = {
                 "brandName": publication.name,
@@ -80,44 +78,39 @@ function exportArticlesAsSnippets() {
                 "textComponents": [],
                 "imageComponents": []
             }
-    
+
             // Create a unique filename
             var baseFileName = folder.fsName + "/" + doc.name + ' ' + shapeTypeName + ' ' + (i + 1);
             try {
                 //Get Studio version and ID
-                baseFileName = baseFileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';   
+                baseFileName = baseFileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';
             } catch (error) {
                 //Use path of layout to make file name unique
                 if (doc.saved) {
                     var suffix = doc.filePath.absoluteURI;
                     while ((suffix.indexOf("~") != -1) || (suffix.indexOf("\\") != -1) || (suffix.indexOf("/") != -1)) {
-                        suffix = suffix.replace ("~", "").replace("\\","-").replace("/","-");
+                        suffix = suffix.replace("~", "").replace("\\", "-").replace("/", "-");
                     }
-                    
-                    baseFileName = baseFileName + ' (' + suffix + ")";   
+
+                    baseFileName = baseFileName + ' (' + suffix + ")";
                 }
-            }
-            alert (baseFileName);
-             
+            }            
+
             var snippetFile = File(baseFileName + ".idms");
             var imgFile = File(baseFileName + ".jpg");
             var jsonFileName = baseFileName + ".json"
-    
+
             // Collect all associated page items for the article
             var pageItems = [];
             var elements = article.articleMembers.everyItem().getElements();
             var outerBounds = getOuterboundOfArticleShape(elements);
-    
-    
+
             for (var j = 0; j < elements.length; j++) {
                 var element = elements[j];
                 var threadedFrames;
-    
+
                 //Create an array with all thread frames (images dont have threaded frames)
-                if (element.itemRef.elementLabel == "graphic") {
-                    threadedFrames = [element.itemRef];
-                } else {
-                    
+                if (isTextFrame(element.itemRef)) {
                     threadedFrames = getThreadedFrames(element.itemRef);
 
                     var textComponent = {
@@ -134,64 +127,70 @@ function exportArticlesAsSnippets() {
                         textComponent.firstParagraphStyle = threadedFrames[0].paragraphs[0].appliedParagraphStyle.name
                     }
 
+                    for (var k = 0; k < threadedFrames.length; k++) {
+                        frame = threadedFrames[k];
+
+                        //Ensure elements have the right z-index
+                        pageItems.push(frame);
+                        //frame.sendToBack();
+
+                        //Add frame to JSON
+                        if (isTextFrame(frame)) {
+                            var textStats = getTextStatisticsWithoutOverset(frame);
+                            textComponent.frames.push({
+                                "geometricBounds": {
+                                    "x": frame.geometricBounds[1] - outerBounds.topLeftX,
+                                    "y": frame.geometricBounds[0] - outerBounds.topLeftY,
+                                    "width": frame.geometricBounds[3] - frame.geometricBounds[1],
+                                    "height": frame.geometricBounds[2] - frame.geometricBounds[0]
+                                },
+                                "columns": frame.textFramePreferences.textColumnCount,
+                                "words": textStats.wordCount,
+                                "characters": textStats.charCount,
+                                "textWrapMode": getTextWrapMode(frame),
+                                "text": textStats.text
+                            });
+                            textComponent.words += textStats.wordCount;
+                            textComponent.characters += textStats.charCount;
+
+                        }
+                    }
+
                     //Add the shape 
                     articleShapeJson.textComponents.push(textComponent);
-                }
-    
-                for (var k = 0; k < threadedFrames.length; k++) {
-                    frame = threadedFrames[k];
-    
+                } else {
                     //Ensure elements have the right z-index
-                    pageItems.push(frame);
-                    frame.sendToBack();
-    
-                    //Add frame to JSON
-                    if (frame.elementLabel == "graphic") {                        
-                        articleShapeJson.imageComponents.push({
-                            "geometricBounds": {
-                                "x": frame.geometricBounds[1] - outerBounds.topLeftX,
-                                "y": frame.geometricBounds[0] - outerBounds.topLeftY,
-                                "width": frame.geometricBounds[3] - frame.geometricBounds[1],
-                                "height": frame.geometricBounds[2] - frame.geometricBounds[0]
-                            },
-                            "textWrapMode": getTextWrapMode(frame)                        
-                        });
-                                            
-                    } else {
-                        var textStats = getTextStatisticsWithoutOverset(frame);
-                        textComponent.frames.push({
-                            "geometricBounds": {
-                                "x": frame.geometricBounds[1] - outerBounds.topLeftX,
-                                "y": frame.geometricBounds[0] - outerBounds.topLeftY,
-                                "width": frame.geometricBounds[3] - frame.geometricBounds[1],
-                                "height": frame.geometricBounds[2] - frame.geometricBounds[0]
-                            },
-                            "columns": frame.textFramePreferences.textColumnCount,
-                            "words": textStats.wordCount,
-                            "characters": textStats.charCount,
-                            "textWrapMode": getTextWrapMode(frame),
-                            "text": textStats.text
-                        });
-                        textComponent.words += textStats.wordCount;
-                        textComponent.characters += textStats.charCount;
-                    }
+                    pageItems.push(element.itemRef);
+                    //element.itemRef.sendToBack();
+
+                    articleShapeJson.imageComponents.push({
+                        "geometricBounds": {
+                            "x": frame.geometricBounds[1] - outerBounds.topLeftX,
+                            "y": frame.geometricBounds[0] - outerBounds.topLeftY,
+                            "width": frame.geometricBounds[3] - element.itemRef.geometricBounds[1],
+                            "height": frame.geometricBounds[2] - element.itemRef.geometricBounds[0]
+                        },
+                        "textWrapMode": getTextWrapMode(element.itemRef)
+                    });
                 }
+
             }
-    
-            
+
             articleShapeJson.geometricBounds.width = outerBounds.bottomRightX - outerBounds.topLeftX;
             articleShapeJson.geometricBounds.height = outerBounds.bottomRightY - outerBounds.topLeftY;
-    
+
+            alert(pageItems.length);
+
             // Export the article's page items
             if (pageItems.length > 1) {
                 //Export as snippet
                 doc.select(pageItems);
                 doc.exportPageItemsSelectionToSnippet(snippetFile);
-    
+
                 // Export as image
                 try {
                     var group = doc.groups.add(pageItems);
-        
+
                     // Define JPEG export options
                     app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.HIGH;
                     app.jpegExportPreferences.exportResolution = 300; // Set resolution to 300 DPI
@@ -202,7 +201,7 @@ function exportArticlesAsSnippets() {
                     // Ungroup the items after export
                     group.ungroup();
                 }
-    
+
                 //Export JSON
                 saveJsonToDisk(articleShapeJson, jsonFileName);
             }
@@ -296,10 +295,10 @@ function getOuterboundOfArticleShape(elements) {
         }
 
         //Create an array with all thread frames (images dont have threaded frames)
-        if (element.itemRef.elementLabel == "graphic") {
-            threadedFrames = [element.itemRef];
-        } else {
+        if (isTextFrame(element.itemRef)) {
             threadedFrames = getThreadedFrames(element.itemRef);
+        } else {
+            threadedFrames = [element.itemRef];
         }
 
         for (var k = 0; k < threadedFrames.length; k++) {
@@ -369,19 +368,33 @@ function getTextWrapMode(frame) {
 
     if (textWrapPrefs.textWrapMode == TextWrapModes.NONE) {
         return "none"
-    } else if  (textWrapPrefs.textWrapMode == TextWrapModes.NONE) {
+    } else if (textWrapPrefs.textWrapMode == TextWrapModes.NONE) {
         return "none"
-    } else if  (textWrapPrefs.textWrapMode == TextWrapModes.BOUNDING_BOX_TEXT_WRAP) {
+    } else if (textWrapPrefs.textWrapMode == TextWrapModes.BOUNDING_BOX_TEXT_WRAP) {
         return "bounding_box"
-    } else if  (textWrapPrefs.textWrapMode == TextWrapModes.SHAPE_TEXT_WRAP) {
+    } else if (textWrapPrefs.textWrapMode == TextWrapModes.SHAPE_TEXT_WRAP) {
         return "contour"
-    } else if  (textWrapPrefs.textWrapMode == TextWrapModes.JUMP_OBJECT_TEXT_WRAP) {
+    } else if (textWrapPrefs.textWrapMode == TextWrapModes.JUMP_OBJECT_TEXT_WRAP) {
         return "jump_object"
-    } else if  (textWrapPrefs.textWrapMode == TextWrapModes.JUMP_TO_NEXT_COLUMN_TEXT_WRAP) {
+    } else if (textWrapPrefs.textWrapMode == TextWrapModes.JUMP_TO_NEXT_COLUMN_TEXT_WRAP) {
         return "jump_to_next_column"
     } else {
         return ""
     }
+}
+
+/**
+ * Checks if the given frame is a text frame.
+ * @param {Object} frame - The InDesign frame to check.
+ * @returns {Boolean} - Returns true if the frame is a text frame, otherwise false.
+ */
+function isTextFrame(frame) {
+    // Check if the frame is valid and is an instance of TextFrame
+    if (frame && frame.isValid && frame instanceof TextFrame) {
+        return true;
+    }
+
+    return false;
 }
 
 // Call the function
