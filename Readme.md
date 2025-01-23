@@ -13,24 +13,22 @@ After (re)starting InDesign the main menu has an Extract article shapes menu is 
 Open keyboards shortcuts dialog Edit->Keyboard Shortcuts...
 Select product area scripts
 Attach the following keyboard shortcuts
-- Shift-Cmd-J to ArticleShapeExtractor:CreateLeadArticle.jsx
-- Shift-Cmd-K to ArticleShapeExtractor:CreateSecondaryArticle.jsx
-- Shift-Cmd-L to ArticleShapeExtractor:CreateThirdArticle.jsx
-- Shift-Cmd-; to ArticleShapeExtractor:CreateFillerArticle.jsx
+- Cmd-1 to ArticleShapeExtractor:CreateLeadArticle.jsx
+- Cmd-2 to ArticleShapeExtractor:CreateSecondaryArticle.jsx
+- Cmd-3 to ArticleShapeExtractor:CreateThirdArticle.jsx
+- Cmd-4 to ArticleShapeExtractor:CreateFillerArticle.jsx
 - Shift-Cmd-E to ArticleShapeExtractor:ExtractArticleShapes.jsx
 Save it as a new set
 
 # Usage
 - Create InDesign Articles with frames for each ArticleShape you would like to export, the name should contain: Lead, Secondary, Third, Filler 
-    - Shift-Cmd-J to create a Lead article
-    - Shift-Cmd-K to create a Secondary article
-    - Shift-Cmd-L to create a Third article
-    - Shift-Cmd-; to create a Filler article
+    - Cmd-1 to create a Lead article
+    - Cmd-2 to create a Secondary article
+    - Cmd-3 to create a Third article
+    - Cmd-4 to create a Filler article
 - Select "Extract article shapes" (Shift-Cmd-E) from the WoodWing Studio menu
 - Select a folder to export the shapes to
 - For each Indesign article a idms, jpg and json file is created
 - You can use the generated images to verify if the export was correct
-
-
 
 The extracted Article Shapes can be converted to a Print Layout Automation csv/xls using this [link](https://woodwing.github.io/pla-articleshape-extractor/create-pla-config.html)

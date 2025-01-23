@@ -179,8 +179,6 @@ function exportArticlesAsSnippets() {
             articleShapeJson.geometricBounds.width = outerBounds.bottomRightX - outerBounds.topLeftX;
             articleShapeJson.geometricBounds.height = outerBounds.bottomRightY - outerBounds.topLeftY;
 
-            alert(pageItems.length);
-
             // Export the article's page items
             if (pageItems.length > 1) {
                 //Export as snippet
@@ -368,15 +366,13 @@ function getTextWrapMode(frame) {
 
     if (textWrapPrefs.textWrapMode == TextWrapModes.NONE) {
         return "none"
-    } else if (textWrapPrefs.textWrapMode == TextWrapModes.NONE) {
-        return "none"
     } else if (textWrapPrefs.textWrapMode == TextWrapModes.BOUNDING_BOX_TEXT_WRAP) {
         return "bounding_box"
-    } else if (textWrapPrefs.textWrapMode == TextWrapModes.SHAPE_TEXT_WRAP) {
+    } else if (textWrapPrefs.textWrapMode == TextWrapModes.CONTOUR) {
         return "contour"
     } else if (textWrapPrefs.textWrapMode == TextWrapModes.JUMP_OBJECT_TEXT_WRAP) {
         return "jump_object"
-    } else if (textWrapPrefs.textWrapMode == TextWrapModes.JUMP_TO_NEXT_COLUMN_TEXT_WRAP) {
+    } else if (textWrapPrefs.textWrapMode == TextWrapModes.NEXT_COLUMN_TEXT_WRAP) {
         return "jump_to_next_column"
     } else {
         return ""

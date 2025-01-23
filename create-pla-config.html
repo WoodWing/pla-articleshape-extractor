@@ -82,12 +82,12 @@
     <h2>1. Configuration</h2>
     <div class="input-container">
         <div>
-            <label for="columnWidth">Column Width:</label>
+            <label for="columnWidth">Column width:</label>
             <input type="number" id="columnWidth" placeholder="Enter column width" />
         </div>
 
         <div>
-            <label for="rowHeight">Row Height:</label>
+            <label for="rowHeight">Row height:</label>
             <input type="number" id="rowHeight" placeholder="Enter row height" />
         </div>
 
@@ -95,17 +95,22 @@
             <label for="bodyComponentRegex">Body component regex (default: body):</label>
             <input type="text" id="bodyComponentRegex" placeholder="Enter regex for body components" />
         </div>
-       
+
         <div>
             <label for="quoteComponentRegex">Quote component regex (default: quote):</label>
             <input type="text" id="quoteComponentRegex" placeholder="Enter regex for quote components" />
-        </div>        
+        </div>
+
+        <div>
+            <label for="filterUniques">Filter on unique shapes:</label>
+            <input type="checkbox" id="filterUniques" />
+        </div>
     </div>
 
     <h2>2. JSON files</h2>
     <input type="file" id="fileInput" multiple accept=".json" />
 
-    <h2>3. Article Shape Data</h2>
+    <h2>3. Article Shape Data <span id="resultSpan"></span></h2>
     <table id="dataTable">
         <thead>
             <tr>
@@ -123,21 +128,24 @@
         </tbody>
     </table>
 
-    <button class="btn" id="copyButton">Copy Article Shapes</button>
+    <button class="btn" id="copyButton">Copy Article Shape data</button>
     <button class="btn" id="downloadCsvButton">Download as CSV</button>
 
     <script>
         // Function to store column width, row height, and regex for body components in localStorage with prefix
         function storePreferences() {
+            console.log(document.getElementById('filterUniques').checked);
             const columnWidth = document.getElementById('columnWidth').value;
             const rowHeight = document.getElementById('rowHeight').value;
             const bodyComponentRegex = document.getElementById('bodyComponentRegex').value || 'body'; // Default to 'body'
             const quoteComponentRegex = document.getElementById('quoteComponentRegex').value || 'quote'; // Default to 'quote'
+            const filterUniques = document.getElementById('filterUniques').checked;
 
             localStorage.setItem('create-pla-config-columnWidth', columnWidth);
             localStorage.setItem('create-pla-config-rowHeight', rowHeight);
             localStorage.setItem('create-pla-config-bodyComponentRegex', bodyComponentRegex);
             localStorage.setItem('create-pla-config-quoteComponentRegex', quoteComponentRegex);
+            localStorage.setItem('create-pla-config-filterUniques', filterUniques);
         }
 
         // Function to load column width, row height, and regex for body components from localStorage with prefix
@@ -146,6 +154,7 @@
             const rowHeight = localStorage.getItem('create-pla-config-rowHeight');
             const bodyComponentRegex = localStorage.getItem('create-pla-config-bodyComponentRegex') || 'body'; // Default to 'body' if not found
             const quoteComponentRegex = localStorage.getItem('create-pla-config-quoteComponentRegex') || 'quote'; // Default to 'body' if not found
+            const filterUniques = localStorage.getItem('create-pla-config-filterUniques') || false;
 
             if (columnWidth) {
                 document.getElementById('columnWidth').value = columnWidth;
@@ -158,7 +167,10 @@
             }
             if (quoteComponentRegex) {
                 document.getElementById('quoteComponentRegex').value = quoteComponentRegex;
-            }            
+            }
+
+            document.getElementById('filterUniques').checked = JSON.parse(filterUniques);
+
         }
 
         // Set up event listeners to store values in localStorage when they change
@@ -166,6 +178,7 @@
         document.getElementById('rowHeight').addEventListener('input', storePreferences);
         document.getElementById('bodyComponentRegex').addEventListener('input', storePreferences);
         document.getElementById('quoteComponentRegex').addEventListener('input', storePreferences);
+        document.getElementById('filterUniques').addEventListener('input', storePreferences);
 
         // Load preferences from localStorage on page load
         loadPreferences();
@@ -175,7 +188,7 @@
         document.getElementById('copyButton').addEventListener('click', copytoClipboard);
         document.getElementById('downloadCsvButton').addEventListener('click', downloadTableAsCSV);
 
-        function handleFileSelect(event) {
+        async function handleFileSelect(event) {
             const files = event.target.files;
             const tableBody = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
             const columnWidthInput = document.getElementById('columnWidth').value;
@@ -184,11 +197,14 @@
             const quoteComponentRegExp = new RegExp(document.getElementById('quoteComponentRegex').value, 'i'); // Case-insensitive regex
 
             tableBody.innerHTML = ''; // Clear existing table data
+            var hashes = [];
+            var filterCount = 0;
+            var filterActive = document.getElementById('filterUniques').checked;
 
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
 
-                reader.onload = function (e) {
+                reader.onload = async function (e) {
                     try {
                         const jsonData = JSON.parse(e.target.result);
 
@@ -196,8 +212,8 @@
                         let quoteCount = 0;
                         let imageCount = 0;
                         let shapeType = jsonData.shapeTypeId;
-                        let width = Math.ceil(jsonData.geometricBounds.width / columnWidthInput);
-                        let height = Math.ceil(jsonData.geometricBounds.height / rowHeightInput);
+                        let width = Math.floor(jsonData.geometricBounds.width / columnWidthInput);
+                        let height = Math.floor(jsonData.geometricBounds.height / rowHeightInput);
                         let section = jsonData.sectionId;
 
                         // Remove the '.json' from the file name
@@ -218,16 +234,27 @@
                             imageCount = jsonData.imageComponents.length;
                         }
 
-                        // Add row to table
-                        const row = tableBody.insertRow();
-                        row.insertCell(0).textContent = fileNameWithoutExtension; // Display name without '.json'
-                        row.insertCell(1).textContent = section;
-                        row.insertCell(2).textContent = width;
-                        row.insertCell(3).textContent = height;
-                        row.insertCell(4).textContent = shapeType;
-                        row.insertCell(5).textContent = bodyLength;
-                        row.insertCell(6).textContent = quoteCount;
-                        row.insertCell(7).textContent = imageCount;
+                        var hash = await hashString(JSON.stringify(jsonData));
+
+                        if (!hashes.includes(hash) || !filterActive) {
+                            // Add row to table
+                            const row = tableBody.insertRow();
+                            row.insertCell(0).textContent = fileNameWithoutExtension; // Display name without '.json'
+                            row.insertCell(1).textContent = section;
+                            row.insertCell(2).textContent = width;
+                            row.insertCell(3).textContent = height;
+                            row.insertCell(4).textContent = shapeType;
+                            row.insertCell(5).textContent = bodyLength;
+                            row.insertCell(6).textContent = quoteCount;
+                            row.insertCell(7).textContent = imageCount;
+
+                            hashes.push (hash);                            
+                        } else {
+                            filterCount += 1;
+                            
+                        }
+                        
+                        document.getElementById('resultSpan').innerText = " (Total: " + hashes.length + ", filtered out:"+ filterCount + ")"
                     } catch (err) {
                         console.error('Error parsing JSON:', err);
                     }
@@ -235,6 +262,22 @@
 
                 reader.readAsText(file);
             });
+
+
+        }
+
+        /**
+        * Hashes a given string using the SHA-256 algorithm.
+        * @param {string} input - The string to hash.
+        * @returns {Promise<string>} - A promise that resolves to the hashed string in hexadecimal format.
+        */
+        async function hashString(input) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(input);
+            const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+            return hashHex;
         }
 
         // Function to download the table as CSV
