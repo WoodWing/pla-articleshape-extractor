@@ -16,6 +16,7 @@ var fallBackSettings = {
 // Function to export all InDesign articles as snippets
 function exportArticlesAsSnippets() {
     var doc = app.activeDocument;
+    var exportCounter = 0;
 
 
     // Check if the document has any articles
@@ -60,7 +61,7 @@ function exportArticlesAsSnippets() {
             shapeTypeName = "filler";
             shapeTypeId = "4";
         } else {
-            alert("InDesign Article [" + article.name + "] skipped because the name does not include lead, secondary, third or filler");
+            //alert("InDesign Article [" + article.name + "] skipped because the name does not include lead, secondary, third or filler");
         }
 
         if (shapeTypeId > 0) {
@@ -202,11 +203,13 @@ function exportArticlesAsSnippets() {
 
                 //Export JSON
                 saveJsonToDisk(articleShapeJson, jsonFileName);
+
+                exportCounter++;
             }
         }
     }
 
-    alert("All articles have been exported as snippets.");
+    alert(exportCounter + " articles have been exported as snippets.");
 }
 
 /**
