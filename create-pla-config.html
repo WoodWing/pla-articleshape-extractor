@@ -111,6 +111,9 @@
     <input type="file" id="fileInput" multiple accept=".json" />
 
     <h2>3. Article Shape Data <span id="resultSpan"></span></h2>
+    <button class="btn" id="copyButton">Copy Article Shape data</button>
+    <button class="btn" id="downloadCsvButton">Download as CSV</button>
+
     <table id="dataTable">
         <thead>
             <tr>
@@ -128,8 +131,6 @@
         </tbody>
     </table>
 
-    <button class="btn" id="copyButton">Copy Article Shape data</button>
-    <button class="btn" id="downloadCsvButton">Download as CSV</button>
 
     <script>
         // Function to store column width, row height, and regex for body components in localStorage with prefix
