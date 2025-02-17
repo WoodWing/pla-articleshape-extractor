@@ -252,7 +252,7 @@
                             hashes.push (hash);                            
                         } else {
                             filterCount += 1;
-                            
+                            console.log ("Filtered: " + fileNameWithoutExtension);
                         }
                         
                         document.getElementById('resultSpan').innerText = " (Total: " + hashes.length + ", filtered out:"+ filterCount + ")"
