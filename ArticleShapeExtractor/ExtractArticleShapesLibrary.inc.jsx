@@ -401,19 +401,19 @@ function isValidTextFrame(object) {
 }
 
 function getLineHeight(line) {
+    if (line.characters.length === 0) {
+        return 0;
+    }
+
+    // Calculate line height based on leading and font size
     var lineHeight = 0;
+    var fontSize = line.characters[0].pointSize; // Font size of first character in line
+    var leading = line.leading; // Leading (line spacing)
+    var baselineShift = line.characters[0].baselineShift; // Baseline shift
 
-    if (line.characters.length > 0) {
-        // Calculate line height based on leading and font size
-        var fontSize = line.characters[0].pointSize; // Font size of first character in line
-        var leading = line.leading; // Leading (line spacing)
-        var baselineShift = line.characters[0].baselineShift; // Baseline shift
-
-        // If leading is set to Auto (value = -1), estimate it as 120% of font size
-        if (leading === Leading.AUTO) {
-            leading = fontSize * 1.2;
-        }
-
+    // If leading is set to Auto (value = -1), estimate it as 120% of font size
+    if (leading === Leading.AUTO) {
+        leading = fontSize * 1.2;
     }
 
     // Calculate final line height
