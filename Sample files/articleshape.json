@@ -13,7 +13,7 @@
   "overlapsesFold": false,
   "textComponents": [
     {
-      "type": "head,intro,body,qoute,caption", 
+      "type": "head,intro,body,quote,caption", 
       "words": 0,
       "characters": 0,
       "frames": [
