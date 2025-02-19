@@ -17,8 +17,8 @@ function createNewArticleWithSelectedFrames(doc, articleName) {
             try {
                 article.articleMembers.add(frame);
             } catch (error) {
-                
-            }                       
+
+            }
         }
     }
 
@@ -74,7 +74,7 @@ function isFrameInArticle(article, frame) {
     return false; // Frame not found in the article
 }
 
-function addOrRenameInDesignArticle (articleName) {
+function addOrRenameInDesignArticle(articleName) {
     if (app.documents.length === 0) {
         alert("No document is open.");
         return;
@@ -89,23 +89,23 @@ function addOrRenameInDesignArticle (articleName) {
     }
 
 
-    var indesignArticles = getIndesignArticles (doc, app.selection[0]);
+    var indesignArticles = getIndesignArticles(doc, app.selection[0]);
 
     if (indesignArticles.length == 0) {
-        createNewArticleWithSelectedFrames (doc, articleName);
-    } else {        
+        createNewArticleWithSelectedFrames(doc, articleName);
+    } else {
         for (var i = 0; i < indesignArticles.length; i++) {
             var article = indesignArticles[i];
             var newName = article.name;
             var oldName = article.name;
 
-            newName = newName.replace (" Lead", "").replace (" Secondary", "").replace (" Third", "").replace (" Filler", "");
-            newName = newName.replace ("Lead", "").replace ("Secondary", "").replace ("Third", "").replace ("Filler", "");                 
+            newName = newName.replace(" Lead", "").replace(" Secondary", "").replace(" Third", "").replace(" Filler", "");
+            newName = newName.replace("Lead", "").replace("Secondary", "").replace("Third", "").replace("Filler", "");
             newName = newName + " " + articleName;
-            article.name = newName;            
-         
+            article.name = newName;
+
             alert("Article \"" + oldName + "\" has been renamed to \"" + newName + "\"");
-        }        
+        }
     }
 
 }

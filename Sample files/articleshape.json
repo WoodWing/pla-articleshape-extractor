@@ -5,9 +5,12 @@
   "sectionId": "",
   "shapeType": "lead, secondary, third, filler",
   "geometricBounds": {
+    "x": 0.0,
+    "y": 0.0,    
     "width": 0.0,
     "height": 0.0
   },
+  "overlapsesFold": false,
   "textComponents": [
     {
       "type": "head,intro,body,qoute,caption", 
@@ -23,7 +26,8 @@
           },
           "columns": 0,
           "words": 0,
-          "characters": 0,
+          "characters": 0,        
+          "totalLineHeight": 0,
           "textWrapMode": "none, bounding_box, contour, jump_object,jump_to_next_column"
         }        
       ]
