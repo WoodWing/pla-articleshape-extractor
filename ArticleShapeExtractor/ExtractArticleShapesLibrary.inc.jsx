@@ -109,7 +109,7 @@ function exportArticlesAsSnippets(folder) {
                 var threadedFrames;
 
                 //Create an array with all thread frames (images dont have threaded frames)
-                if (isTextFrame(element.itemRef)) {
+                if (isValidTextFrame(element.itemRef)) {
                     threadedFrames = getThreadedFrames(element.itemRef);
 
                     var textComponent = {
@@ -134,7 +134,7 @@ function exportArticlesAsSnippets(folder) {
                         //frame.sendToBack();
 
                         //Add frame to JSON
-                        if (isTextFrame(frame)) {
+                        if (isValidTextFrame(frame)) {
                             var textStats = getTextStatisticsWithoutOverset(frame);
                             textComponent.frames.push({
                                 "geometricBounds": {
@@ -305,7 +305,7 @@ function getOuterboundOfArticleShape(elements) {
         }
 
         //Create an array with all thread frames (images dont have threaded frames)
-        if (isTextFrame(element.itemRef)) {
+        if (isValidTextFrame(element.itemRef)) {
             threadedFrames = getThreadedFrames(element.itemRef);
         } else {
             threadedFrames = [element.itemRef];
@@ -392,17 +392,12 @@ function getTextWrapMode(frame) {
 }
 
 /**
- * Checks if the given frame is a text frame.
- * @param {Object} frame - The InDesign frame to check.
- * @returns {Boolean} - Returns true if the frame is a text frame, otherwise false.
+ * Tells whether the given object is a valid text frame.
+ * @param {Object} object
+ * @returns {Boolean}
  */
-function isTextFrame(frame) {
-    // Check if the frame is valid and is an instance of TextFrame
-    if (frame && frame.isValid && frame instanceof TextFrame) {
-        return true;
-    }
-
-    return false;
+function isValidTextFrame(object) {
+    return object && object instanceof TextFrame && object.isValid
 }
 
 function getLineHeight(line) {
