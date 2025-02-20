@@ -17,8 +17,8 @@ function exportArticlesAsSnippets(doc, folder) {
     var exportCounter = 0;
 
     app.scriptPreferences.measurementUnit = MeasurementUnits.POINTS;
-    for (var i = 0; i < doc.articles.length; i++) {
-        var article = doc.articles[i];
+    for (var articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
+        var article = doc.articles[articleIndex];
         var pageItems = []; // Collect all associated page items for the article.
         var elements = article.articleMembers.everyItem().getElements();
         var outerBounds = getOuterboundOfArticleShape(elements);
@@ -27,8 +27,8 @@ function exportArticlesAsSnippets(doc, folder) {
             continue;
         }
 
-        for (var j = 0; j < elements.length; j++) {
-            var element = elements[j];
+        for (var elementIndex = 0; elementIndex < elements.length; elementIndex++) {
+            var element = elements[elementIndex];
             if (isValidTextFrame(element.itemRef)) {
                 var threadedFrames = getThreadedFrames(element.itemRef);
                 var textComponent = {
@@ -44,8 +44,8 @@ function exportArticlesAsSnippets(doc, folder) {
                     textComponent.firstParagraphStyle = threadedFrames[0].paragraphs[0].appliedParagraphStyle.name
                 }
 
-                for (var k = 0; k < threadedFrames.length; k++) {
-                    var frame = threadedFrames[k];
+                for (var frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
+                    var frame = threadedFrames[frameIndex];
                     pageItems.push(frame);
                     if (isValidTextFrame(frame)) {
                         var textStats = getTextStatisticsWithoutOverset(frame);
@@ -72,7 +72,7 @@ function exportArticlesAsSnippets(doc, folder) {
             }
         }
         if (pageItems.length > 1) {
-            exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, i, pageItems, articleShapeJson)
+            exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
             exportCounter++;
         }
     }
