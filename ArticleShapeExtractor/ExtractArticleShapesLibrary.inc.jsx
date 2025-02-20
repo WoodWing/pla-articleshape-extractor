@@ -137,12 +137,7 @@ function exportArticlesAsSnippets(folder) {
                         if (isValidTextFrame(frame)) {
                             var textStats = getTextStatisticsWithoutOverset(frame);
                             textComponent.frames.push({
-                                "geometricBounds": {
-                                    "x": frame.geometricBounds[1] - outerBounds.topLeftX,
-                                    "y": frame.geometricBounds[0] - outerBounds.topLeftY,
-                                    "width": frame.geometricBounds[3] - frame.geometricBounds[1],
-                                    "height": frame.geometricBounds[2] - frame.geometricBounds[0]
-                                },
+                                "geometricBounds": composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
                                 "columns": frame.textFramePreferences.textColumnCount,
                                 "words": textStats.wordCount,
                                 "characters": textStats.charCount,
@@ -163,12 +158,7 @@ function exportArticlesAsSnippets(folder) {
                     //element.itemRef.sendToBack();
 
                     articleShapeJson.imageComponents.push({
-                        "geometricBounds": {
-                            "x": element.itemRef.geometricBounds[1] - outerBounds.topLeftX,
-                            "y": element.itemRef.geometricBounds[0] - outerBounds.topLeftY,
-                            "width": element.itemRef.geometricBounds[3] - element.itemRef.geometricBounds[1],
-                            "height": element.itemRef.geometricBounds[2] - element.itemRef.geometricBounds[0]
-                        },
+                        "geometricBounds": composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef),
                         "textWrapMode": getTextWrapMode(element.itemRef)
                     });
                 }
@@ -214,9 +204,23 @@ function exportArticlesAsSnippets(folder) {
 
     app.scriptPreferences.measurementUnit = AutoEnum.AUTO_VALUE;    
 
-    return exportCounter;
+    return exportCounter;    
+}
 
-    
+/**
+ * Create a data object that describes the geometrical boundaries of a given page item.
+ * @param {Number} topLeftX - Make it relative to this X position.
+ * @param {Number} topLeftY - Make it relative to this Y position.
+ * @param {PageItem} pageItem - TextFrame, Rectangle, etc
+ * @return {Object}
+ */
+function composeGeometricBounds(topLeftX, topLeftY, pageItem) {
+    return {
+        "x": pageItem.geometricBounds[1] - topLeftX,
+        "y": pageItem.geometricBounds[0] - topLeftY,
+        "width": pageItem.geometricBounds[3] - pageItem.geometricBounds[1],
+        "height": pageItem.geometricBounds[2] - pageItem.geometricBounds[0]
+    }    
 }
 
 /**
