@@ -164,10 +164,10 @@ function exportArticlesAsSnippets(folder) {
 
                     articleShapeJson.imageComponents.push({
                         "geometricBounds": {
-                            "x": frame.geometricBounds[1] - outerBounds.topLeftX,
-                            "y": frame.geometricBounds[0] - outerBounds.topLeftY,
-                            "width": frame.geometricBounds[3] - element.itemRef.geometricBounds[1],
-                            "height": frame.geometricBounds[2] - element.itemRef.geometricBounds[0]
+                            "x": element.itemRef.geometricBounds[1] - outerBounds.topLeftX,
+                            "y": element.itemRef.geometricBounds[0] - outerBounds.topLeftY,
+                            "width": element.itemRef.geometricBounds[3] - element.itemRef.geometricBounds[1],
+                            "height": element.itemRef.geometricBounds[2] - element.itemRef.geometricBounds[0]
                         },
                         "textWrapMode": getTextWrapMode(element.itemRef)
                     });
