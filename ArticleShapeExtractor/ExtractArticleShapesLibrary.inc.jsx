@@ -26,7 +26,6 @@ function exportArticlesAsSnippets(folder) {
         return;
     }
 
-
     //Get the category object of the layout
     try {
         var publication = app.entSessions.getPublication(doc.entMetaData.get("Core_Publication"));
@@ -40,170 +39,179 @@ function exportArticlesAsSnippets(folder) {
     for (var i = 0; i < doc.articles.length; i++) {
 
         var article = doc.articles[i];
-        var shapeTypeName = "";
-        var shapeTypeId = -1;
-
-        if (article.name.toLowerCase().indexOf("lead") != -1) {
-            shapeTypeName = "lead";
-            shapeTypeId = "1";
-        } else if (article.name.toLowerCase().indexOf("secondary") != -1) {
-            shapeTypeName = "secondary";
-            shapeTypeId = "2";
-        } else if (article.name.toLowerCase().indexOf("third") != -1) {
-            shapeTypeName = "third";
-            shapeTypeId = "3";
-        } else if (article.name.toLowerCase().indexOf("filler") != -1) {
-            shapeTypeName = "filler";
-            shapeTypeId = "4";
-        } else {
-            //alert("InDesign Article [" + article.name + "] skipped because the name does not include lead, secondary, third or filler");
+        var shapeType = resolveShapeTypeFromArticleName(article.name)
+        if(shapeType === null) {
+            continue;
         }
 
-        if (shapeTypeId > 0) {
-            var articleShapeJson = {
-                "brandName": publication.name,
-                "brandId": publication.id,
-                "sectionName": category.name,
-                "sectionId": category.id,
-                "shapeTypeName": shapeTypeName,
-                "shapeTypeId": shapeTypeId,
-                "geometricBounds": {
-                    "x": 0,
-                    "y": 0,
-                    "width": 0,
-                    "height": 0
-                },
-                "overlapsesFold": false,
-                "textComponents": [],
-                "imageComponents": []
-            }
+        var articleShapeJson = {
+            "brandName": publication.name,
+            "brandId": publication.id,
+            "sectionName": category.name,
+            "sectionId": category.id,
+            "shapeTypeName": shapeType.name,
+            "shapeTypeId": shapeType.id,
+            "geometricBounds": {
+                "x": 0,
+                "y": 0,
+                "width": 0,
+                "height": 0
+            },
+            "overlapsesFold": false,
+            "textComponents": [],
+            "imageComponents": []
+        }
 
-            // Create a unique filename
-            var baseFileName = folder.fsName + "/" + doc.name + ' ' + shapeTypeName + ' ' + (i + 1);
-            try {
-                //Get Studio version and ID
-                baseFileName = baseFileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';
-            } catch (error) {
-                //Use path of layout to make file name unique
-                if (doc.saved) {
-                    var suffix = doc.filePath.absoluteURI;
-                    while ((suffix.indexOf("~") != -1) || (suffix.indexOf("\\") != -1) || (suffix.indexOf("/") != -1)) {
-                        suffix = suffix.replace("~", "").replace("\\", "-").replace("/", "-");
-                    }
-
-                    baseFileName = baseFileName + ' (' + suffix + ")";
+        // Create a unique filename
+        var baseFileName = folder.fsName + "/" + doc.name + ' ' + shapeType.name + ' ' + (i + 1);
+        try {
+            //Get Studio version and ID
+            baseFileName = baseFileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';
+        } catch (error) {
+            //Use path of layout to make file name unique
+            if (doc.saved) {
+                var suffix = doc.filePath.absoluteURI;
+                while ((suffix.indexOf("~") != -1) || (suffix.indexOf("\\") != -1) || (suffix.indexOf("/") != -1)) {
+                    suffix = suffix.replace("~", "").replace("\\", "-").replace("/", "-");
                 }
+
+                baseFileName = baseFileName + ' (' + suffix + ")";
             }
+        }
 
-            // Collect all associated page items for the article
-            var pageItems = [];
-            var elements = article.articleMembers.everyItem().getElements();
-            var outerBounds = getOuterboundOfArticleShape(elements);
+        // Collect all associated page items for the article
+        var pageItems = [];
+        var elements = article.articleMembers.everyItem().getElements();
+        var outerBounds = getOuterboundOfArticleShape(elements);
 
-            for (var j = 0; j < elements.length; j++) {
-                var element = elements[j];
+        for (var j = 0; j < elements.length; j++) {
+            var element = elements[j];
 
-                //Create an array with all thread frames (images dont have threaded frames)
-                if (isValidTextFrame(element.itemRef)) {
-                    var threadedFrames = getThreadedFrames(element.itemRef);
+            //Create an array with all thread frames (images dont have threaded frames)
+            if (isValidTextFrame(element.itemRef)) {
+                var threadedFrames = getThreadedFrames(element.itemRef);
 
-                    var textComponent = {
-                        "type": element.itemRef.elementLabel,
-                        "words": 0,
-                        "characters": 0,
-                        "firstParagraphStyle": "",
-                        "frames": [
-                        ]
-                    };
+                var textComponent = {
+                    "type": element.itemRef.elementLabel,
+                    "words": 0,
+                    "characters": 0,
+                    "firstParagraphStyle": "",
+                    "frames": [
+                    ]
+                };
 
-                    //Add the name of the first paragraph style used in the chain of threaded frames
-                    if (threadedFrames[0].paragraphs.length > 0) {
-                        textComponent.firstParagraphStyle = threadedFrames[0].paragraphs[0].appliedParagraphStyle.name
-                    }
+                //Add the name of the first paragraph style used in the chain of threaded frames
+                if (threadedFrames[0].paragraphs.length > 0) {
+                    textComponent.firstParagraphStyle = threadedFrames[0].paragraphs[0].appliedParagraphStyle.name
+                }
 
-                    for (var k = 0; k < threadedFrames.length; k++) {
-                        var frame = threadedFrames[k];
+                for (var k = 0; k < threadedFrames.length; k++) {
+                    var frame = threadedFrames[k];
 
-                        //Ensure elements have the right z-index
-                        pageItems.push(frame);
-                        //frame.sendToBack();
-
-                        //Add frame to JSON
-                        if (isValidTextFrame(frame)) {
-                            var textStats = getTextStatisticsWithoutOverset(frame);
-                            textComponent.frames.push({
-                                "geometricBounds": composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
-                                "columns": frame.textFramePreferences.textColumnCount,
-                                "words": textStats.wordCount,
-                                "characters": textStats.charCount,
-                                "textWrapMode": getTextWrapMode(frame),
-                                "totalLineHeight": roundTo3Decimals(textStats.totalLineHeight),
-                                "text": textStats.text
-                            });
-                            textComponent.words += textStats.wordCount;
-                            textComponent.characters += textStats.charCount;
-                        }
-                    }
-
-                    //Add the shape 
-                    articleShapeJson.textComponents.push(textComponent);
-                } else {
                     //Ensure elements have the right z-index
-                    pageItems.push(element.itemRef);
-                    //element.itemRef.sendToBack();
+                    pageItems.push(frame);
+                    //frame.sendToBack();
 
-                    articleShapeJson.imageComponents.push({
-                        "geometricBounds": composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef),
-                        "textWrapMode": getTextWrapMode(element.itemRef)
-                    });
+                    //Add frame to JSON
+                    if (isValidTextFrame(frame)) {
+                        var textStats = getTextStatisticsWithoutOverset(frame);
+                        textComponent.frames.push({
+                            "geometricBounds": composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
+                            "columns": frame.textFramePreferences.textColumnCount,
+                            "words": textStats.wordCount,
+                            "characters": textStats.charCount,
+                            "textWrapMode": getTextWrapMode(frame),
+                            "totalLineHeight": roundTo3Decimals(textStats.totalLineHeight),
+                            "text": textStats.text
+                        });
+                        textComponent.words += textStats.wordCount;
+                        textComponent.characters += textStats.charCount;
+                    }
                 }
 
+                //Add the shape 
+                articleShapeJson.textComponents.push(textComponent);
+            } else {
+                //Ensure elements have the right z-index
+                pageItems.push(element.itemRef);
+                //element.itemRef.sendToBack();
+
+                articleShapeJson.imageComponents.push({
+                    "geometricBounds": composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef),
+                    "textWrapMode": getTextWrapMode(element.itemRef)
+                });
             }
 
-            articleShapeJson.geometricBounds.x = outerBounds.topLeftX;
-            articleShapeJson.geometricBounds.y = outerBounds.topLeftY;
-            articleShapeJson.geometricBounds.width = outerBounds.bottomRightX - outerBounds.topLeftX;
-            articleShapeJson.geometricBounds.height = outerBounds.bottomRightY - outerBounds.topLeftY;
+        }
 
-            articleShapeJson.overlapsesFold = doc.documentPreferences.pageWidth < articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
+        articleShapeJson.geometricBounds.x = outerBounds.topLeftX;
+        articleShapeJson.geometricBounds.y = outerBounds.topLeftY;
+        articleShapeJson.geometricBounds.width = outerBounds.bottomRightX - outerBounds.topLeftX;
+        articleShapeJson.geometricBounds.height = outerBounds.bottomRightY - outerBounds.topLeftY;
+
+        articleShapeJson.overlapsesFold = doc.documentPreferences.pageWidth < articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
 
 
-            // Export the article's page items
-            if (pageItems.length > 1) {
-                var snippetFile = File(baseFileName + ".idms");
-                var imgFile = File(baseFileName + ".jpg");
-                var jsonFileName = baseFileName + ".json"
+        // Export the article's page items
+        if (pageItems.length > 1) {
+            var snippetFile = File(baseFileName + ".idms");
+            var imgFile = File(baseFileName + ".jpg");
+            var jsonFileName = baseFileName + ".json"
 
-                //Export as snippet
-                doc.select(pageItems);
-                doc.exportPageItemsSelectionToSnippet(snippetFile);
+            //Export as snippet
+            doc.select(pageItems);
+            doc.exportPageItemsSelectionToSnippet(snippetFile);
 
-                // Export as image
-                try {
-                    var group = doc.groups.add(pageItems);
+            // Export as image
+            try {
+                var group = doc.groups.add(pageItems);
 
-                    // Define JPEG export options
-                    app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.HIGH;
-                    app.jpegExportPreferences.exportResolution = 300; // Set resolution to 300 DPI
-                    group.exportFile(ExportFormat.JPG, imgFile);
-                } catch (e) {
-                    alert("Error exporting the snippet: " + e.message);
-                } finally {
-                    // Ungroup the items after export
-                    group.ungroup();
-                }
-
-                //Export JSON
-                saveJsonToDisk(articleShapeJson, jsonFileName);
-
-                exportCounter++;
+                // Define JPEG export options
+                app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.HIGH;
+                app.jpegExportPreferences.exportResolution = 300; // Set resolution to 300 DPI
+                group.exportFile(ExportFormat.JPG, imgFile);
+            } catch (e) {
+                alert("Error exporting the snippet: " + e.message);
+            } finally {
+                // Ungroup the items after export
+                group.ungroup();
             }
+
+            //Export JSON
+            saveJsonToDisk(articleShapeJson, jsonFileName);
+
+            exportCounter++;
         }
     }
 
     app.scriptPreferences.measurementUnit = AutoEnum.AUTO_VALUE;    
 
     return exportCounter;    
+}
+
+/**
+ * @param {String} articleName 
+ * @returns {Object|null}
+ */
+function resolveShapeTypeFromArticleName(articleName) {
+    var shapeType = { id: null, name: null };
+    articleName = articleName.toLowerCase();
+    if (articleName.indexOf("lead") != -1) {
+        shapeType.name = "lead";
+        shapeType.id = "1";
+    } else if (articleName.indexOf("secondary") != -1) {
+        shapeType.name = "secondary";
+        shapeType.id = "2";
+    } else if (articleName.indexOf("third") != -1) {
+        shapeType.name = "third";
+        shapeType.id = "3";
+    } else if (articleName.indexOf("filler") != -1) {
+        shapeType.name = "filler";
+        shapeType.id = "4";
+    } else {
+        shapeType = null;
+    }
+    return shapeType;
 }
 
 /**
