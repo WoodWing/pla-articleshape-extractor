@@ -62,23 +62,6 @@ function exportArticlesAsSnippets(folder) {
             "imageComponents": []
         }
 
-        // Create a unique filename
-        var baseFileName = folder.fsName + "/" + doc.name + ' ' + shapeType.name + ' ' + (i + 1);
-        try {
-            //Get Studio version and ID
-            baseFileName = baseFileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';
-        } catch (error) {
-            //Use path of layout to make file name unique
-            if (doc.saved) {
-                var suffix = doc.filePath.absoluteURI;
-                while ((suffix.indexOf("~") != -1) || (suffix.indexOf("\\") != -1) || (suffix.indexOf("/") != -1)) {
-                    suffix = suffix.replace("~", "").replace("\\", "-").replace("/", "-");
-                }
-
-                baseFileName = baseFileName + ' (' + suffix + ")";
-            }
-        }
-
         // Collect all associated page items for the article
         var pageItems = [];
         var elements = article.articleMembers.everyItem().getElements();
@@ -154,6 +137,7 @@ function exportArticlesAsSnippets(folder) {
 
         // Export the article's page items
         if (pageItems.length > 1) {
+            var baseFileName = getFileBaseName(doc, folder, shapeType.name, i)
             var snippetFile = File(baseFileName + ".idms");
             var imgFile = File(baseFileName + ".jpg");
             var jsonFileName = baseFileName + ".json"
@@ -212,6 +196,33 @@ function resolveShapeTypeFromArticleName(articleName) {
         shapeType = null;
     }
     return shapeType;
+}
+
+/**
+ * Compose a unique name that can be used as a base to compose export filenames.
+ * @param {Document} doc 
+ * @param {Object} folder 
+ * @param {String} shapeTypeName 
+ * @param {Number} articleIndex 
+ * @returns {String}
+ */
+function getFileBaseName(doc, folder, shapeTypeName, articleIndex) {
+    var baseFileName = folder.fsName + "/" + doc.name + ' ' + shapeTypeName + ' ' + (articleIndex + 1);
+    try {
+        // Get workflow object ID and Version from Studio.
+        baseFileName = baseFileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';
+    } catch (error) {
+        // Use path of layout to make file name unique.
+        if (doc.saved) {
+            var suffix = doc.filePath.absoluteURI;
+            while ((suffix.indexOf("~") != -1) || (suffix.indexOf("\\") != -1) || (suffix.indexOf("/") != -1)) {
+                suffix = suffix.replace("~", "").replace("\\", "-").replace("/", "-");
+            }
+            baseFileName = baseFileName + ' (' + suffix + ")";
+        }
+    }
+    return baseFileName;
+
 }
 
 /**
