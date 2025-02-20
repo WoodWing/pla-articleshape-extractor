@@ -227,7 +227,7 @@ function exportArticlesAsSnippets(folder) {
 function saveJsonToDisk(jsonData, filePath) {
     try {
         // Convert JSON object to a string
-        var jsonString = JSON.stringify(jsonData);
+        var jsonString = JSON.stringify(jsonData, null, 4);
 
         // Create a File object
         var file = new File(filePath);
