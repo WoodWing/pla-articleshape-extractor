@@ -109,7 +109,7 @@ function exportArticlesAsSnippets(folder) {
                 var threadedFrames;
 
                 //Create an array with all thread frames (images dont have threaded frames)
-                if (isTextFrame(element.itemRef)) {
+                if (isValidTextFrame(element.itemRef)) {
                     threadedFrames = getThreadedFrames(element.itemRef);
 
                     var textComponent = {
@@ -134,7 +134,7 @@ function exportArticlesAsSnippets(folder) {
                         //frame.sendToBack();
 
                         //Add frame to JSON
-                        if (isTextFrame(frame)) {
+                        if (isValidTextFrame(frame)) {
                             var textStats = getTextStatisticsWithoutOverset(frame);
                             textComponent.frames.push({
                                 "geometricBounds": {
@@ -305,7 +305,7 @@ function getOuterboundOfArticleShape(elements) {
         }
 
         //Create an array with all thread frames (images dont have threaded frames)
-        if (isTextFrame(element.itemRef)) {
+        if (isValidTextFrame(element.itemRef)) {
             threadedFrames = getThreadedFrames(element.itemRef);
         } else {
             threadedFrames = [element.itemRef];
@@ -392,37 +392,34 @@ function getTextWrapMode(frame) {
 }
 
 /**
- * Checks if the given frame is a text frame.
- * @param {Object} frame - The InDesign frame to check.
- * @returns {Boolean} - Returns true if the frame is a text frame, otherwise false.
+ * Tells whether the given object is a valid text frame.
+ * @param {Object} object
+ * @returns {Boolean}
  */
-function isTextFrame(frame) {
-    // Check if the frame is valid and is an instance of TextFrame
-    if (frame && frame.isValid && frame instanceof TextFrame) {
-        return true;
-    }
-
-    return false;
+function isValidTextFrame(object) {
+    return object && object instanceof TextFrame && object.isValid
 }
 
+/**
+ * Calculate the line height in points.
+ * @param {Line} line
+ * @returns {Number}
+ */
 function getLineHeight(line) {
-    var lineHeight = 0;
-
-    if (line.characters.length > 0) {
-        // Calculate line height based on leading and font size
-        var fontSize = line.characters[0].pointSize; // Font size of first character in line
-        var leading = line.leading; // Leading (line spacing)
-        var baselineShift = line.characters[0].baselineShift; // Baseline shift
-
-        // If leading is set to Auto (value = -1), estimate it as 120% of font size
-        if (leading === Leading.AUTO) {
-            leading = fontSize * 1.2;
-        }
-
+    if (line.characters.length === 0) {
+        return 0;
     }
 
-    // Calculate final line height
-    lineHeight = leading + (baselineShift || 0);
+    // Calculate line height based on line leading and base shift of first character.
+    var leading = line.leading; // line spacing
+    var baselineShift = line.characters[0].baselineShift;
 
-    return lineHeight;
+    // If leading is set to Auto (value = -1), estimate it as 120% of font size.
+    if (leading === Leading.AUTO) {
+        var fontSize = line.characters[0].pointSize;
+        leading = fontSize * 1.2;
+    }
+
+    // Calculate final line height.
+    return leading + (baselineShift || 0);
 }
