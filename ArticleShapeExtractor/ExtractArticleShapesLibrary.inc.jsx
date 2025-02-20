@@ -95,10 +95,6 @@ function exportArticlesAsSnippets(folder) {
                 }
             }
 
-            var snippetFile = File(baseFileName + ".idms");
-            var imgFile = File(baseFileName + ".jpg");
-            var jsonFileName = baseFileName + ".json"
-
             // Collect all associated page items for the article
             var pageItems = [];
             var elements = article.articleMembers.everyItem().getElements();
@@ -106,11 +102,10 @@ function exportArticlesAsSnippets(folder) {
 
             for (var j = 0; j < elements.length; j++) {
                 var element = elements[j];
-                var threadedFrames;
 
                 //Create an array with all thread frames (images dont have threaded frames)
                 if (isValidTextFrame(element.itemRef)) {
-                    threadedFrames = getThreadedFrames(element.itemRef);
+                    var threadedFrames = getThreadedFrames(element.itemRef);
 
                     var textComponent = {
                         "type": element.itemRef.elementLabel,
@@ -127,7 +122,7 @@ function exportArticlesAsSnippets(folder) {
                     }
 
                     for (var k = 0; k < threadedFrames.length; k++) {
-                        frame = threadedFrames[k];
+                        var frame = threadedFrames[k];
 
                         //Ensure elements have the right z-index
                         pageItems.push(frame);
@@ -175,6 +170,10 @@ function exportArticlesAsSnippets(folder) {
 
             // Export the article's page items
             if (pageItems.length > 1) {
+                var snippetFile = File(baseFileName + ".idms");
+                var imgFile = File(baseFileName + ".jpg");
+                var jsonFileName = baseFileName + ".json"
+
                 //Export as snippet
                 doc.select(pageItems);
                 doc.exportPageItemsSelectionToSnippet(snippetFile);
