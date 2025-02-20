@@ -12,21 +12,13 @@ var fallBackSettings = {
     },
 }
 
-
 // Function to export all InDesign articles as snippets
-function exportArticlesAsSnippets(folder) {
-    var doc = app.activeDocument;
+function exportArticlesAsSnippets(doc, folder) {
     var exportCounter = 0;
 
     app.scriptPreferences.measurementUnit = MeasurementUnits.POINTS;
 
-    // Check if the document has any articles
-    if (doc.articles.length === 0) {
-        alert("No articles found in the document.");
-        return;
-    }
-
-    //Get the category object of the layout
+    // Get the category object of the layout.
     try {
         var publication = app.entSessions.getPublication(doc.entMetaData.get("Core_Publication"));
         var category = app.entSession.getCategory(doc.entMetaData.get("Core_Publication"), doc.entMetaData.get("Core_Section"), doc.entMetaData.get("Core_Issue"));
