@@ -18,40 +18,13 @@ function exportArticlesAsSnippets(doc, folder) {
 
     app.scriptPreferences.measurementUnit = MeasurementUnits.POINTS;
 
-    // Get the category object of the layout.
-    try {
-        var publication = app.entSessions.getPublication(doc.entMetaData.get("Core_Publication"));
-        var category = app.entSession.getCategory(doc.entMetaData.get("Core_Publication"), doc.entMetaData.get("Core_Section"), doc.entMetaData.get("Core_Issue"));
-    } catch (error) {
-        var publication = fallBackSettings.publication;
-        var category = fallBackSettings.category;
-    }
-
     // Loop through each article
     for (var i = 0; i < doc.articles.length; i++) {
 
         var article = doc.articles[i];
-        var shapeType = resolveShapeTypeFromArticleName(article.name)
-        if(shapeType === null) {
+        var articleShapeJson = composeArticleShapeJson(doc, article.name);
+        if (articleShapeJson === null) {
             continue;
-        }
-
-        var articleShapeJson = {
-            "brandName": publication.name,
-            "brandId": publication.id,
-            "sectionName": category.name,
-            "sectionId": category.id,
-            "shapeTypeName": shapeType.name,
-            "shapeTypeId": shapeType.id,
-            "geometricBounds": {
-                "x": 0,
-                "y": 0,
-                "width": 0,
-                "height": 0
-            },
-            "overlapsesFold": false,
-            "textComponents": [],
-            "imageComponents": []
         }
 
         // Collect all associated page items for the article
@@ -127,7 +100,7 @@ function exportArticlesAsSnippets(doc, folder) {
         articleShapeJson.overlapsesFold = doc.documentPreferences.pageWidth < articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
 
         if (pageItems.length > 1) {
-            exportArticlePageItems(doc, folder, shapeType.name, i, pageItems, articleShapeJson)
+            exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, i, pageItems, articleShapeJson)
             exportCounter++;
         }
     }
@@ -212,6 +185,56 @@ function composeGeometricBounds(topLeftX, topLeftY, pageItem) {
  */
 function roundTo3Decimals(precisionNumber) {
     return Math.round(precisionNumber * 1000) / 1000
+}
+
+/**
+ * 
+ * @param {Document} doc 
+ * @param {String} articleName 
+ * @returns {Object|null}
+ */
+function composeArticleShapeJson(doc, articleName) {
+
+    // Resolve Brand/Category. Fallback to defaults when no Studio session.
+    try {
+        var publication = app.entSessions.getPublication(
+            doc.entMetaData.get("Core_Publication")
+        );
+        var category = app.entSession.getCategory(
+            doc.entMetaData.get("Core_Publication"), 
+            doc.entMetaData.get("Core_Section"), 
+            doc.entMetaData.get("Core_Issue")
+        );
+    } catch (error) {
+        var publication = fallBackSettings.publication;
+        var category = fallBackSettings.category;
+    }
+
+    // Resolve the shape type. Bail out when article has bad naming convention.
+    var shapeType = resolveShapeTypeFromArticleName(articleName)
+    if(shapeType === null) {
+        return null;
+    }
+
+    // Compose a base structure in the Article Shape JSON export format.
+    var articleShapeJson = {
+        "brandName": publication.name,
+        "brandId": publication.id,
+        "sectionName": category.name,
+        "sectionId": category.id,
+        "shapeTypeName": shapeType.name,
+        "shapeTypeId": shapeType.id,
+        "geometricBounds": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+        },
+        "overlapsesFold": false,
+        "textComponents": [],
+        "imageComponents": []
+    }
+    return articleShapeJson;
 }
 
 /**
