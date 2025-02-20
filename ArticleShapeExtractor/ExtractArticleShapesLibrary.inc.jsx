@@ -122,8 +122,14 @@ function getFileBaseName(doc, folder, shapeTypeName, articleIndex) {
         // Use path of layout to make file name unique.
         if (doc.saved) {
             var suffix = doc.filePath.absoluteURI;
-            while ((suffix.indexOf("~") != -1) || (suffix.indexOf("\\") != -1) || (suffix.indexOf("/") != -1)) {
-                suffix = suffix.replace("~", "").replace("\\", "-").replace("/", "-");
+            if ((suffix.indexOf("~\\") === 0) || (suffix.indexOf("~/") === 0)) {
+                suffix = suffix.replace("~\\", "").replace("~/", "");
+            }
+            while ((suffix.indexOf("\\") === 0) || (suffix.indexOf("/") === 0)) {
+                suffix = suffix.replace("\\", "").replace("/", "");
+            }
+            while ((suffix.indexOf("\\") != -1) || (suffix.indexOf("/") != -1)) {
+                suffix = suffix.replace("\\", "-").replace("/", "-");
             }
             baseFileName = baseFileName + ' (' + suffix + ")";
         }
