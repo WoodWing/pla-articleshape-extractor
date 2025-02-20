@@ -19,15 +19,14 @@ function exportArticlesAsSnippets(doc, folder) {
     app.scriptPreferences.measurementUnit = MeasurementUnits.POINTS;
     for (var i = 0; i < doc.articles.length; i++) {
         var article = doc.articles[i];
-        var articleShapeJson = composeArticleShapeJson(doc, article.name);
+        var pageItems = []; // Collect all associated page items for the article.
+        var elements = article.articleMembers.everyItem().getElements();
+        var outerBounds = getOuterboundOfArticleShape(elements);
+        var articleShapeJson = composeArticleShapeJson(doc, article.name, outerBounds);
         if (articleShapeJson === null) {
             continue;
         }
 
-        var pageItems = []; // Collect all associated page items for the article.
-        var elements = article.articleMembers.everyItem().getElements();
-        var outerBounds = getOuterboundOfArticleShape(elements);
-        
         for (var j = 0; j < elements.length; j++) {
             var element = elements[j];
             if (isValidTextFrame(element.itemRef)) {
@@ -71,16 +70,7 @@ function exportArticlesAsSnippets(doc, folder) {
                     "textWrapMode": getTextWrapMode(element.itemRef)
                 });
             }
-
         }
-
-        articleShapeJson.geometricBounds.x = outerBounds.topLeftX;
-        articleShapeJson.geometricBounds.y = outerBounds.topLeftY;
-        articleShapeJson.geometricBounds.width = outerBounds.bottomRightX - outerBounds.topLeftX;
-        articleShapeJson.geometricBounds.height = outerBounds.bottomRightY - outerBounds.topLeftY;
-
-        articleShapeJson.overlapsesFold = doc.documentPreferences.pageWidth < articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
-
         if (pageItems.length > 1) {
             exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, i, pageItems, articleShapeJson)
             exportCounter++;
@@ -171,9 +161,10 @@ function roundTo3Decimals(precisionNumber) {
  * 
  * @param {Document} doc 
  * @param {String} articleName 
+ * @param {Object} outerBounds
  * @returns {Object|null}
  */
-function composeArticleShapeJson(doc, articleName) {
+function composeArticleShapeJson(doc, articleName, outerBounds) {
 
     // Resolve Brand/Category. Fallback to defaults when no Studio session.
     try {
@@ -205,15 +196,16 @@ function composeArticleShapeJson(doc, articleName) {
         "shapeTypeName": shapeType.name,
         "shapeTypeId": shapeType.id,
         "geometricBounds": {
-            "x": 0,
-            "y": 0,
-            "width": 0,
-            "height": 0
+            "x": outerBounds.topLeftX,
+            "y": outerBounds.topLeftY,
+            "width": outerBounds.bottomRightX - outerBounds.topLeftX,
+            "height": outerBounds.bottomRightY - outerBounds.topLeftY
         },
         "overlapsesFold": false,
         "textComponents": [],
         "imageComponents": []
     }
+    articleShapeJson.overlapsesFold = doc.documentPreferences.pageWidth < articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
     return articleShapeJson;
 }
 
