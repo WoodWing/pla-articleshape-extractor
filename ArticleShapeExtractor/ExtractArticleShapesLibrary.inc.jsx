@@ -126,36 +126,8 @@ function exportArticlesAsSnippets(doc, folder) {
 
         articleShapeJson.overlapsesFold = doc.documentPreferences.pageWidth < articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
 
-
-        // Export the article's page items
         if (pageItems.length > 1) {
-            var baseFileName = getFileBaseName(doc, folder, shapeType.name, i)
-            var snippetFile = File(baseFileName + ".idms");
-            var imgFile = File(baseFileName + ".jpg");
-            var jsonFileName = baseFileName + ".json"
-
-            //Export as snippet
-            doc.select(pageItems);
-            doc.exportPageItemsSelectionToSnippet(snippetFile);
-
-            // Export as image
-            try {
-                var group = doc.groups.add(pageItems);
-
-                // Define JPEG export options
-                app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.HIGH;
-                app.jpegExportPreferences.exportResolution = 300; // Set resolution to 300 DPI
-                group.exportFile(ExportFormat.JPG, imgFile);
-            } catch (e) {
-                alert("Error exporting the snippet: " + e.message);
-            } finally {
-                // Ungroup the items after export
-                group.ungroup();
-            }
-
-            //Export JSON
-            saveJsonToDisk(articleShapeJson, jsonFileName);
-
+            exportArticlePageItems(doc, folder, shapeType.name, i, pageItems, articleShapeJson)
             exportCounter++;
         }
     }
@@ -240,6 +212,43 @@ function composeGeometricBounds(topLeftX, topLeftY, pageItem) {
  */
 function roundTo3Decimals(precisionNumber) {
     return Math.round(precisionNumber * 1000) / 1000
+}
+
+/**
+ * @param {Document} doc 
+ * @param {Object} folder 
+ * @param {String} shapeTypeName 
+ * @param {Number} articleIndex 
+ * @param {Array} pageItems
+ * @param {Object} articleShapeJson
+ */
+function exportArticlePageItems(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
+    var baseFileName = getFileBaseName(doc, folder, shapeTypeName, articleIndex)
+    var snippetFile = File(baseFileName + ".idms");
+    var imgFile = File(baseFileName + ".jpg");
+    var jsonFileName = baseFileName + ".json";
+
+    // Export IDMS snippet.
+    doc.select(pageItems);
+    doc.exportPageItemsSelectionToSnippet(snippetFile);
+
+    // Export JPEG image.
+    try {
+        var group = doc.groups.add(pageItems);
+
+        // Define JPEG export options
+        app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.HIGH;
+        app.jpegExportPreferences.exportResolution = 300; // Set resolution to 300 DPI
+        group.exportFile(ExportFormat.JPG, imgFile);
+    } catch (e) {
+        alert("Error exporting the snippet: " + e.message);
+    } finally {
+        // Ungroup the items after export
+        group.ungroup();
+    }
+
+    // Export JSON.
+    saveJsonToDisk(articleShapeJson, jsonFileName);    
 }
 
 /**
