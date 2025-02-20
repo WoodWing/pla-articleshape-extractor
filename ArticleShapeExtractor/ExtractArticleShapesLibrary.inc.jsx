@@ -263,10 +263,6 @@ function saveJsonToDisk(jsonData, filePath) {
  * @returns {Object} - An object containing word count, character count and text without overset.
  */
 function getTextStatisticsWithoutOverset(textFrame) {
-    if (!textFrame || !textFrame.isValid) {
-        alert("Invalid text frame.");
-        return { wordCount: 0, charCount: 0 };
-    }
 
     // Extract only the visible text (not overset)
     var visibleText = textFrame.lines;
@@ -357,11 +353,6 @@ function getOuterboundOfArticleShape(elements) {
  * @returns {Array} - An array of all threaded text frames, including the starting frame.
  */
 function getThreadedFrames(textFrame) {
-    if (!textFrame || !textFrame.isValid) {
-        alert("Invalid text frame.");
-        return [];
-    }
-
     var threadedFrames = [];
     var currentFrame = textFrame;
 
