@@ -142,7 +142,7 @@ function exportArticlesAsSnippets(folder) {
                                 "words": textStats.wordCount,
                                 "characters": textStats.charCount,
                                 "textWrapMode": getTextWrapMode(frame),
-                                "totalLineHeight": textStats.totalLineHeight,
+                                "totalLineHeight": roundTo3Decimals(textStats.totalLineHeight),
                                 "text": textStats.text
                             });
                             textComponent.words += textStats.wordCount;
@@ -212,15 +212,24 @@ function exportArticlesAsSnippets(folder) {
  * @param {Number} topLeftX - Make it relative to this X position.
  * @param {Number} topLeftY - Make it relative to this Y position.
  * @param {PageItem} pageItem - TextFrame, Rectangle, etc
- * @return {Object}
+ * @returns {Object}
  */
 function composeGeometricBounds(topLeftX, topLeftY, pageItem) {
     return {
-        "x": pageItem.geometricBounds[1] - topLeftX,
-        "y": pageItem.geometricBounds[0] - topLeftY,
-        "width": pageItem.geometricBounds[3] - pageItem.geometricBounds[1],
-        "height": pageItem.geometricBounds[2] - pageItem.geometricBounds[0]
+        "x": roundTo3Decimals(pageItem.geometricBounds[1] - topLeftX),
+        "y": roundTo3Decimals(pageItem.geometricBounds[0] - topLeftY),
+        "width": roundTo3Decimals(pageItem.geometricBounds[3] - pageItem.geometricBounds[1]),
+        "height": roundTo3Decimals(pageItem.geometricBounds[2] - pageItem.geometricBounds[0])
     }    
+}
+
+/**
+ * Round a given number to a precision of maximum 3 decimals.
+ * @param {Number} precisionNumber 
+ * @returns {Number}
+ */
+function roundTo3Decimals(precisionNumber) {
+    return Math.round(precisionNumber * 1000) / 1000
 }
 
 /**
@@ -274,7 +283,12 @@ function getTextStatisticsWithoutOverset(textFrame) {
         totalLineHeight += getLineHeight(visibleText[i]);
     }
 
-    return { wordCount: wordCount, charCount: charCount, text: text, totalLineHeight: totalLineHeight };
+    return { 
+        wordCount: wordCount, 
+        charCount: charCount, 
+        text: text, 
+        totalLineHeight: roundTo3Decimals(totalLineHeight) 
+    };
 }
 
 
