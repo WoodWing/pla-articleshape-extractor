@@ -17,50 +17,37 @@ function exportArticlesAsSnippets(doc, folder) {
     var exportCounter = 0;
 
     app.scriptPreferences.measurementUnit = MeasurementUnits.POINTS;
-
-    // Loop through each article
     for (var i = 0; i < doc.articles.length; i++) {
-
         var article = doc.articles[i];
         var articleShapeJson = composeArticleShapeJson(doc, article.name);
         if (articleShapeJson === null) {
             continue;
         }
 
-        // Collect all associated page items for the article
-        var pageItems = [];
+        var pageItems = []; // Collect all associated page items for the article.
         var elements = article.articleMembers.everyItem().getElements();
         var outerBounds = getOuterboundOfArticleShape(elements);
-
+        
         for (var j = 0; j < elements.length; j++) {
             var element = elements[j];
-
-            //Create an array with all thread frames (images dont have threaded frames)
             if (isValidTextFrame(element.itemRef)) {
                 var threadedFrames = getThreadedFrames(element.itemRef);
-
                 var textComponent = {
                     "type": element.itemRef.elementLabel,
                     "words": 0,
                     "characters": 0,
                     "firstParagraphStyle": "",
-                    "frames": [
-                    ]
+                    "frames": []
                 };
 
-                //Add the name of the first paragraph style used in the chain of threaded frames
+                // Add the name of the first paragraph style used in the chain of threaded frames.
                 if (threadedFrames[0].paragraphs.length > 0) {
                     textComponent.firstParagraphStyle = threadedFrames[0].paragraphs[0].appliedParagraphStyle.name
                 }
 
                 for (var k = 0; k < threadedFrames.length; k++) {
                     var frame = threadedFrames[k];
-
-                    //Ensure elements have the right z-index
                     pageItems.push(frame);
-                    //frame.sendToBack();
-
-                    //Add frame to JSON
                     if (isValidTextFrame(frame)) {
                         var textStats = getTextStatisticsWithoutOverset(frame);
                         textComponent.frames.push({
@@ -76,14 +63,9 @@ function exportArticlesAsSnippets(doc, folder) {
                         textComponent.characters += textStats.charCount;
                     }
                 }
-
-                //Add the shape 
                 articleShapeJson.textComponents.push(textComponent);
             } else {
-                //Ensure elements have the right z-index
                 pageItems.push(element.itemRef);
-                //element.itemRef.sendToBack();
-
                 articleShapeJson.imageComponents.push({
                     "geometricBounds": composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef),
                     "textWrapMode": getTextWrapMode(element.itemRef)
@@ -104,9 +86,7 @@ function exportArticlesAsSnippets(doc, folder) {
             exportCounter++;
         }
     }
-
     app.scriptPreferences.measurementUnit = AutoEnum.AUTO_VALUE;    
-
     return exportCounter;    
 }
 
