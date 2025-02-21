@@ -2,7 +2,7 @@
  * Creates a new InDesign article with the given name and adds the selected frames to it.
  * @param {String} articleName - The name of the article to create.
  */
-function createNewArticleWithSelectedFrames(doc, articleName) {
+function createNewInDesignArticleWithSelectedFrames(doc, articleName) {
 
     // Create a new article (even if an article with the same name already exists)
     var article = doc.articles.add();
@@ -17,39 +17,31 @@ function createNewArticleWithSelectedFrames(doc, articleName) {
             try {
                 article.articleMembers.add(frame);
             } catch (error) {
-
             }
         }
     }
-
-    alert("A new article '" + articleName + "' has been created, and selected frames have been added.");
 }
 
 /**
- * Returns an array of all the articles the selected frame is part of.
- * @param {Object} frame - The selected frame (e.g., TextFrame, Rectangle, Oval, or Polygon).
- * @returns {Array} - An array of article names the frame is part of.
+ * Collect articles the provided frame is part of.
+ * @param {Object} frame - The selected frame (e.g. TextFrame, Rectangle, Oval or Polygon).
+ * @returns {Array}
  */
-function getIndesignArticles(doc, frame) {
-    if (!frame || !frame.isValid) {
-        alert("Invalid or no frame selected.");
-        return [];
-    }
-
-    var articles = doc.articles;
-    var indesignArticles = [];
+function getInDesignArticles(doc, frame) {
+    var docArticles = doc.articles;
+    var frameArticles = [];
 
     // Loop through all articles to check if the frame is a member
-    for (var i = 0; i < articles.length; i++) {
-        var article = articles[i];
+    for (var i = 0; i < docArticles.length; i++) {
+        var docArticle = docArticles[i];
 
         // Check if the frame is in the article's members
-        if (isFrameInArticle(article, frame)) {
-            indesignArticles.push(article);
+        if (isFrameMemberOfInDesignArticle(docArticle, frame)) {
+            frameArticles.push(docArticle);
         }
     }
 
-    return indesignArticles;
+    return frameArticles;
 }
 
 /**
@@ -58,7 +50,7 @@ function getIndesignArticles(doc, frame) {
  * @param {Object} frame - The frame to check for membership.
  * @returns {Boolean} - True if the frame is already a member of the article, false otherwise.
  */
-function isFrameInArticle(article, frame) {
+function isFrameMemberOfInDesignArticle(article, frame) {
     if (!article || !frame || !frame.isValid) {
         return false;
     }
@@ -80,35 +72,41 @@ function addOrRenameInDesignArticle(articleName) {
         return;
     }
 
-    var doc = app.activeDocument;
-
-    // Ensure that at least one item is selected
     if (app.selection.length === 0) {
         alert("Please select one or more frames first.");
         return;
     }
 
+    var frame = app.selection[0];
+    if (!frame || !frame.isValid) {
+        alert("Invalid or no frame selected.");
+        return;
+    }
 
-    var indesignArticles = getIndesignArticles(doc, app.selection[0]);
+    // Add new InDesign Articles.
+    var doc = app.activeDocument;
+    var articles = getInDesignArticles(doc, frame);
+    if (articles.length == 0) {
+        createNewInDesignArticleWithSelectedFrames(doc, articleName);
+        alert("A new article '" + articleName + "' has been created, and selected frames have been added.");
+        return;
+    }
 
-    if (indesignArticles.length == 0) {
-        createNewArticleWithSelectedFrames(doc, articleName);
-    } else {
-        for (var articleIndex = 0; articleIndex < indesignArticles.length; articleIndex++) {
-            var article = indesignArticles[articleIndex];
-            var newName = article.name;
-            var oldName = article.name;
+    // Rename existing InDesign Articles.
+    for (var articleIndex = 0; articleIndex < articles.length; articleIndex++) {
+        var article = articles[articleIndex];
+        var newName = article.name;
+        var oldName = article.name;
 
-            var storyTypeNames = ["Lead", "Secondary", "Third", "Filler"];
-            for (var storyTypeIndex = 0; storyTypeIndex < storyTypeNames.length; storyTypeIndex++) {
-                var storyTypeName = storyTypeNames[storyTypeIndex];
-                newName = replaceTextCaseInsensitive(newName, storyTypeName, articleName);
-                newName = cleanWhitespaces(newName)
-            };
-            if (newName != oldName) {
-                article.name = newName;
-                alert("Article \"" + oldName + "\" has been renamed to \"" + newName + "\"");
-            }
+        var storyTypeNames = ["Lead", "Secondary", "Third", "Filler"];
+        for (var storyTypeIndex = 0; storyTypeIndex < storyTypeNames.length; storyTypeIndex++) {
+            var storyTypeName = storyTypeNames[storyTypeIndex];
+            newName = replaceTextCaseInsensitive(newName, storyTypeName, articleName);
+            newName = cleanWhitespaces(newName)
+        };
+        if (newName != oldName) {
+            article.name = newName;
+            alert("Article \"" + oldName + "\" has been renamed to \"" + newName + "\"");
         }
     }
 }
