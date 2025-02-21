@@ -1,19 +1,17 @@
 /**
- * Creates a new InDesign article with the given name and adds the selected frames to it.
- * @param {String} articleName - The name of the article to create.
+ * Create a new InDesign Article with the given name. Add the selected frames to the article.
+ * @param {String} articleName
  */
 function createNewInDesignArticleWithSelectedFrames(doc, articleName) {
 
-    // Create a new article (even if an article with the same name already exists)
+    // Create a new InDesign Article (even if an article with the same name already exists).
     var article = doc.articles.add();
     article.name = articleName;
 
-    // Add selected frames to the new article
+    // Add selected frames to the new article.
     for (var i = 0; i < app.selection.length; i++) {
         var frame = app.selection[i];
-
-        // Ensure that the selected item is a valid frame (TextFrame, GraphicFrame, or Rectangle)
-        if (frame instanceof TextFrame || frame instanceof Rectangle || frame instanceof Oval || frame instanceof Polygon) {
+        if (isValidArticleComponentFrame(frame)) {
             try {
                 article.articleMembers.add(frame);
             } catch (error) {
@@ -24,8 +22,8 @@ function createNewInDesignArticleWithSelectedFrames(doc, articleName) {
 
 /**
  * Collect articles the provided frame is part of.
- * @param {Object} frame - The selected frame (e.g. TextFrame, Rectangle, Oval or Polygon).
- * @returns {Array}
+ * @param {PageItem} Valid text/graphic frame.
+ * @returns {Array<Article>}
  */
 function getInDesignArticles(doc, frame) {
     var docArticles = doc.articles;
@@ -45,27 +43,31 @@ function getInDesignArticles(doc, frame) {
 }
 
 /**
- * Checks if a given frame is already a member of the specified article.
+ * Tell whether a given page item is member of a the given InDesign Article.
  * @param {Article} article - The InDesign article to check.
- * @param {Object} frame - The frame to check for membership.
+ * @param {PageItem} frame - The frame to check for membership.
  * @returns {Boolean} - True if the frame is already a member of the article, false otherwise.
  */
 function isFrameMemberOfInDesignArticle(article, frame) {
-    if (!article || !frame || !frame.isValid) {
-        return false;
-    }
-
     var articleMembers = article.articleMembers.everyItem().getElements(); // Get all members as an array
-
     for (var i = 0; i < articleMembers.length; i++) {
         if (articleMembers[i].itemRef === frame) {
             return true; // The frame is already a member of the article
         }
     }
-
     return false; // Frame not found in the article
 }
 
+/**
+ * Create a new InDesign Article for the currently selected frames. Or, when the frames are
+ * already member of existing articles, rename the articles instead.
+ * 
+ * For the provided article name, pass in the story type (Lead, Secondary, Third or Filler).
+ * This name will be applied to new articles. For existing articles, it replaces previously 
+ * set story type (in the existing article names) with the new/provided story type.
+ * 
+ * @param {String} articleName 
+ */
 function addOrRenameInDesignArticle(articleName) {
     if (app.documents.length === 0) {
         alert("No document is open.");
@@ -78,8 +80,8 @@ function addOrRenameInDesignArticle(articleName) {
     }
 
     var frame = app.selection[0];
-    if (!frame || !frame.isValid) {
-        alert("Invalid or no frame selected.");
+    if (!isValidArticleComponentFrame(frame)) {
+        alert("Invalid or no text/graphical frame selected.");
         return;
     }
 
@@ -130,4 +132,32 @@ function replaceTextCaseInsensitive(text, search, replacement) {
  */
 function cleanWhitespaces(text) {
     return text.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+}
+
+/**
+ * Tells whether the given page item is a valid text frame (to be part of an article).
+ * @param {pageItem|null} object
+ * @returns {Boolean}
+ */
+function isValidArticleTextFrame(pageItem) {
+    return pageItem && pageItem instanceof TextFrame && pageItem.isValid
+}
+
+/**
+ * Tells whether the given page item is a valid graphic frame (to be part of an article).
+ * A graphic frame is any SplineItem, except GraphicLine; So only Rectangle, Oval and Polygon.
+ * @param {pageItem|null} object
+ * @returns {Boolean}
+ */
+function isValidArticleGraphicFrame(pageItem) {
+    return pageItem && (pageItem instanceof Rectangle || pageItem instanceof Oval || pageItem instanceof Polygon) && pageItem.isValid;
+}
+
+/**
+ * Tells whether the given page item is a valid text- or graphic frame (to be part of an article).
+ * @param {pageItem|null} object
+ * @returns {Boolean}
+ */
+function isValidArticleComponentFrame(pageItem) {
+    return isValidArticleTextFrame(pageItem) || isValidArticleGraphicFrame(pageItem)
 }

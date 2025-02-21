@@ -1,4 +1,5 @@
 //@include "Json.inc.jsx";
+//@include "InDesignArticleLibrary.inc.jsx";
 
 //Settings used if the layout is not stored in Studio
 var fallBackSettings = {
@@ -29,7 +30,7 @@ function exportArticlesAsSnippets(doc, folder) {
 
         for (var elementIndex = 0; elementIndex < elements.length; elementIndex++) {
             var element = elements[elementIndex];
-            if (isValidTextFrame(element.itemRef)) {
+            if (isValidArticleTextFrame(element.itemRef)) {
                 var threadedFrames = getThreadedFrames(element.itemRef);
                 var textComponent = {
                     "type": element.itemRef.elementLabel,
@@ -47,7 +48,7 @@ function exportArticlesAsSnippets(doc, folder) {
                 for (var frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
                     var frame = threadedFrames[frameIndex];
                     pageItems.push(frame);
-                    if (isValidTextFrame(frame)) {
+                    if (isValidArticleTextFrame(frame)) {
                         var textStats = getTextStatisticsWithoutOverset(frame);
                         textComponent.frames.push({
                             "geometricBounds": composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
@@ -63,7 +64,7 @@ function exportArticlesAsSnippets(doc, folder) {
                     }
                 }
                 articleShapeJson.textComponents.push(textComponent);
-            } else {
+            } else if (isValidArticleGraphicFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
                 articleShapeJson.imageComponents.push({
                     "geometricBounds": composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef),
@@ -339,7 +340,7 @@ function getOuterboundOfArticleShape(elements) {
         }
 
         //Create an array with all thread frames (images dont have threaded frames)
-        if (isValidTextFrame(element.itemRef)) {
+        if (isValidArticleTextFrame(element.itemRef)) {
             threadedFrames = getThreadedFrames(element.itemRef);
         } else {
             threadedFrames = [element.itemRef];
@@ -394,11 +395,11 @@ function getThreadedFrames(textFrame) {
 
 /**
  * Get the text wrap settings of a selected frame, including the text wrap mode as a string.
- * @param {Object} frame - The InDesign frame object (e.g., TextFrame, GraphicFrame).
+ * @param {PageItem|null} frame - The InDesign frame object (e.g., TextFrame, GraphicFrame).
  * @returns {String} - Name of the text wrap mode
  */
 function getTextWrapMode(frame) {
-    if (!frame || !frame.isValid) {
+    if (!isValidArticleComponentFrame(frame)) {
         alert("Invalid frame.");
         return null;
     }
@@ -418,15 +419,6 @@ function getTextWrapMode(frame) {
     } else {
         return ""
     }
-}
-
-/**
- * Tells whether the given object is a valid text frame.
- * @param {Object} object
- * @returns {Boolean}
- */
-function isValidTextFrame(object) {
-    return object && object instanceof TextFrame && object.isValid
 }
 
 /**
