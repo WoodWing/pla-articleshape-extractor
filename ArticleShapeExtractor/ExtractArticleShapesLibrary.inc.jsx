@@ -265,6 +265,7 @@ function saveJsonToDisk(jsonData, filePath) {
 
         // Create a File object
         var file = new File(filePath);
+        file.encoding = "UTF-8";
 
         // Open the file for writing
         if (file.open("w")) {
