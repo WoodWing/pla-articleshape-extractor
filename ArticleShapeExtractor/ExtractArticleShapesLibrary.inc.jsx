@@ -202,10 +202,10 @@ function composeArticleShapeJson(doc, articleName, outerBounds) {
         "shapeTypeName": shapeType.name,
         "shapeTypeId": shapeType.id,
         "geometricBounds": {
-            "x": outerBounds.topLeftX,
-            "y": outerBounds.topLeftY,
-            "width": outerBounds.bottomRightX - outerBounds.topLeftX,
-            "height": outerBounds.bottomRightY - outerBounds.topLeftY
+            "x": roundTo3Decimals(outerBounds.topLeftX),
+            "y": roundTo3Decimals(outerBounds.topLeftY),
+            "width": roundTo3Decimals(outerBounds.bottomRightX - outerBounds.topLeftX),
+            "height": roundTo3Decimals(outerBounds.bottomRightY - outerBounds.topLeftY)
         },
         "overlapsesFold": false,
         "textComponents": [],
