@@ -94,18 +94,42 @@ function addOrRenameInDesignArticle(articleName) {
     if (indesignArticles.length == 0) {
         createNewArticleWithSelectedFrames(doc, articleName);
     } else {
-        for (var i = 0; i < indesignArticles.length; i++) {
-            var article = indesignArticles[i];
+        for (var articleIndex = 0; articleIndex < indesignArticles.length; articleIndex++) {
+            var article = indesignArticles[articleIndex];
             var newName = article.name;
             var oldName = article.name;
 
-            newName = newName.replace(" Lead", "").replace(" Secondary", "").replace(" Third", "").replace(" Filler", "");
-            newName = newName.replace("Lead", "").replace("Secondary", "").replace("Third", "").replace("Filler", "");
-            newName = newName + " " + articleName;
-            article.name = newName;
-
-            alert("Article \"" + oldName + "\" has been renamed to \"" + newName + "\"");
+            var storyTypeNames = ["Lead", "Secondary", "Third", "Filler"];
+            for (var storyTypeIndex = 0; storyTypeIndex < storyTypeNames.length; storyTypeIndex++) {
+                var storyTypeName = storyTypeNames[storyTypeIndex];
+                newName = replaceTextCaseInsensitive(newName, storyTypeName, articleName);
+                newName = cleanWhitespaces(newName)
+            };
+            if (newName != oldName) {
+                article.name = newName;
+                alert("Article \"" + oldName + "\" has been renamed to \"" + newName + "\"");
+            }
         }
     }
+}
 
+/**
+ * Search for a text fragment (case insensitive) and substitute any found match with a replacement.
+ * @param {String} text 
+ * @param {String} search 
+ * @param {String} replacement 
+ * @returns {String} Text with substitutes.
+ */
+function replaceTextCaseInsensitive(text, search, replacement) {
+    var regex = new RegExp(search, "gi"); // "g" = global, "i" = case insensitive
+    return text.replace(regex, replacement);
+}
+
+/**
+ * Remove any leading or trailing whitespaces. Replace multiple inner whitespaces with a single space.
+ * @param {String} text 
+ * @returns {String} Cleaned text.
+ */
+function cleanWhitespaces(text) {
+    return text.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
 }
