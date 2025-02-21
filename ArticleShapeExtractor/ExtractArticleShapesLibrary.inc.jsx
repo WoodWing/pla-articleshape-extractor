@@ -12,211 +12,244 @@ var fallBackSettings = {
     },
 }
 
-
 // Function to export all InDesign articles as snippets
-function exportArticlesAsSnippets(folder) {
-    var doc = app.activeDocument;
+function exportArticlesAsSnippets(doc, folder) {
     var exportCounter = 0;
 
     app.scriptPreferences.measurementUnit = MeasurementUnits.POINTS;
+    for (var articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
+        var article = doc.articles[articleIndex];
+        var pageItems = []; // Collect all associated page items for the article.
+        var elements = article.articleMembers.everyItem().getElements();
+        var outerBounds = getOuterboundOfArticleShape(elements);
+        var articleShapeJson = composeArticleShapeJson(doc, article.name, outerBounds);
+        if (articleShapeJson === null) {
+            continue;
+        }
 
-    // Check if the document has any articles
-    if (doc.articles.length === 0) {
-        alert("No articles found in the document.");
-        return;
+        for (var elementIndex = 0; elementIndex < elements.length; elementIndex++) {
+            var element = elements[elementIndex];
+            if (isValidTextFrame(element.itemRef)) {
+                var threadedFrames = getThreadedFrames(element.itemRef);
+                var textComponent = {
+                    "type": element.itemRef.elementLabel,
+                    "words": 0,
+                    "characters": 0,
+                    "firstParagraphStyle": "",
+                    "frames": []
+                };
+
+                // Add the name of the first paragraph style used in the chain of threaded frames.
+                if (threadedFrames[0].paragraphs.length > 0) {
+                    textComponent.firstParagraphStyle = threadedFrames[0].paragraphs[0].appliedParagraphStyle.name
+                }
+
+                for (var frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
+                    var frame = threadedFrames[frameIndex];
+                    pageItems.push(frame);
+                    if (isValidTextFrame(frame)) {
+                        var textStats = getTextStatisticsWithoutOverset(frame);
+                        textComponent.frames.push({
+                            "geometricBounds": composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
+                            "columns": frame.textFramePreferences.textColumnCount,
+                            "words": textStats.wordCount,
+                            "characters": textStats.charCount,
+                            "textWrapMode": getTextWrapMode(frame),
+                            "totalLineHeight": roundTo3Decimals(textStats.totalLineHeight),
+                            "text": textStats.text
+                        });
+                        textComponent.words += textStats.wordCount;
+                        textComponent.characters += textStats.charCount;
+                    }
+                }
+                articleShapeJson.textComponents.push(textComponent);
+            } else {
+                pageItems.push(element.itemRef);
+                articleShapeJson.imageComponents.push({
+                    "geometricBounds": composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef),
+                    "textWrapMode": getTextWrapMode(element.itemRef)
+                });
+            }
+        }
+        if (pageItems.length > 1) {
+            exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
+            exportCounter++;
+        }
     }
+    app.scriptPreferences.measurementUnit = AutoEnum.AUTO_VALUE;    
+    return exportCounter;    
+}
 
+/**
+ * @param {String} articleName 
+ * @returns {Object|null}
+ */
+function resolveShapeTypeFromArticleName(articleName) {
+    var shapeType = { id: null, name: null };
+    articleName = articleName.toLowerCase();
+    if (articleName.indexOf("lead") != -1) {
+        shapeType.name = "lead";
+        shapeType.id = "1";
+    } else if (articleName.indexOf("secondary") != -1) {
+        shapeType.name = "secondary";
+        shapeType.id = "2";
+    } else if (articleName.indexOf("third") != -1) {
+        shapeType.name = "third";
+        shapeType.id = "3";
+    } else if (articleName.indexOf("filler") != -1) {
+        shapeType.name = "filler";
+        shapeType.id = "4";
+    } else {
+        shapeType = null;
+    }
+    return shapeType;
+}
 
-    //Get the category object of the layout
+/**
+ * Compose a unique name that can be used as a base to compose export filenames.
+ * @param {Document} doc 
+ * @param {Object} folder 
+ * @param {String} shapeTypeName 
+ * @param {Number} articleIndex 
+ * @returns {String}
+ */
+function getFileBaseName(doc, folder, shapeTypeName, articleIndex) {
+    var baseFileName = folder.fsName + "/" + doc.name + ' ' + shapeTypeName + ' ' + (articleIndex + 1);
     try {
-        var publication = app.entSessions.getPublication(doc.entMetaData.get("Core_Publication"));
-        var category = app.entSession.getCategory(doc.entMetaData.get("Core_Publication"), doc.entMetaData.get("Core_Section"), doc.entMetaData.get("Core_Issue"));
+        // Get workflow object ID and Version from Studio.
+        baseFileName = baseFileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';
+    } catch (error) {
+        // Use path of layout to make file name unique.
+        if (doc.saved) {
+            var suffix = doc.filePath.absoluteURI;
+            if ((suffix.indexOf("~\\") === 0) || (suffix.indexOf("~/") === 0)) {
+                suffix = suffix.replace("~\\", "").replace("~/", "");
+            }
+            while ((suffix.indexOf("\\") === 0) || (suffix.indexOf("/") === 0)) {
+                suffix = suffix.replace("\\", "").replace("/", "");
+            }
+            while ((suffix.indexOf("\\") != -1) || (suffix.indexOf("/") != -1)) {
+                suffix = suffix.replace("\\", "-").replace("/", "-");
+            }
+            baseFileName = baseFileName + ' (' + suffix + ")";
+        }
+    }
+    return baseFileName;
+
+}
+
+/**
+ * Create a data object that describes the geometrical boundaries of a given page item.
+ * @param {Number} topLeftX - Make it relative to this X position.
+ * @param {Number} topLeftY - Make it relative to this Y position.
+ * @param {PageItem} pageItem - TextFrame, Rectangle, etc
+ * @returns {Object}
+ */
+function composeGeometricBounds(topLeftX, topLeftY, pageItem) {
+    return {
+        "x": roundTo3Decimals(pageItem.geometricBounds[1] - topLeftX),
+        "y": roundTo3Decimals(pageItem.geometricBounds[0] - topLeftY),
+        "width": roundTo3Decimals(pageItem.geometricBounds[3] - pageItem.geometricBounds[1]),
+        "height": roundTo3Decimals(pageItem.geometricBounds[2] - pageItem.geometricBounds[0])
+    }    
+}
+
+/**
+ * Round a given number to a precision of maximum 3 decimals.
+ * @param {Number} precisionNumber 
+ * @returns {Number}
+ */
+function roundTo3Decimals(precisionNumber) {
+    return Math.round(precisionNumber * 1000) / 1000
+}
+
+/**
+ * 
+ * @param {Document} doc 
+ * @param {String} articleName 
+ * @param {Object} outerBounds
+ * @returns {Object|null}
+ */
+function composeArticleShapeJson(doc, articleName, outerBounds) {
+
+    // Resolve Brand/Category. Fallback to defaults when no Studio session.
+    try {
+        var publication = app.entSessions.getPublication(
+            doc.entMetaData.get("Core_Publication")
+        );
+        var category = app.entSession.getCategory(
+            doc.entMetaData.get("Core_Publication"), 
+            doc.entMetaData.get("Core_Section"), 
+            doc.entMetaData.get("Core_Issue")
+        );
     } catch (error) {
         var publication = fallBackSettings.publication;
         var category = fallBackSettings.category;
     }
 
-    // Loop through each article
-    for (var i = 0; i < doc.articles.length; i++) {
-
-        var article = doc.articles[i];
-        var shapeTypeName = "";
-        var shapeTypeId = -1;
-
-        if (article.name.toLowerCase().indexOf("lead") != -1) {
-            shapeTypeName = "lead";
-            shapeTypeId = "1";
-        } else if (article.name.toLowerCase().indexOf("secondary") != -1) {
-            shapeTypeName = "secondary";
-            shapeTypeId = "2";
-        } else if (article.name.toLowerCase().indexOf("third") != -1) {
-            shapeTypeName = "third";
-            shapeTypeId = "3";
-        } else if (article.name.toLowerCase().indexOf("filler") != -1) {
-            shapeTypeName = "filler";
-            shapeTypeId = "4";
-        } else {
-            //alert("InDesign Article [" + article.name + "] skipped because the name does not include lead, secondary, third or filler");
-        }
-
-        if (shapeTypeId > 0) {
-            var articleShapeJson = {
-                "brandName": publication.name,
-                "brandId": publication.id,
-                "sectionName": category.name,
-                "sectionId": category.id,
-                "shapeTypeName": shapeTypeName,
-                "shapeTypeId": shapeTypeId,
-                "geometricBounds": {
-                    "x": 0,
-                    "y": 0,
-                    "width": 0,
-                    "height": 0
-                },
-                "overlapsesFold": false,
-                "textComponents": [],
-                "imageComponents": []
-            }
-
-            // Create a unique filename
-            var baseFileName = folder.fsName + "/" + doc.name + ' ' + shapeTypeName + ' ' + (i + 1);
-            try {
-                //Get Studio version and ID
-                baseFileName = baseFileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';
-            } catch (error) {
-                //Use path of layout to make file name unique
-                if (doc.saved) {
-                    var suffix = doc.filePath.absoluteURI;
-                    while ((suffix.indexOf("~") != -1) || (suffix.indexOf("\\") != -1) || (suffix.indexOf("/") != -1)) {
-                        suffix = suffix.replace("~", "").replace("\\", "-").replace("/", "-");
-                    }
-
-                    baseFileName = baseFileName + ' (' + suffix + ")";
-                }
-            }
-
-            var snippetFile = File(baseFileName + ".idms");
-            var imgFile = File(baseFileName + ".jpg");
-            var jsonFileName = baseFileName + ".json"
-
-            // Collect all associated page items for the article
-            var pageItems = [];
-            var elements = article.articleMembers.everyItem().getElements();
-            var outerBounds = getOuterboundOfArticleShape(elements);
-
-            for (var j = 0; j < elements.length; j++) {
-                var element = elements[j];
-                var threadedFrames;
-
-                //Create an array with all thread frames (images dont have threaded frames)
-                if (isValidTextFrame(element.itemRef)) {
-                    threadedFrames = getThreadedFrames(element.itemRef);
-
-                    var textComponent = {
-                        "type": element.itemRef.elementLabel,
-                        "words": 0,
-                        "characters": 0,
-                        "firstParagraphStyle": "",
-                        "frames": [
-                        ]
-                    };
-
-                    //Add the name of the first paragraph style used in the chain of threaded frames
-                    if (threadedFrames[0].paragraphs.length > 0) {
-                        textComponent.firstParagraphStyle = threadedFrames[0].paragraphs[0].appliedParagraphStyle.name
-                    }
-
-                    for (var k = 0; k < threadedFrames.length; k++) {
-                        frame = threadedFrames[k];
-
-                        //Ensure elements have the right z-index
-                        pageItems.push(frame);
-                        //frame.sendToBack();
-
-                        //Add frame to JSON
-                        if (isValidTextFrame(frame)) {
-                            var textStats = getTextStatisticsWithoutOverset(frame);
-                            textComponent.frames.push({
-                                "geometricBounds": {
-                                    "x": frame.geometricBounds[1] - outerBounds.topLeftX,
-                                    "y": frame.geometricBounds[0] - outerBounds.topLeftY,
-                                    "width": frame.geometricBounds[3] - frame.geometricBounds[1],
-                                    "height": frame.geometricBounds[2] - frame.geometricBounds[0]
-                                },
-                                "columns": frame.textFramePreferences.textColumnCount,
-                                "words": textStats.wordCount,
-                                "characters": textStats.charCount,
-                                "textWrapMode": getTextWrapMode(frame),
-                                "totalLineHeight": textStats.totalLineHeight,
-                                "text": textStats.text
-                            });
-                            textComponent.words += textStats.wordCount;
-                            textComponent.characters += textStats.charCount;
-                        }
-                    }
-
-                    //Add the shape 
-                    articleShapeJson.textComponents.push(textComponent);
-                } else {
-                    //Ensure elements have the right z-index
-                    pageItems.push(element.itemRef);
-                    //element.itemRef.sendToBack();
-
-                    articleShapeJson.imageComponents.push({
-                        "geometricBounds": {
-                            "x": frame.geometricBounds[1] - outerBounds.topLeftX,
-                            "y": frame.geometricBounds[0] - outerBounds.topLeftY,
-                            "width": frame.geometricBounds[3] - element.itemRef.geometricBounds[1],
-                            "height": frame.geometricBounds[2] - element.itemRef.geometricBounds[0]
-                        },
-                        "textWrapMode": getTextWrapMode(element.itemRef)
-                    });
-                }
-
-            }
-
-            articleShapeJson.geometricBounds.x = outerBounds.topLeftX;
-            articleShapeJson.geometricBounds.y = outerBounds.topLeftY;
-            articleShapeJson.geometricBounds.width = outerBounds.bottomRightX - outerBounds.topLeftX;
-            articleShapeJson.geometricBounds.height = outerBounds.bottomRightY - outerBounds.topLeftY;
-
-            articleShapeJson.overlapsesFold = doc.documentPreferences.pageWidth < articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
-
-
-            // Export the article's page items
-            if (pageItems.length > 1) {
-                //Export as snippet
-                doc.select(pageItems);
-                doc.exportPageItemsSelectionToSnippet(snippetFile);
-
-                // Export as image
-                try {
-                    var group = doc.groups.add(pageItems);
-
-                    // Define JPEG export options
-                    app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.HIGH;
-                    app.jpegExportPreferences.exportResolution = 300; // Set resolution to 300 DPI
-                    group.exportFile(ExportFormat.JPG, imgFile);
-                } catch (e) {
-                    alert("Error exporting the snippet: " + e.message);
-                } finally {
-                    // Ungroup the items after export
-                    group.ungroup();
-                }
-
-                //Export JSON
-                saveJsonToDisk(articleShapeJson, jsonFileName);
-
-                exportCounter++;
-            }
-        }
+    // Resolve the shape type. Bail out when article has bad naming convention.
+    var shapeType = resolveShapeTypeFromArticleName(articleName)
+    if(shapeType === null) {
+        return null;
     }
 
-    app.scriptPreferences.measurementUnit = AutoEnum.AUTO_VALUE;    
+    // Compose a base structure in the Article Shape JSON export format.
+    var articleShapeJson = {
+        "brandName": publication.name,
+        "brandId": publication.id,
+        "sectionName": category.name,
+        "sectionId": category.id,
+        "shapeTypeName": shapeType.name,
+        "shapeTypeId": shapeType.id,
+        "geometricBounds": {
+            "x": outerBounds.topLeftX,
+            "y": outerBounds.topLeftY,
+            "width": outerBounds.bottomRightX - outerBounds.topLeftX,
+            "height": outerBounds.bottomRightY - outerBounds.topLeftY
+        },
+        "overlapsesFold": false,
+        "textComponents": [],
+        "imageComponents": []
+    }
+    articleShapeJson.overlapsesFold = doc.documentPreferences.pageWidth < articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
+    return articleShapeJson;
+}
 
-    return exportCounter;
+/**
+ * @param {Document} doc 
+ * @param {Object} folder 
+ * @param {String} shapeTypeName 
+ * @param {Number} articleIndex 
+ * @param {Array} pageItems
+ * @param {Object} articleShapeJson
+ */
+function exportArticlePageItems(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
+    var baseFileName = getFileBaseName(doc, folder, shapeTypeName, articleIndex)
+    var snippetFile = File(baseFileName + ".idms");
+    var imgFile = File(baseFileName + ".jpg");
+    var jsonFileName = baseFileName + ".json";
 
-    
+    // Export IDMS snippet.
+    doc.select(pageItems);
+    doc.exportPageItemsSelectionToSnippet(snippetFile);
+
+    // Export JPEG image.
+    try {
+        var group = doc.groups.add(pageItems);
+
+        // Define JPEG export options
+        app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.HIGH;
+        app.jpegExportPreferences.exportResolution = 300; // Set resolution to 300 DPI
+        group.exportFile(ExportFormat.JPG, imgFile);
+    } catch (e) {
+        alert("Error exporting the snippet: " + e.message);
+    } finally {
+        // Ungroup the items after export
+        group.ungroup();
+    }
+
+    // Export JSON.
+    saveJsonToDisk(articleShapeJson, jsonFileName);    
 }
 
 /**
@@ -227,7 +260,7 @@ function exportArticlesAsSnippets(folder) {
 function saveJsonToDisk(jsonData, filePath) {
     try {
         // Convert JSON object to a string
-        var jsonString = JSON.stringify(jsonData);
+        var jsonString = JSON.stringify(jsonData, null, 4);
 
         // Create a File object
         var file = new File(filePath);
@@ -250,10 +283,6 @@ function saveJsonToDisk(jsonData, filePath) {
  * @returns {Object} - An object containing word count, character count and text without overset.
  */
 function getTextStatisticsWithoutOverset(textFrame) {
-    if (!textFrame || !textFrame.isValid) {
-        alert("Invalid text frame.");
-        return { wordCount: 0, charCount: 0 };
-    }
 
     // Extract only the visible text (not overset)
     var visibleText = textFrame.lines;
@@ -270,7 +299,12 @@ function getTextStatisticsWithoutOverset(textFrame) {
         totalLineHeight += getLineHeight(visibleText[i]);
     }
 
-    return { wordCount: wordCount, charCount: charCount, text: text, totalLineHeight: totalLineHeight };
+    return { 
+        wordCount: wordCount, 
+        charCount: charCount, 
+        text: text, 
+        totalLineHeight: roundTo3Decimals(totalLineHeight) 
+    };
 }
 
 
@@ -339,11 +373,6 @@ function getOuterboundOfArticleShape(elements) {
  * @returns {Array} - An array of all threaded text frames, including the starting frame.
  */
 function getThreadedFrames(textFrame) {
-    if (!textFrame || !textFrame.isValid) {
-        alert("Invalid text frame.");
-        return [];
-    }
-
     var threadedFrames = [];
     var currentFrame = textFrame;
 
