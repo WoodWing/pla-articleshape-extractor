@@ -240,7 +240,7 @@ function exportArticlePageItems(doc, folder, shapeTypeName, articleIndex, pageIt
 
         // Define JPEG export options
         app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.HIGH;
-        app.jpegExportPreferences.exportResolution = 300; // Set resolution to 300 DPI
+        app.jpegExportPreferences.exportResolution = 144; // DPI, screen resolution
         group.exportFile(ExportFormat.JPG, imgFile);
     } catch (e) {
         alert("Error exporting the snippet: " + e.message);
