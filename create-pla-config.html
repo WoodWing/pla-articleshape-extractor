@@ -213,8 +213,8 @@
                         let quoteCount = 0;
                         let imageCount = 0;
                         let shapeType = jsonData.shapeTypeId;
-                        let width = Math.floor(jsonData.geometricBounds.width / columnWidthInput);
-                        let height = Math.floor(jsonData.geometricBounds.height / rowHeightInput);
+                        let width = Math.round(jsonData.geometricBounds.width / columnWidthInput);
+                        let height = Math.round(jsonData.geometricBounds.height / rowHeightInput);
                         let section = jsonData.sectionId;
 
                         // Remove the '.json' from the file name
