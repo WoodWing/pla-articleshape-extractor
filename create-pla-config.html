@@ -119,6 +119,7 @@
             <tr>
                 <th>name</th>
                 <th>section</th>
+                <th>genre</th>
                 <th>width</th>
                 <th>height</th>
                 <th>shape_type</th>
@@ -216,6 +217,7 @@
                         let width = Math.round(jsonData.geometricBounds.width / columnWidthInput);
                         let height = Math.round(jsonData.geometricBounds.height / rowHeightInput);
                         let section = jsonData.sectionId;
+                        let genre = jsonData.genreId || ""; // optional (nullable)
 
                         // Remove the '.json' from the file name
                         const fileNameWithoutExtension = file.name.replace('.json', '');
@@ -242,12 +244,13 @@
                             const row = tableBody.insertRow();
                             row.insertCell(0).textContent = fileNameWithoutExtension; // Display name without '.json'
                             row.insertCell(1).textContent = section;
-                            row.insertCell(2).textContent = width;
-                            row.insertCell(3).textContent = height;
-                            row.insertCell(4).textContent = shapeType;
-                            row.insertCell(5).textContent = bodyLength;
-                            row.insertCell(6).textContent = quoteCount;
-                            row.insertCell(7).textContent = imageCount;
+                            row.insertCell(2).textContent = genre;
+                            row.insertCell(3).textContent = width;
+                            row.insertCell(4).textContent = height;
+                            row.insertCell(5).textContent = shapeType;
+                            row.insertCell(6).textContent = bodyLength;
+                            row.insertCell(7).textContent = quoteCount;
+                            row.insertCell(8).textContent = imageCount;
 
                             hashes.push (hash);                            
                         } else {
