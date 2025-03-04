@@ -27,6 +27,10 @@ if (folder) {
             // Send a query to Enterprise
             //=======================================
             var query = app.storedUserQuery(articleQueryName);
+            if(query == undefined) {
+                alert(" User Query '" + articleQueryName + "' does not exist.");
+                exit();
+            }
             
             //=======================================
             //Push the query results into an array using new lines as the value to split by
