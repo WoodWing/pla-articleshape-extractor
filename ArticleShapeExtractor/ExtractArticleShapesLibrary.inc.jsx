@@ -1,4 +1,5 @@
 //@include "Json.inc.jsx";
+//@include "String.inc.jsx";
 //@include "InDesignArticleLibrary.inc.jsx";
 
 //Settings used if the layout is not stored in Studio
@@ -73,6 +74,10 @@ function exportArticlesAsSnippets(doc, folder) {
             }
         }
         if (pageItems.length > 1) {
+            var managedArticle = getManagedArticleFromPageItems(pageItems)
+            if (managedArticle) {
+                articleShapeJson.genreId = resolveGenreFromManagedArticle(managedArticle);
+            }
             exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
             exportCounter++;
         }
@@ -200,6 +205,7 @@ function composeArticleShapeJson(doc, articleName, outerBounds) {
         "brandId": publication.id,
         "sectionName": category.name,
         "sectionId": category.id,
+        "genreId": null,
         "shapeTypeName": shapeType.name,
         "shapeTypeId": shapeType.id,
         "geometricBounds": {
@@ -444,4 +450,41 @@ function getLineHeight(line) {
 
     // Calculate final line height.
     return leading + (baselineShift || 0);
+}
+
+/**
+ * 
+ * @param {Array<PageItem>} pageItems 
+ * @returns {ManagedArticle|null}
+ */
+function getManagedArticleFromPageItems(pageItems) {
+    for (var i = 0; i < pageItems.length; i++) {
+        var pageItem = pageItems[i];
+        if (pageItem.managedArticle instanceof ManagedArticle) {
+            return pageItem.managedArticle;
+        }
+    }
+    return null;
+}
+
+/**
+ * @param {ManagedArticle} managedArticle 
+ * @return {String|null}
+ */
+function resolveGenreFromManagedArticle(managedArticle) {
+    if (!managedArticle.entMetaData instanceof EntMetaData) {
+        return null;
+    }
+    if (!managedArticle.entMetaData.has("C_PLA_GENRE")) {
+        return null;
+    }
+    var genreId = managedArticle.entMetaData.get("C_PLA_GENRE");
+    if (!genreId instanceof String) {
+        return null;
+    }
+    genreId = genreId.trim();
+    if (genreId.length == 0) {
+        return null;
+    }
+    return genreId;
 }
