@@ -74,7 +74,7 @@ function exportArticlesAsSnippets(doc, folder) {
             }
         }
         if (pageItems.length > 1) {
-            managedArticle = getManagedArticleFromPageItems(pageItems)
+            var managedArticle = getManagedArticleFromPageItems(pageItems)
             if (managedArticle) {
                 articleShapeJson.genreId = resolveGenreFromManagedArticle(managedArticle);
             }
