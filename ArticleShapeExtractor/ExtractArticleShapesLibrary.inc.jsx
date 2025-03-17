@@ -459,10 +459,12 @@ function getLineHeight(line) {
  */
 function getManagedArticleFromPageItems(pageItems) {
     for (var i = 0; i < pageItems.length; i++) {
-        var pageItem = pageItems[i];
-        if (pageItem.managedArticle instanceof ManagedArticle) {
-            return pageItem.managedArticle;
-        }
+        var pageItem = pageItems[i];        
+        try {
+            if (pageItem.managedArticle instanceof ManagedArticle) {
+                return pageItem.managedArticle;
+            }                
+        } catch (error) {}
     }
     return null;
 }
