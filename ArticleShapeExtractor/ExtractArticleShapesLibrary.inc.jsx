@@ -78,6 +78,7 @@ function exportArticlesAsSnippets(doc, folder) {
             if (managedArticle) {
                 articleShapeJson.genreId = resolveGenreFromManagedArticle(managedArticle);
             }
+            
             exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
             exportCounter++;
         }
@@ -237,8 +238,12 @@ function exportArticlePageItems(doc, folder, shapeTypeName, articleIndex, pageIt
     var jsonFileName = baseFileName + ".json";
 
     // Export IDMS snippet.
-    doc.select(pageItems);
-    doc.exportPageItemsSelectionToSnippet(snippetFile);
+    var pageItemsIds = [];
+    for (var index = 0; index < pageItems.length; index++) {
+        var item = pageItems[index];
+        pageItemsIds.push(item.id);
+    }    
+    doc.exportPageItemsToSnippet (snippetFile, pageItemsIds);
 
     // Export JPEG image.
     try {
