@@ -20,12 +20,12 @@ Container.registerSingleton("ArticleShapeGateway", function() {
     );
 });
 
-//@include "InDesignArticleLibrary.inc.jsx";
+//@include "modules/InDesignArticleService.inc.jsx";
 Container.registerFactory("InDesignArticleService", function() {
     return new InDesignArticleService();
 });
 
-//@include "ExtractArticleShapesLibrary.inc.jsx";
+//@include "modules/ExportInDesignArticlesToPlaService.inc.jsx";
 Container.registerFactory("ExportInDesignArticlesToPlaService", function() {
     var settings = Container.resolve("Settings");
     return new ExportInDesignArticlesToPlaService(
