@@ -1,4 +1,4 @@
-//@include "String.inc.jsx"; // trimEndChars
+//@include "libraries/_.jsx";
 
 /**
  * Understands how to merge the local settings into the default settings.
@@ -35,7 +35,7 @@ function Settings(defaultConfig, localConfig) {
      * @returns {String}
      */
     this.getPlaServiceUrl = function() {
-        return this._configData.plaServiceUrl.trimEndChars('/')
+        return this._configData.plaServiceUrl.rtrim('/')
     };
 
     /**
