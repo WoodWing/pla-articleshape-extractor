@@ -1,21 +1,25 @@
 //@include "Json.inc.jsx";
 //@include "String.inc.jsx";
-//@include "InDesignArticleLibrary.inc.jsx";
 
-//Settings used if the layout is not stored in Studio
-var fallBackSettings = {
-    "publication": {
-        "name": "WW News",
-        "id": "1",
-    },
-    "category": {
-        "name": "News",
-        "id": "1",
-    },
-}
+/**
+ * @constructor
+ * @param {InDesignArticleService} inDesignArticleService
+ * @param {ArticleShapeGateway} articleShapeGateway
+ * @param {Object} fallbackBrand
+ * @param {Object} fallbackCategory
+ */
+function ExportInDesignArticlesToPlaService(inDesignArticleService, articleShapeGateway, fallbackBrand, fallbackCategory) {
+    this._inDesignArticleService = inDesignArticleService;
+    this._articleShapeGateway = articleShapeGateway;
+    this._fallbackBrand = fallbackBrand;
+    this._fallbackCategory = fallbackCategory;
 
-// Function to export all InDesign articles as snippets
-function exportArticlesAsSnippets(doc, folder) {
+/**
+ * @param {Document} doc 
+ * @param {Folder} folder
+ * @returns {Number} Count of exported article shapes.
+ */
+this.run = function(doc, folder) {
     var exportCounter = 0;
 
     app.scriptPreferences.measurementUnit = MeasurementUnits.POINTS;
@@ -23,16 +27,16 @@ function exportArticlesAsSnippets(doc, folder) {
         var article = doc.articles[articleIndex];
         var pageItems = []; // Collect all associated page items for the article.
         var elements = article.articleMembers.everyItem().getElements();
-        var outerBounds = getOuterboundOfArticleShape(elements);
-        var articleShapeJson = composeArticleShapeJson(doc, article.name, outerBounds);
+        var outerBounds = this._getOuterboundOfArticleShape(elements);
+        var articleShapeJson = this._composeArticleShapeJson(doc, article.name, outerBounds);
         if (articleShapeJson === null) {
             continue;
         }
 
         for (var elementIndex = 0; elementIndex < elements.length; elementIndex++) {
             var element = elements[elementIndex];
-            if (isValidArticleTextFrame(element.itemRef)) {
-                var threadedFrames = getThreadedFrames(element.itemRef);
+            if (this._inDesignArticleService.isValidArticleTextFrame(element.itemRef)) {
+                var threadedFrames = this._getThreadedFrames(element.itemRef);
                 var textComponent = {
                     "type": element.itemRef.elementLabel,
                     "words": 0,
@@ -49,15 +53,15 @@ function exportArticlesAsSnippets(doc, folder) {
                 for (var frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
                     var frame = threadedFrames[frameIndex];
                     pageItems.push(frame);
-                    if (isValidArticleTextFrame(frame)) {
-                        var textStats = getTextStatisticsWithoutOverset(frame);
+                    if (this._inDesignArticleService.isValidArticleTextFrame(frame)) {
+                        var textStats = this._getTextStatisticsWithoutOverset(frame);
                         textComponent.frames.push({
-                            "geometricBounds": composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
+                            "geometricBounds": this._composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
                             "columns": frame.textFramePreferences.textColumnCount,
                             "words": textStats.wordCount,
                             "characters": textStats.charCount,
-                            "textWrapMode": getTextWrapMode(frame),
-                            "totalLineHeight": roundTo3Decimals(textStats.totalLineHeight),
+                            "textWrapMode": this._getTextWrapMode(frame),
+                            "totalLineHeight": this._roundTo3Decimals(textStats.totalLineHeight),
                             "text": textStats.text
                         });
                         textComponent.words += textStats.wordCount;
@@ -65,20 +69,20 @@ function exportArticlesAsSnippets(doc, folder) {
                     }
                 }
                 articleShapeJson.textComponents.push(textComponent);
-            } else if (isValidArticleGraphicFrame(element.itemRef)) {
+            } else if (this._inDesignArticleService.isValidArticleGraphicFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
                 articleShapeJson.imageComponents.push({
-                    "geometricBounds": composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef),
-                    "textWrapMode": getTextWrapMode(element.itemRef)
+                    "geometricBounds": this._composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef),
+                    "textWrapMode": this._getTextWrapMode(element.itemRef)
                 });
             }
         }
         if (pageItems.length > 1) {
-            var managedArticle = getManagedArticleFromPageItems(pageItems)
+            var managedArticle = this._getManagedArticleFromPageItems(pageItems)
             if (managedArticle) {
-                articleShapeJson.genreId = resolveGenreFromManagedArticle(managedArticle);
+                articleShapeJson.genreId = this._resolveGenreFromManagedArticle(managedArticle);
             }
-            exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
+            this._exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
             exportCounter++;
         }
     }
@@ -90,7 +94,7 @@ function exportArticlesAsSnippets(doc, folder) {
  * @param {String} articleName 
  * @returns {Object|null}
  */
-function resolveShapeTypeFromArticleName(articleName) {
+this._resolveShapeTypeFromArticleName = function(articleName) {
     var shapeType = { id: null, name: null };
     articleName = articleName.toLowerCase();
     if (articleName.indexOf("lead") != -1) {
@@ -114,12 +118,12 @@ function resolveShapeTypeFromArticleName(articleName) {
 /**
  * Compose a unique name that can be used as a base to compose export filenames.
  * @param {Document} doc 
- * @param {Object} folder 
+ * @param {Folder} folder 
  * @param {String} shapeTypeName 
  * @param {Number} articleIndex 
  * @returns {String}
  */
-function getFileBaseName(doc, folder, shapeTypeName, articleIndex) {
+this._getFileBaseName = function(doc, folder, shapeTypeName, articleIndex) {
     var baseFileName = folder.fsName + "/" + doc.name + ' ' + shapeTypeName + ' ' + (articleIndex + 1);
     try {
         // Get workflow object ID and Version from Studio.
@@ -141,7 +145,6 @@ function getFileBaseName(doc, folder, shapeTypeName, articleIndex) {
         }
     }
     return baseFileName;
-
 }
 
 /**
@@ -151,12 +154,12 @@ function getFileBaseName(doc, folder, shapeTypeName, articleIndex) {
  * @param {PageItem} pageItem - TextFrame, Rectangle, etc
  * @returns {Object}
  */
-function composeGeometricBounds(topLeftX, topLeftY, pageItem) {
+this._composeGeometricBounds = function(topLeftX, topLeftY, pageItem) {
     return {
-        "x": roundTo3Decimals(pageItem.geometricBounds[1] - topLeftX),
-        "y": roundTo3Decimals(pageItem.geometricBounds[0] - topLeftY),
-        "width": roundTo3Decimals(pageItem.geometricBounds[3] - pageItem.geometricBounds[1]),
-        "height": roundTo3Decimals(pageItem.geometricBounds[2] - pageItem.geometricBounds[0])
+        "x": this._roundTo3Decimals(pageItem.geometricBounds[1] - topLeftX),
+        "y": this._roundTo3Decimals(pageItem.geometricBounds[0] - topLeftY),
+        "width": this._roundTo3Decimals(pageItem.geometricBounds[3] - pageItem.geometricBounds[1]),
+        "height": this._roundTo3Decimals(pageItem.geometricBounds[2] - pageItem.geometricBounds[0])
     }    
 }
 
@@ -165,7 +168,7 @@ function composeGeometricBounds(topLeftX, topLeftY, pageItem) {
  * @param {Number} precisionNumber 
  * @returns {Number}
  */
-function roundTo3Decimals(precisionNumber) {
+this._roundTo3Decimals = function(precisionNumber) {
     return Math.round(precisionNumber * 1000) / 1000
 }
 
@@ -176,11 +179,11 @@ function roundTo3Decimals(precisionNumber) {
  * @param {Object} outerBounds
  * @returns {Object|null}
  */
-function composeArticleShapeJson(doc, articleName, outerBounds) {
+this._composeArticleShapeJson = function(doc, articleName, outerBounds) {
 
     // Resolve Brand/Category. Fallback to defaults when no Studio session.
     try {
-        var publication = app.entSessions.getPublication(
+        var brand = app.entSessions.getPublication(
             doc.entMetaData.get("Core_Publication")
         );
         var category = app.entSession.getCategory(
@@ -189,30 +192,30 @@ function composeArticleShapeJson(doc, articleName, outerBounds) {
             doc.entMetaData.get("Core_Issue")
         );
     } catch (error) {
-        var publication = fallBackSettings.publication;
-        var category = fallBackSettings.category;
+        var brand = this._fallbackBrand;
+        var category = this._fallbackCategory;
     }
 
     // Resolve the shape type. Bail out when article has bad naming convention.
-    var shapeType = resolveShapeTypeFromArticleName(articleName)
+    var shapeType = this._resolveShapeTypeFromArticleName(articleName)
     if(shapeType === null) {
         return null;
     }
 
     // Compose a base structure in the Article Shape JSON export format.
     var articleShapeJson = {
-        "brandName": publication.name,
-        "brandId": publication.id,
+        "brandName": brand.name,
+        "brandId": brand.id,
         "sectionName": category.name,
         "sectionId": category.id,
         "genreId": null,
         "shapeTypeName": shapeType.name,
         "shapeTypeId": shapeType.id,
         "geometricBounds": {
-            "x": roundTo3Decimals(outerBounds.topLeftX),
-            "y": roundTo3Decimals(outerBounds.topLeftY),
-            "width": roundTo3Decimals(outerBounds.bottomRightX - outerBounds.topLeftX),
-            "height": roundTo3Decimals(outerBounds.bottomRightY - outerBounds.topLeftY)
+            "x": this._roundTo3Decimals(outerBounds.topLeftX),
+            "y": this._roundTo3Decimals(outerBounds.topLeftY),
+            "width": this._roundTo3Decimals(outerBounds.bottomRightX - outerBounds.topLeftX),
+            "height": this._roundTo3Decimals(outerBounds.bottomRightY - outerBounds.topLeftY)
         },
         "overlapsesFold": false,
         "textComponents": [],
@@ -224,14 +227,14 @@ function composeArticleShapeJson(doc, articleName, outerBounds) {
 
 /**
  * @param {Document} doc 
- * @param {Object} folder 
+ * @param {Folder} folder 
  * @param {String} shapeTypeName 
  * @param {Number} articleIndex 
  * @param {Array} pageItems
  * @param {Object} articleShapeJson
  */
-function exportArticlePageItems(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
-    var baseFileName = getFileBaseName(doc, folder, shapeTypeName, articleIndex)
+this._exportArticlePageItems = function(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
+    var baseFileName = this._getFileBaseName(doc, folder, shapeTypeName, articleIndex)
     var snippetFile = File(baseFileName + ".idms");
     var imgFile = File(baseFileName + ".jpg");
     var jsonFileName = baseFileName + ".json";
@@ -256,7 +259,7 @@ function exportArticlePageItems(doc, folder, shapeTypeName, articleIndex, pageIt
     }
 
     // Export JSON.
-    saveJsonToDisk(articleShapeJson, jsonFileName);    
+    this._saveJsonToDisk(articleShapeJson, jsonFileName);    
 }
 
 /**
@@ -264,7 +267,7 @@ function exportArticlePageItems(doc, folder, shapeTypeName, articleIndex, pageIt
 * @param {Object} jsonData - The JSON object to save.
 * @param {String} filePath - The full path to save the file (including file name and .json extension).
 */
-function saveJsonToDisk(jsonData, filePath) {
+this._saveJsonToDisk = function(jsonData, filePath) {
     try {
         // Convert JSON object to a string
         var jsonString = JSON.stringify(jsonData, null, 4);
@@ -290,7 +293,7 @@ function saveJsonToDisk(jsonData, filePath) {
  * @param {TextFrame} textFrame - The text frame to analyze.
  * @returns {Object} - An object containing word count, character count and text without overset.
  */
-function getTextStatisticsWithoutOverset(textFrame) {
+this._getTextStatisticsWithoutOverset = function(textFrame) {
 
     // Extract only the visible text (not overset)
     var visibleText = textFrame.lines;
@@ -304,14 +307,14 @@ function getTextStatisticsWithoutOverset(textFrame) {
         wordCount += visibleText[i].words.length;
         charCount += visibleText[i].characters.length;
         text += visibleText[i].contents;
-        totalLineHeight += getLineHeight(visibleText[i]);
+        totalLineHeight += this._getLineHeight(visibleText[i]);
     }
 
     return { 
         wordCount: wordCount, 
         charCount: charCount, 
         text: text, 
-        totalLineHeight: roundTo3Decimals(totalLineHeight) 
+        totalLineHeight: this._roundTo3Decimals(totalLineHeight) 
     };
 }
 
@@ -329,7 +332,7 @@ function getTextStatisticsWithoutOverset(textFrame) {
  *                         bottomRightY: {Number} - The largest Y coordinate of the bounding box's bottom-right corner.
  *                     }
  */
-function getOuterboundOfArticleShape(elements) {
+this._getOuterboundOfArticleShape = function(elements) {
     var topLeftX = 0;
     var topLeftY = 0;
     var bottomRightX = 0;
@@ -347,8 +350,8 @@ function getOuterboundOfArticleShape(elements) {
         }
 
         //Create an array with all thread frames (images dont have threaded frames)
-        if (isValidArticleTextFrame(element.itemRef)) {
-            threadedFrames = getThreadedFrames(element.itemRef);
+        if (this._inDesignArticleService.isValidArticleTextFrame(element.itemRef)) {
+            threadedFrames = this._getThreadedFrames(element.itemRef);
         } else {
             threadedFrames = [element.itemRef];
         }
@@ -380,7 +383,7 @@ function getOuterboundOfArticleShape(elements) {
  * @param {TextFrame} textFrame - The starting text frame.
  * @returns {Array} - An array of all threaded text frames, including the starting frame.
  */
-function getThreadedFrames(textFrame) {
+this._getThreadedFrames = function(textFrame) {
     var threadedFrames = [];
     var currentFrame = textFrame;
 
@@ -405,8 +408,8 @@ function getThreadedFrames(textFrame) {
  * @param {PageItem|null} frame - The InDesign frame object (e.g., TextFrame, GraphicFrame).
  * @returns {String} - Name of the text wrap mode
  */
-function getTextWrapMode(frame) {
-    if (!isValidArticleComponentFrame(frame)) {
+this._getTextWrapMode = function(frame) {
+    if (!this._inDesignArticleService.isValidArticleComponentFrame(frame)) {
         alert("Invalid frame.");
         return null;
     }
@@ -433,7 +436,7 @@ function getTextWrapMode(frame) {
  * @param {Line} line
  * @returns {Number}
  */
-function getLineHeight(line) {
+this._getLineHeight = function(line) {
     if (line.characters.length === 0) {
         return 0;
     }
@@ -453,11 +456,10 @@ function getLineHeight(line) {
 }
 
 /**
- * 
  * @param {Array<PageItem>} pageItems 
  * @returns {ManagedArticle|null}
  */
-function getManagedArticleFromPageItems(pageItems) {
+this._getManagedArticleFromPageItems = function(pageItems) {
     for (var i = 0; i < pageItems.length; i++) {
         var pageItem = pageItems[i];        
         try {
@@ -473,7 +475,7 @@ function getManagedArticleFromPageItems(pageItems) {
  * @param {ManagedArticle} managedArticle 
  * @return {String|null}
  */
-function resolveGenreFromManagedArticle(managedArticle) {
+this._resolveGenreFromManagedArticle = function(managedArticle) {
     if (!managedArticle.entMetaData instanceof EntMetaData) {
         return null;
     }
@@ -489,4 +491,5 @@ function resolveGenreFromManagedArticle(managedArticle) {
         return null;
     }
     return genreId;
+}
 }

@@ -1,3 +1,3 @@
-//@include "IndesignArticleLibrary.inc.jsx";
+//@include "bootstrap.jsx";
 
-addOrRenameInDesignArticle("Lead");
+Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Lead");

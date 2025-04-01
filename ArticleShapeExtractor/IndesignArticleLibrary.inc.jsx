@@ -1,8 +1,10 @@
+function InDesignArticleService() {
+
 /**
  * Create a new InDesign Article with the given name. Add the selected frames to the article.
  * @param {String} articleName
  */
-function createNewInDesignArticleWithSelectedFrames(doc, articleName) {
+this._createNewInDesignArticleWithSelectedFrames = function(doc, articleName) {
 
     // Create a new InDesign Article (even if an article with the same name already exists).
     var article = doc.articles.add();
@@ -11,21 +13,21 @@ function createNewInDesignArticleWithSelectedFrames(doc, articleName) {
     // Add selected frames to the new article.
     for (var i = 0; i < app.selection.length; i++) {
         var frame = app.selection[i];
-        if (isValidArticleComponentFrame(frame)) {
+        if (this.isValidArticleComponentFrame(frame)) {
             try {
                 article.articleMembers.add(frame);
             } catch (error) {
             }
         }
     }
-}
+};
 
 /**
  * Collect articles the provided frame is part of.
  * @param {PageItem} Valid text/graphic frame.
  * @returns {Array<Article>}
  */
-function getInDesignArticles(doc, frame) {
+this._getInDesignArticles = function(doc, frame) {
     var docArticles = doc.articles;
     var frameArticles = [];
 
@@ -34,13 +36,13 @@ function getInDesignArticles(doc, frame) {
         var docArticle = docArticles[i];
 
         // Check if the frame is in the article's members
-        if (isFrameMemberOfInDesignArticle(docArticle, frame)) {
+        if (this._isFrameMemberOfInDesignArticle(docArticle, frame)) {
             frameArticles.push(docArticle);
         }
     }
 
     return frameArticles;
-}
+};
 
 /**
  * Tell whether a given page item is member of a the given InDesign Article.
@@ -48,7 +50,7 @@ function getInDesignArticles(doc, frame) {
  * @param {PageItem} frame - The frame to check for membership.
  * @returns {Boolean} - True if the frame is already a member of the article, false otherwise.
  */
-function isFrameMemberOfInDesignArticle(article, frame) {
+this._isFrameMemberOfInDesignArticle = function(article, frame) {
     var articleMembers = article.articleMembers.everyItem().getElements(); // Get all members as an array
     for (var i = 0; i < articleMembers.length; i++) {
         if (articleMembers[i].itemRef === frame) {
@@ -56,7 +58,7 @@ function isFrameMemberOfInDesignArticle(article, frame) {
         }
     }
     return false; // Frame not found in the article
-}
+};
 
 /**
  * Create a new InDesign Article for the currently selected frames. Or, when the frames are
@@ -68,7 +70,7 @@ function isFrameMemberOfInDesignArticle(article, frame) {
  * 
  * @param {String} articleName 
  */
-function addOrRenameInDesignArticle(articleName) {
+this.addOrRenameInDesignArticle = function(articleName) {
     if (app.documents.length === 0) {
         alert("No document is open.");
         return;
@@ -80,16 +82,16 @@ function addOrRenameInDesignArticle(articleName) {
     }
 
     var frame = app.selection[0];
-    if (!isValidArticleComponentFrame(frame)) {
+    if (!this.isValidArticleComponentFrame(frame)) {
         alert("Invalid or no text/graphical frame selected.");
         return;
     }
 
     // Add new InDesign Articles.
     var doc = app.activeDocument;
-    var articles = getInDesignArticles(doc, frame);
+    var articles = this._getInDesignArticles(doc, frame);
     if (articles.length == 0) {
-        createNewInDesignArticleWithSelectedFrames(doc, articleName);
+        this._createNewInDesignArticleWithSelectedFrames(doc, articleName);
         alert("A new article '" + articleName + "' has been created, and selected frames have been added.");
         return;
     }
@@ -103,15 +105,15 @@ function addOrRenameInDesignArticle(articleName) {
         var storyTypeNames = ["Lead", "Secondary", "Third", "Filler"];
         for (var storyTypeIndex = 0; storyTypeIndex < storyTypeNames.length; storyTypeIndex++) {
             var storyTypeName = storyTypeNames[storyTypeIndex];
-            newName = replaceTextCaseInsensitive(newName, storyTypeName, articleName);
-            newName = cleanWhitespaces(newName)
+            newName = this._replaceTextCaseInsensitive(newName, storyTypeName, articleName);
+            newName = this._cleanWhitespaces(newName)
         };
         if (newName != oldName) {
             article.name = newName;
             alert("Article \"" + oldName + "\" has been renamed to \"" + newName + "\"");
         }
     }
-}
+};
 
 /**
  * Search for a text fragment (case insensitive) and substitute any found match with a replacement.
@@ -120,28 +122,28 @@ function addOrRenameInDesignArticle(articleName) {
  * @param {String} replacement 
  * @returns {String} Text with substitutes.
  */
-function replaceTextCaseInsensitive(text, search, replacement) {
+this._replaceTextCaseInsensitive = function(text, search, replacement) {
     var regex = new RegExp(search, "gi"); // "g" = global, "i" = case insensitive
     return text.replace(regex, replacement);
-}
+};
 
 /**
  * Remove any leading or trailing whitespaces. Replace multiple inner whitespaces with a single space.
  * @param {String} text 
  * @returns {String} Cleaned text.
  */
-function cleanWhitespaces(text) {
+this._cleanWhitespaces = function(text) {
     return text.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
-}
+};
 
 /**
  * Tells whether the given page item is a valid text frame (to be part of an article).
  * @param {pageItem|null} object
  * @returns {Boolean}
  */
-function isValidArticleTextFrame(pageItem) {
+this.isValidArticleTextFrame = function(pageItem) {
     return pageItem && pageItem instanceof TextFrame && pageItem.isValid
-}
+};
 
 /**
  * Tells whether the given page item is a valid graphic frame (to be part of an article).
@@ -149,15 +151,16 @@ function isValidArticleTextFrame(pageItem) {
  * @param {pageItem|null} object
  * @returns {Boolean}
  */
-function isValidArticleGraphicFrame(pageItem) {
+this.isValidArticleGraphicFrame = function(pageItem) {
     return pageItem && (pageItem instanceof Rectangle || pageItem instanceof Oval || pageItem instanceof Polygon) && pageItem.isValid;
-}
+};
 
 /**
  * Tells whether the given page item is a valid text- or graphic frame (to be part of an article).
  * @param {pageItem|null} object
  * @returns {Boolean}
  */
-function isValidArticleComponentFrame(pageItem) {
-    return isValidArticleTextFrame(pageItem) || isValidArticleGraphicFrame(pageItem)
+this.isValidArticleComponentFrame = function(pageItem) {
+    return this.isValidArticleTextFrame(pageItem) || this.isValidArticleGraphicFrame(pageItem)
+}
 }

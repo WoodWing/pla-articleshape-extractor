@@ -7,3 +7,10 @@ if (!String.prototype.trim) {
         };
     })();
 }
+
+String.prototype.trimEndChars = function(chars) {
+    if (!chars || chars.length === 0) return this;
+    var escapedChars = chars.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+    var regExpression = new RegExp("[" + escapedChars + "]+$", "g");
+    return this.replace(regExpression, "");
+};
