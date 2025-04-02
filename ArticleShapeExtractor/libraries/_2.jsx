@@ -727,6 +727,31 @@ constructUnderscore:
 				return this.replace(/^\s+|\s+$/g, "");
 			}
 		}
+		
+		String.prototype._composePadding = function(targetLength, padChar) {
+			padChar = padChar || " "; // Default padding character is a space
+			targetLength = targetLength >> 0; // Convert to integer
+			if (this.length >= targetLength) return "";		
+			return new Array(targetLength - this.length + 1).join(padChar);
+		}
+
+		/**
+		 * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padStart
+		 */
+		if (!String.prototype.padStart) {
+			String.prototype.padStart = function (targetLength, padChar) {
+				return this._composePadding(targetLength, padChar) + this;
+			};
+		}
+
+		/**
+		 * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padEnd
+		 */
+		if (!String.prototype.padEnd) {
+			String.prototype.padEnd = function (targetLength, padChar) {
+				return this + this._composePadding(targetLength, padChar);
+			};
+		}
 
 		/**
 		 * ******************** FILE & FOLDER ********************

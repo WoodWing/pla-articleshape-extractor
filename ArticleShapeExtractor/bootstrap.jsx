@@ -13,6 +13,14 @@ Container.registerSingleton("Settings", function() {
     return new Settings($.global.plaDefaultConfig, localConfig);
 });
 
+//@include "modules/Logger.inc.jsx";
+Container.registerSingleton("Logger", function() {
+    var config = Container.resolve("Settings").getLoggerConfig();
+    var logger = new Logger(config.folder, config.filename, config.level, config.wipe);
+    logger.init();
+    return logger;
+});
+
 //@include "modules/ArticleShapeGateway.inc.jsx";
 Container.registerSingleton("ArticleShapeGateway", function() {
     return new ArticleShapeGateway(
@@ -29,6 +37,7 @@ Container.registerFactory("InDesignArticleService", function() {
 Container.registerFactory("ExportInDesignArticlesToPlaService", function() {
     var settings = Container.resolve("Settings");
     return new ExportInDesignArticlesToPlaService(
+        Container.resolve("Logger"), 
         Container.resolve("InDesignArticleService"), 
         Container.resolve("ArticleShapeGateway"), 
         settings.getFallbackBrand(),

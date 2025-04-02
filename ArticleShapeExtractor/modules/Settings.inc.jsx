@@ -58,4 +58,11 @@ function Settings(defaultConfig, localConfig) {
     this.getRegenerateArticleShapesQueryName = function() {
         return this._configData.regenerateArticleShapesQueryName;
     }
+
+    /**
+     * @returns {Object}
+     */
+    this.getLoggerConfig = function() {
+        return this._configData.logger;
+    }        
 }

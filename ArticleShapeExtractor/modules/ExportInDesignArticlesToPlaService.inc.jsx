@@ -3,17 +3,20 @@
 
 /**
  * @constructor
+ * @param {Logger} logger
  * @param {InDesignArticleService} inDesignArticleService
  * @param {ArticleShapeGateway} articleShapeGateway
  * @param {Object} fallbackBrand
  * @param {Object} fallbackCategory
  */
 function ExportInDesignArticlesToPlaService(
+    logger,
     inDesignArticleService, 
     articleShapeGateway, 
     fallbackBrand, 
     fallbackCategory,
 ) {
+    this._logger = logger;
     this._inDesignArticleService = inDesignArticleService;
     this._articleShapeGateway = articleShapeGateway;
     this._fallbackBrand = fallbackBrand;
@@ -25,6 +28,7 @@ function ExportInDesignArticlesToPlaService(
      * @returns {Number} Count of exported article shapes.
      */
     this.run = function(doc, folder) {
+        this._logger.info("Extracting InDesign Articles for layout document '{}'.", doc.fullName);
         var exportCounter = 0;
 
         app.scriptPreferences.measurementUnit = MeasurementUnits.POINTS;
@@ -200,6 +204,8 @@ function ExportInDesignArticlesToPlaService(
             var brand = this._fallbackBrand;
             var category = this._fallbackCategory;
         }
+        this._logger.info("Resolved brand '{}' (id={}) and category '{}' (id={}).", 
+            brand.name, brand.id, category.name, category.id);
 
         // Resolve the shape type. Bail out when article has bad naming convention.
         var shapeType = this._resolveShapeTypeFromArticleName(articleName)
