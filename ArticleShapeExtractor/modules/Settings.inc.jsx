@@ -41,15 +41,8 @@ function Settings(defaultConfig, localConfig) {
     /**
      * @returns {Object}
      */
-    this.getFallbackBrand = function() {
-        return this._configData.fallback.brand;
-    }
-
-    /**
-     * @returns {Object}
-     */
-    this.getFallbackCategory = function() {
-        return this._configData.fallback.category;
+    this.getOfflineFallbackConfig = function() {
+        return this._configData.offlineFallback;
     }
 
     /**

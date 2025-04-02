@@ -9,7 +9,7 @@ $.global.plaDefaultConfig = {
     regenerateArticleShapesQueryName: "RegenerateArticleShapes",
 
     // Settings used if the layout is not stored in Studio.
-    fallback: {
+    offlineFallback: {
         brand: {
             id: "1",
             name: "WW News",

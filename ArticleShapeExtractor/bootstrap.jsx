@@ -40,8 +40,8 @@ Container.registerFactory("ExportInDesignArticlesToPlaService", function() {
         Container.resolve("Logger"), 
         Container.resolve("InDesignArticleService"), 
         Container.resolve("ArticleShapeGateway"), 
-        settings.getFallbackBrand(),
-        settings.getFallbackCategory(),
+        settings.getOfflineFallbackConfig().brand,
+        settings.getOfflineFallbackConfig().category,
     );
 });
 
