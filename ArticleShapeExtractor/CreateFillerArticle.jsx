@@ -1,3 +1,7 @@
-//@include "IndesignArticleLibrary.inc.jsx";
+//@include "bootstrap.jsx";
 
-addOrRenameInDesignArticle("Filler");
+try {
+    Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Filler");
+} catch(error) {
+    error.alert();
+}

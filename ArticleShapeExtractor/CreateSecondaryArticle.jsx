@@ -1,3 +1,7 @@
-//@include "IndesignArticleLibrary.inc.jsx";
+//@include "bootstrap.jsx";
 
-addOrRenameInDesignArticle("Secondary");
+try {
+    Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Secondary");
+} catch(error) {
+    error.alert();
+}
