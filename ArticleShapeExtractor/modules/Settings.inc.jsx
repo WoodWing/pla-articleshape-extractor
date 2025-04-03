@@ -57,5 +57,12 @@ function Settings(defaultConfig, localConfig) {
      */
     this.getLoggerConfig = function() {
         return this._configData.logger;
-    }        
+    }
+    
+    /**
+     * @returns {Boolean}
+     */
+    this.getIncludeErrorDetailInAlerts = function() {
+        return this._configData.includeErrorDetailInAlerts;
+    }
 }

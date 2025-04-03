@@ -1,3 +1,7 @@
 //@include "bootstrap.jsx";
 
-Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Third");
+try {
+    Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Third");
+} catch(error) {
+    error.alert();
+}

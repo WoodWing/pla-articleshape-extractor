@@ -21,6 +21,16 @@ Container.registerSingleton("Logger", function() {
     return logger;
 });
 
+//@include "modules/ErrorFactory.inc.jsx";
+Container.registerSingleton("ErrorFactory", function() {
+    return new ErrorFactory(
+        Container.resolve("Logger"),
+        Container.resolve("Settings").getIncludeErrorDetailInAlerts(),
+    );
+});
+// Late initialize custom errors (once after ErrorFactory is registered).
+$.evalFile(File($.fileName).parent.fsName + "/modules/Errors.inc.jsx");
+
 //@include "modules/ArticleShapeGateway.inc.jsx";
 Container.registerSingleton("ArticleShapeGateway", function() {
     return new ArticleShapeGateway(

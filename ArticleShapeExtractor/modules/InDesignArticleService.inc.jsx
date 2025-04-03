@@ -12,19 +12,16 @@ function InDesignArticleService() {
      */
     this.addOrRenameInDesignArticle = function(articleName) {
         if (app.documents.length === 0) {
-            alert("No document is open.");
-            return;
+            throw new NoDocumentOpenedError(null, $.fileName, $.line);
         }
 
         if (app.selection.length === 0) {
-            alert("Please select one or more frames first.");
-            return;
+            throw new NoFramesSelectedError(null, $.fileName, $.line);
         }
 
         var frame = app.selection[0];
         if (!this.isValidArticleComponentFrame(frame)) {
-            alert("Invalid or no text/graphical frame selected.");
-            return;
+            throw new NoTextOrGraphicalFramesSelectedError(null, $.fileName, $.line);
         }
 
         // Add new InDesign Articles.

@@ -28,4 +28,7 @@ $.global.plaDefaultConfig = {
         folder: Folder.desktop, // Directory where to create the log file.
         wipe: true, // Whether to clean the log file before starting a new operation.
     },
+
+    // Whether to include all available error information in the alert dialogs.
+    includeErrorDetailInAlerts: false,
 };
