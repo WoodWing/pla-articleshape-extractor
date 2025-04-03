@@ -43,3 +43,22 @@ Extract Article Shapes from a layout in InDesign:
    * You can use the `jpg` files to verify if the export was correct.
 
 The extracted Article Shapes can be converted to a Print Layout Automation configuration file (`csv` or `xls`) using [this link](https://woodwing.github.io/pla-articleshape-extractor/create-pla-config.html).
+
+# Configuration
+The factory defaults can be found in the [config.jsx](ArticleShapeExtractor/config/config.jsx) file. If you want to change settings, do ___not___ edit that file. Instead, create a new file named `config/config-local.jsx` with the following structure:
+```javascript
+$.global.plaLocalConfig = {
+};
+```
+Copy the setting you want to change, including its surrounding structure, into this file. Adjust the value for the copied setting. For example:
+```javascript
+$.global.plaLocalConfig = {
+    fallback: {
+        category: {
+            id: "2",
+            name: "Sport",
+        },
+    },
+};
+```
+Your settings added to the `config/config-local.jsx` file will locally override the factory defaults provided in the `config/config.jsx` file. 
