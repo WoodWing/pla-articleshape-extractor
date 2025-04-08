@@ -85,6 +85,12 @@ function ExportInDesignArticlesToPlaService(
                         "geometricBounds": this._composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef),
                         "textWrapMode": this._getTextWrapMode(element.itemRef)
                     });
+                } else {
+                    this._logger.info("Article '{}' has a page item '{}' placed at ({},{}). " 
+                        + "The page item is either not valid or not a text/graphic frame. "
+                        + "Hence the item is excluded from the article export operation.",
+                        article.name, element.itemRef.constructor.name, 
+                        element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0]);
                 }
             }
             if (pageItems.length > 1) {
