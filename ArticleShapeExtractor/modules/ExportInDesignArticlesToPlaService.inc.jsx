@@ -39,6 +39,7 @@ function ExportInDesignArticlesToPlaService(
             var outerBounds = this._getOuterboundOfArticleShape(elements);
             var articleShapeJson = this._composeArticleShapeJson(doc, article.name, outerBounds);
             if (articleShapeJson === null) {
+                this._logger.warning("Excluded article '{}' from export because conversion to JSON failed.", article.name);
                 continue;
             }
 
@@ -119,6 +120,7 @@ function ExportInDesignArticlesToPlaService(
             shapeType.name = "filler";
             shapeType.id = "4";
         } else {
+            this._logger.warning("Shape type could not be resolved from article '{}' due to bad naming convention.", articleName);
             shapeType = null;
         }
         return shapeType;
