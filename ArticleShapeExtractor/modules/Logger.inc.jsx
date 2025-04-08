@@ -1,4 +1,5 @@
 //@include "libraries/_.jsx"
+//@include "modules/Severity.inc.jsx";
 
 /**
  * Understands how to write messages of given severity to a log file.
@@ -12,12 +13,32 @@
 function Logger(filePath, filename, logLevel, wipe) {
 
 	this.file = null;
-	this.SEVERITY = ["DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"];
+	this.LOGLEVEL = ["DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"];
 
 	this.path = filePath;
 	this.name = filename;
-	this.level = this.SEVERITY.indexOf(logLevel);
+	this.level = this.LOGLEVEL.indexOf(logLevel);
 	this.wipe = wipe;
+
+	this.log = function (severity, message) {
+		switch(severity) {
+			case Severity.LEVELS.NOTICE:
+				this.info(message);
+				break;
+			case Severity.LEVELS.WARNING:
+				this.warning(message);
+				break;
+			case Severity.LEVELS.ERROR:
+				this.error(message);
+				break;
+			case Severity.LEVELS.CRITICAL:
+				this.critical(message);
+				break;
+			default:
+				this.error(message);
+				break;
+		}
+	};
 
 	/**
 	 * Log a debug message, to provide diagnostically helpful information.
@@ -80,10 +101,10 @@ function Logger(filePath, filename, logLevel, wipe) {
 	};
 
 	/**
-	 * @param {String} severity 
+	 * @param {String} logLevel 
 	 * @param {String} args 
 	 */
-	this._log = function (severity, args) {
+	this._log = function (logLevel, args) {
 		var template = args.shift();
 		// Replace undefined arguments with '*undefined*' to distinguish from ''
 		_.each(args, function(replacement, i){
@@ -92,21 +113,21 @@ function Logger(filePath, filename, logLevel, wipe) {
 			}
 		});
 		var message = template.contains('{}') ? template.format.apply(template, args) : template;
-		this._writeLine(severity, message);
+		this._writeLine(logLevel, message);
 	};
 
 	/**
-	 * @param {String} severity 
+	 * @param {String} logLevel 
 	 * @param {String} message 
 	 */
-	this._writeLine = function (severity, message) {
+	this._writeLine = function (logLevel, message) {
 		if (!this.file) {
 			return;
 		}
 		this.file.open("a");
 		this.file.writeln(
 			'[' + this._getDateTimeWithMsAsString() + '] '
-			+ '[' + this.SEVERITY[severity].padEnd(8) + '] '
+			+ '[' + this.LOGLEVEL[logLevel].padEnd(8) + '] '
 			+ message);
 		this.file.close();
 	};
