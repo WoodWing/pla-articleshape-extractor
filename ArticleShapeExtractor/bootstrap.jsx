@@ -1,4 +1,5 @@
 //@include "modules/Container.inc.jsx";
+//@include "modules/Severity.inc.jsx";
 
 //@include "config/config.jsx";
 //@include "modules/Settings.inc.jsx";

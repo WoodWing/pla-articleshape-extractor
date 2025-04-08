@@ -39,6 +39,7 @@ function ExportInDesignArticlesToPlaService(
             var outerBounds = this._getOuterboundOfArticleShape(elements);
             var articleShapeJson = this._composeArticleShapeJson(doc, article.name, outerBounds);
             if (articleShapeJson === null) {
+                this._logger.warning("Excluded article '{}' from export because conversion to JSON failed.", article.name);
                 continue;
             }
 
@@ -84,16 +85,30 @@ function ExportInDesignArticlesToPlaService(
                         "geometricBounds": this._composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef),
                         "textWrapMode": this._getTextWrapMode(element.itemRef)
                     });
+                } else {
+                    this._logger.info("Article '{}' has a page item '{}' placed at ({},{}). " 
+                        + "The page item is either not valid or not a text/graphic frame. "
+                        + "Hence the item is excluded from the article export operation.",
+                        article.name, element.itemRef.constructor.name, 
+                        element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0]);
                 }
             }
-            if (pageItems.length > 1) {
-                var managedArticle = this._getManagedArticleFromPageItems(pageItems)
-                if (managedArticle) {
-                    articleShapeJson.genreId = this._resolveGenreFromManagedArticle(managedArticle);
-                }
-                this._exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
-                exportCounter++;
+            if (pageItems.length === 0) {
+                continue;
             }
+            var managedArticle = this._getManagedArticleFromPageItems(pageItems)
+            if (managedArticle) {
+                articleShapeJson.genreId = this._resolveGenreFromManagedArticle(managedArticle);
+            }
+            if (!this._arePageItemsOnSameSpread(pageItems)) {
+                const message = ("Article '{}' could not be exported because not all "
+                    + "page items are placed on the same spread.").format(article.name);
+                alert(message);
+                this._logger.error(message);
+                continue;
+            }
+            this._exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
+            exportCounter++;
         }
         app.scriptPreferences.measurementUnit = AutoEnum.AUTO_VALUE;    
         return exportCounter;    
@@ -119,6 +134,7 @@ function ExportInDesignArticlesToPlaService(
             shapeType.name = "filler";
             shapeType.id = "4";
         } else {
+            this._logger.warning("Shape type could not be resolved from article '{}' due to bad naming convention.", articleName);
             shapeType = null;
         }
         return shapeType;
@@ -235,6 +251,25 @@ function ExportInDesignArticlesToPlaService(
         articleShapeJson.overlapsesFold = doc.documentPreferences.pageWidth < articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
         return articleShapeJson;
     }
+
+    /**
+     * Tells whether all given page items are placed on the same spread. If this is not the case,
+     * the items can not be selected nor grouped which is required by _exportArticlePageItems().
+     * @param {Array} pageItems 
+     * @returns 
+     */
+    this._arePageItemsOnSameSpread = function(pageItems) {
+        if (pageItems.length === 0) {
+            return true;
+        }
+        var firstItemSpread = pageItems[0].parent;
+        for (var i = 1; i < pageItems.length; i++) {
+            if (pageItems[i].parent !== firstItemSpread) {
+                return false; // Different spread found
+            }
+        }
+        return true;
+    }    
 
     /**
      * @param {Document} doc 

@@ -7,4 +7,5 @@ NoFramesSelectedError = errorFactory.make("NoFramesSelectedError", "No frames se
 NoTextOrGraphicalFramesSelectedError = errorFactory.make("NoTextOrGraphicalFramesSelectedError", "No text/graphical frame selected.");
 NoArticlesInDocumentError = errorFactory.make("NoArticlesInDocumentError", "No articles found in the document.");
 
+NoFolderSelectedError = errorFactory.make("NoFolderSelectedError", "No folder selected.");
 PrintLayoutAutomationError = errorFactory.make("PrintLayoutAutomationError");

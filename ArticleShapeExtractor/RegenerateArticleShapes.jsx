@@ -6,7 +6,7 @@ try {
     // Prompt the user to select the folder for saving the Article Shapes.
     var folder = Folder.selectDialog("Select a folder to save the Article Shapes:");
     if (!folder) {
-        throw new PrintLayoutAutomationError("No folder selected. Export cancelled.", $.fileName, $.line);
+        throw new NoFolderSelectedError(null, $.fileName, $.line, Severity.LEVELS.NOTICE);
     }
 
     Container.resolve("RegenerateArticleShapesService").run(folder);

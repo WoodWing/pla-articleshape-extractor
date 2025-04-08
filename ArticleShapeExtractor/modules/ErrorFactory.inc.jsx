@@ -1,3 +1,5 @@
+//@include "modules/Severity.inc.jsx";
+
 /**
  * Understands how to define a custom error class.
  * 
@@ -17,7 +19,7 @@ function ErrorFactory(logger, includeErrorDetailInAlerts) {
      * @returns {Error}
      */
 	this.make = function (errorClassname, defaultMessage) {
-        var error = function (msg, file, line) {
+        var error = function (msg, file, line, severity) {
             this.name = errorClassname;
             if(typeof file !== 'undefined')
                 this.file = file;
@@ -26,7 +28,7 @@ function ErrorFactory(logger, includeErrorDetailInAlerts) {
             this.message = msg || defaultMessage || "";
             this.stack = $.stack;
             this._includeErrorDetailInAlerts = includeErrorDetailInAlerts;
-            logger.error(this._detailsAsString());
+            logger.log(severity || Severity.LEVELS.ERROR, this._detailsAsString());
         }
         error.prototype = new Error();
         error.prototype.name = errorClassname;
