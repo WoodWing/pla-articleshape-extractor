@@ -2,18 +2,18 @@
 
 try {
     if (app.documents.length === 0) {
-        throw new NoDocumentOpenedError(null, $.fileName, $.line, Severity.LEVELS.NOTICE);
+        throw new NoDocumentOpenedError(null, $.fileName, $.line);
     }
 
     var doc = app.activeDocument;
     if (doc.articles.length === 0) {
-        throw new NoArticlesInDocumentError(null, $.fileName, $.line, Severity.LEVELS.NOTICE);
+        throw new NoArticlesInDocumentError(null, $.fileName, $.line);
     }
 
     // Prompt the user to select the folder for saving the snippets.
     var folder = Folder.selectDialog("Select a folder to save the Article Shapes:");
     if (!folder) {
-        throw new NoFolderSelectedError(null, $.fileName, $.line, Severity.LEVELS.NOTICE);
+        throw new NoFolderSelectedError(null, $.fileName, $.line);
     }
 
     var exportCounter = Container.resolve("ExportInDesignArticlesToPlaService").run(doc, folder);
