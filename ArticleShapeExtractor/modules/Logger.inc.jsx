@@ -85,12 +85,14 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this._log = function (logLevel, args) {
 		var template = args.shift();
 		// Replace undefined arguments with '*undefined*' to distinguish from ''
-		_.each(args, function(replacement, i){
-			if(typeof replacement === 'undefined') {
-				args[i] = '*undefined*';
+		args.forEach(function(replacement, i) {
+			if (typeof replacement === 'undefined') {
+			  args[i] = '*undefined*';
 			}
-		});
-		var message = template.contains('{}') ? template.format.apply(template, args) : template;
+		  });		
+		const message = template.includes('{') && template.includes('}')
+			? template.replace(/{}/g, () => args.shift())
+			: template;		
 		this._writeLine(logLevel, message);
 	};
 
