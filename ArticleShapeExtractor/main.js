@@ -2,23 +2,30 @@ const { entrypoints } = require("uxp");
 
 entrypoints.setup({
     commands: {
-        createLeadArticle: () => {
-            require('./CreateLeadArticle.jsx');
+        createLeadArticle: async () => {
+            const CreateLeadArticle = require('./CreateLeadArticle.jsx');
+            (new CreateLeadArticle()).run();
         },
-        createSecondaryArticle: () => {
-            require('./CreateSecondaryArticle.jsx');
+        createSecondaryArticle: async () => {
+            const CreateSecondaryArticle = require('./CreateSecondaryArticle.jsx');
+            (new CreateSecondaryArticle()).run();
         },
-        createThirdArticle: () => {
-            require('./CreateThirdArticle.jsx');
+        createThirdArticle: async () => {
+            const CreateThirdArticle = require('./CreateThirdArticle.jsx');
+            (new CreateThirdArticle()).run();
         },
-        createFillerArticle: () => {
-            require('./CreateFillerArticle.jsx');
+        createFillerArticle: async () => {
+            const CreateFillerArticle = require('./CreateFillerArticle.jsx');
+            (new CreateFillerArticle()).run();
         },
-        extractArticleShapes: () => {
-            require('./ExtractArticleShapes.jsx');
+        extractArticleShapes: async () => {
+            const ExtractArticleShapes = require('./ExtractArticleShapes.jsx');
+            await (new ExtractArticleShapes()).run();
         },
-        regenerateArticleShapes: () => {
-            require('./RegenerateArticleShapes.jsx');
+        regenerateArticleShapes: async () => {
+            const RegenerateArticleShapes = require('./RegenerateArticleShapes.jsx');
+            await (new RegenerateArticleShapes()).run();
+            
         },
     }
 });
