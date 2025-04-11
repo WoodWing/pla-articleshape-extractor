@@ -140,7 +140,7 @@ function InDesignArticleService() {
      * @returns {Boolean}
      */
     this.isValidArticleTextFrame = function(pageItem) {
-        return pageItem && pageItem instanceof TextFrame && pageItem.isValid
+        return pageItem && pageItem.constructorName === "TextFrame" && pageItem.isValid
     };
 
     /**
@@ -150,7 +150,8 @@ function InDesignArticleService() {
      * @returns {Boolean}
      */
     this.isValidArticleGraphicFrame = function(pageItem) {
-        return pageItem && (pageItem instanceof Rectangle || pageItem instanceof Oval || pageItem instanceof Polygon) && pageItem.isValid;
+        const graphicClasses = ["Rectangle", "Oval", "Polygon"];
+        return pageItem && graphicClasses.includes(pageItem.constructorName) && pageItem.isValid;
     };
 
     /**

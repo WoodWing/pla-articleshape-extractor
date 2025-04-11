@@ -89,7 +89,7 @@ function ExportInDesignArticlesToPlaService(
                     this._logger.info("Article '{}' has a page item '{}' placed at ({},{}). " 
                         + "The page item is either not valid or not a text/graphic frame. "
                         + "Hence the item is excluded from the article export operation.",
-                        article.name, element.itemRef.constructor.name, 
+                        article.name, element.itemRef.constructorName, 
                         element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0]);
                 }
             }
@@ -509,7 +509,7 @@ function ExportInDesignArticlesToPlaService(
         for (var i = 0; i < pageItems.length; i++) {
             var pageItem = pageItems[i];        
             try {
-                if (pageItem.managedArticle instanceof ManagedArticle) {
+                if (pageItem.managedArticle.constructorName === "ManagedArticle") {
                     return pageItem.managedArticle;
                 }                
             } catch (error) {}
@@ -522,7 +522,7 @@ function ExportInDesignArticlesToPlaService(
      * @return {String|null}
      */
     this._resolveGenreFromManagedArticle = function(managedArticle) {
-        if (!managedArticle.entMetaData instanceof EntMetaData) {
+        if (!managedArticle.entMetaData.constructorName === "EntMetaData") {
             return null;
         }
         if (!managedArticle.entMetaData.has("C_PLA_GENRE")) {
