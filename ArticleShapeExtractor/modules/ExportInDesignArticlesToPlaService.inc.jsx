@@ -148,28 +148,22 @@ function ExportInDesignArticlesToPlaService(
      * @param {Number} articleIndex 
      * @returns {String}
      */
-    this._getFileBaseName = function(doc, folder, shapeTypeName, articleIndex) {
-        var baseFileName = folder.fsName + "/" + doc.name + ' ' + shapeTypeName + ' ' + (articleIndex + 1);
+    this._getFileBaseName = async function(doc, folder, shapeTypeName, articleIndex) {
+        var fileName = doc.name + ' ' + shapeTypeName + ' ' + (articleIndex + 1);
         try {
             // Get workflow object ID and Version from Studio.
-            baseFileName = baseFileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';
+            fileName = fileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';
         } catch (error) {
             // Use path of layout to make file name unique.
             if (doc.saved) {
-                var suffix = doc.filePath.absoluteURI;
-                if ((suffix.indexOf("~\\") === 0) || (suffix.indexOf("~/") === 0)) {
-                    suffix = suffix.replace("~\\", "").replace("~/", "");
-                }
-                while ((suffix.indexOf("\\") === 0) || (suffix.indexOf("/") === 0)) {
-                    suffix = suffix.replace("\\", "").replace("/", "");
-                }
-                while ((suffix.indexOf("\\") != -1) || (suffix.indexOf("/") != -1)) {
-                    suffix = suffix.replace("\\", "-").replace("/", "-");
-                }
-                baseFileName = baseFileName + ' (' + suffix + ")";
+                const docFile  = await doc.fullName;
+                var suffix = window.path.dirname(docFile);
+                suffix = suffix.ltrim(window.path.sep).rtrim(window.path.sep);
+                suffix = suffix.replaceAll(window.path.sep, "-");
+                fileName = fileName + ' (' + suffix + ")";
             }
         }
-        return baseFileName;
+        return window.path.join(folder, fileName)
     }
 
     /**
@@ -194,7 +188,7 @@ function ExportInDesignArticlesToPlaService(
      * @returns {Number}
      */
     this._roundTo3Decimals = function(precisionNumber) {
-        return Math.round(precisionNumber * 1000) / 1000
+        return Math.round(precisionNumber * 1000) / 1000;
     }
 
     /**
@@ -279,11 +273,13 @@ function ExportInDesignArticlesToPlaService(
      * @param {Array} pageItems
      * @param {Object} articleShapeJson
      */
-    this._exportArticlePageItems = function(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
-        var baseFileName = this._getFileBaseName(doc, folder, shapeTypeName, articleIndex)
-        var snippetFile = File(baseFileName + ".idms");
-        var imgFile = File(baseFileName + ".jpg");
-        var jsonFileName = baseFileName + ".json";
+    this._exportArticlePageItems = async function(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
+        const fs = require('uxp').storage.localFileSystem;
+
+        var baseFileName = await this._getFileBaseName(doc, folder, shapeTypeName, articleIndex);
+        var snippetFile = await fs.createEntryWithUrl(baseFileName + ".idms", { overwrite: true });
+        var imgFile = await fs.createEntryWithUrl(baseFileName + ".jpg", { overwrite: true });
+        var jsonFile = await fs.createEntryWithUrl(baseFileName + ".json", { overwrite: true });
 
         // Export IDMS snippet.
         doc.select(pageItems);
@@ -305,30 +301,22 @@ function ExportInDesignArticlesToPlaService(
         }
 
         // Export JSON.
-        this._saveJsonToDisk(articleShapeJson, jsonFileName);    
+        this._saveJsonToDisk(articleShapeJson, jsonFile);    
     }
 
     /**
     * Save JSON data to a file on disk.
     * @param {Object} jsonData - The JSON object to save.
-    * @param {String} filePath - The full path to save the file (including file name and .json extension).
+    * @param {File} file
     */
-    this._saveJsonToDisk = function(jsonData, filePath) {
+    this._saveJsonToDisk = function(jsonData, file) {
         try {
             // Convert JSON object to a string
             var jsonString = JSON.stringify(jsonData, null, 4);
 
-            // Create a File object
-            var file = new File(filePath);
-            file.encoding = "UTF-8";
-
-            // Open the file for writing
-            if (file.open("w")) {
-                file.write(jsonString); // Write the JSON string to the file
-                file.close(); // Close the file
-            } else {
-                alert("Failed to open the file for writing.");
-            }
+            // Write the JSON string to the file
+            const formats = require('uxp').storage.formats;
+            file.write(jsonString, {format: formats.utf8}); 
         } catch (e) {
             alert("An error occurred: " + e.message);
         }
@@ -350,10 +338,11 @@ function ExportInDesignArticlesToPlaService(
 
         // Loop through visible lines to count words and characters
         for (var i = 0; i < visibleText.length; i++) {
-            wordCount += visibleText[i].words.length;
-            charCount += visibleText[i].characters.length;
-            text += visibleText[i].contents;
-            totalLineHeight += this._getLineHeight(visibleText[i]);
+            var visibleTextItem = visibleText.item(i);
+            wordCount += visibleTextItem.words.length;
+            charCount += visibleTextItem.characters.length;
+            text += visibleTextItem.contents;
+            totalLineHeight += this._getLineHeight(visibleTextItem);
         }
 
         return { 
