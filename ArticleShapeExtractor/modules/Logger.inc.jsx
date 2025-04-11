@@ -1,5 +1,4 @@
 //@include "libraries/_.jsx"
-//@include "modules/Severity.inc.jsx";
 
 /**
  * Understands how to write messages of given severity to a log file.
@@ -19,26 +18,6 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this.name = filename;
 	this.level = this.LOGLEVEL.indexOf(logLevel);
 	this.wipe = wipe;
-
-	this.log = function (severity, message) {
-		switch(severity) {
-			case Severity.LEVELS.NOTICE:
-				this.info(message);
-				break;
-			case Severity.LEVELS.WARNING:
-				this.warning(message);
-				break;
-			case Severity.LEVELS.ERROR:
-				this.error(message);
-				break;
-			case Severity.LEVELS.CRITICAL:
-				this.critical(message);
-				break;
-			default:
-				this.error(message);
-				break;
-		}
-	};
 
 	/**
 	 * Log a debug message, to provide diagnostically helpful information.

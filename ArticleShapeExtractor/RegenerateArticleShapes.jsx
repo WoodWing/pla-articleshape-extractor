@@ -6,7 +6,7 @@ try {
     // Prompt the user to select the folder for saving the Article Shapes.
     var folder = Folder.selectDialog("Select a folder to save the Article Shapes:");
     if (!folder) {
-        throw new NoFolderSelectedError(null, $.fileName, $.line, Severity.LEVELS.NOTICE);
+        throw new NoFolderSelectedError(null, $.fileName, $.line);
     }
 
     Container.resolve("RegenerateArticleShapesService").run(folder);
