@@ -1,4 +1,5 @@
 require("./extensions/String.js");
+require("./extensions/globals.js");
 const Container = require("./modules/Container.inc.jsx");
 
 //@include "config/config.jsx";
