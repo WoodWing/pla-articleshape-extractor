@@ -1,6 +1,7 @@
 ExtractArticleShapes = function() {
     this.run = async function() {
         require('./bootstrap.jsx');
+        const { app } = require("indesign");
         try {
             if (app.documents.length === 0) {
                 throw new NoDocumentOpenedError();
@@ -12,9 +13,12 @@ ExtractArticleShapes = function() {
             }
         
             // Prompt the user to select the folder for saving the snippets.
-            var folder = Folder.selectDialog("Select a folder to save the Article Shapes:");
-            if (!folder) {
-                throw new NoFolderSelectedError(null, $.fileName, $.line);
+            alert("Select a folder to save the Article Shapes.");
+            const fs = require('uxp').storage.localFileSystem;
+            const domains = require('uxp').storage.domains;
+            const folder = await fs.getFolder({initialDomain: domains.userDocuments});
+            if (!folder || !folder.isFolder) {
+                throw new NoFolderSelectedError();
             }
         
             const Container = require("./modules/Container.inc.jsx");
