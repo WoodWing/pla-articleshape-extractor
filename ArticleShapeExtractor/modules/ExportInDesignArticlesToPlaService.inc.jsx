@@ -1,3 +1,5 @@
+const { app } = require("indesign");
+const idd = require("indesign");
 
 /**
  * @constructor
@@ -29,7 +31,7 @@ function ExportInDesignArticlesToPlaService(
         this._logger.info("Extracting InDesign Articles for layout document '{}'.", doc.fullName);
         var exportCounter = 0;
 
-        app.scriptPreferences.measurementUnit = MeasurementUnits.POINTS;
+        app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
         for (var articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
             var article = doc.articles[articleIndex];
             var pageItems = []; // Collect all associated page items for the article.
@@ -108,7 +110,7 @@ function ExportInDesignArticlesToPlaService(
             this._exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
             exportCounter++;
         }
-        app.scriptPreferences.measurementUnit = AutoEnum.AUTO_VALUE;    
+        app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
         return exportCounter;    
     }
 
@@ -262,7 +264,7 @@ function ExportInDesignArticlesToPlaService(
         }
         var firstItemSpread = pageItems[0].parent;
         for (var i = 1; i < pageItems.length; i++) {
-            if (pageItems[i].parent !== firstItemSpread) {
+            if (!pageItems[i].parent.equals(firstItemSpread)) {
                 return false; // Different spread found
             }
         }
@@ -292,9 +294,9 @@ function ExportInDesignArticlesToPlaService(
             var group = doc.groups.add(pageItems);
 
             // Define JPEG export options
-            app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.HIGH;
+            app.jpegExportPreferences.jpegQuality = idd.JPEGOptionsQuality.HIGH;
             app.jpegExportPreferences.exportResolution = 144; // DPI, screen resolution
-            group.exportFile(ExportFormat.JPG, imgFile);
+            group.exportFile(idd.ExportFormat.JPG, imgFile);
         } catch (e) {
             alert("Error exporting the snippet: " + e.message);
         } finally {
@@ -460,15 +462,15 @@ function ExportInDesignArticlesToPlaService(
 
         var textWrapPrefs = frame.textWrapPreferences;
 
-        if (textWrapPrefs.textWrapMode == TextWrapModes.NONE) {
+        if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.NONE)) {
             return "none"
-        } else if (textWrapPrefs.textWrapMode == TextWrapModes.BOUNDING_BOX_TEXT_WRAP) {
+        } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.BOUNDING_BOX_TEXT_WRAP)) {
             return "bounding_box"
-        } else if (textWrapPrefs.textWrapMode == TextWrapModes.CONTOUR) {
+        } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.CONTOUR)) {
             return "contour"
-        } else if (textWrapPrefs.textWrapMode == TextWrapModes.JUMP_OBJECT_TEXT_WRAP) {
+        } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.JUMP_OBJECT_TEXT_WRAP)) {
             return "jump_object"
-        } else if (textWrapPrefs.textWrapMode == TextWrapModes.NEXT_COLUMN_TEXT_WRAP) {
+        } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.NEXT_COLUMN_TEXT_WRAP)) {
             return "jump_to_next_column"
         } else {
             return ""
@@ -490,8 +492,8 @@ function ExportInDesignArticlesToPlaService(
         var baselineShift = line.characters[0].baselineShift;
 
         // If leading is set to Auto (value = -1), estimate it as 120% of font size.
-        if (leading === Leading.AUTO) {
-            var fontSize = line.characters[0].pointSize;
+        if (leading.equals(idd.Leading.AUTO)) {
+            var fontSize = line.characters.item(0).pointSize;
             leading = fontSize * 1.2;
         }
 

@@ -82,7 +82,7 @@ function InDesignArticleService() {
     this._isFrameMemberOfInDesignArticle = function(article, frame) {
         var articleMembers = article.articleMembers.everyItem().getElements(); // Get all members as an array
         for (var i = 0; i < articleMembers.length; i++) {
-            if (articleMembers[i].itemRef === frame) {
+            if (articleMembers[i].itemRef.equals(frame)) {
                 return true; // The frame is already a member of the article
             }
         }

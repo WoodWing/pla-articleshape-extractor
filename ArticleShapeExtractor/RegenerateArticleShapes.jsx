@@ -1,10 +1,8 @@
 RegenerateArticleShapes = function() {
     this.run = async function() {
         require('./bootstrap.jsx');
-
-        app.scriptPreferences.userInteractionLevel = UserInteractionLevels.neverInteract;
-        
         const { app } = require("indesign");
+        const idd = require("indesign");
         try {
             // Prompt the user to select the folder for saving the Article Shapes.
             alert("Select a folder to save the Article Shapes.");
@@ -16,12 +14,14 @@ RegenerateArticleShapes = function() {
             }    
         
             const Container = require("./modules/Container.inc.jsx");
+            app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
             Container.resolve("RegenerateArticleShapesService").run(folder);
+            app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
         } catch(error) {
+            // First enable the user interaction again to able to show the alert.
+            app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
             error.alert();
         }
-        
-        app.scriptPreferences.userInteractionLevel = UserInteractionLevels.interactWithAll;
     };
 }
 module.exports = RegenerateArticleShapes;
