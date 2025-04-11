@@ -1,4 +1,6 @@
-var errorFactory = Container.resolve("ErrorFactory");
+const Container = require("./Container.inc.jsx");
+const errorFactory = Container.resolve("ErrorFactory");
+
 ArgumentError = errorFactory.make("ArgumentError", "Bad argument provided.");
 ConfigurationError = errorFactory.make("ConfigurationError", "Valid configuration.");
 

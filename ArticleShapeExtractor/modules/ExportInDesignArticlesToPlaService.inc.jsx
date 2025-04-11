@@ -537,3 +537,5 @@ function ExportInDesignArticlesToPlaService(
         return genreId;
     }
 }
+
+module.exports = ExportInDesignArticlesToPlaService;

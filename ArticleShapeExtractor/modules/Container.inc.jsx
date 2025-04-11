@@ -1,4 +1,4 @@
-var Container = typeof $.global.Container === 'object' ? $.global.Container : {
+const Container = {
     _registrations: {},
 
     /**
@@ -79,5 +79,7 @@ var Container = typeof $.global.Container === 'object' ? $.global.Container : {
         }
         var match = obj.constructor.toString().match(/function\s+([^\s(]+)/);
         return match ? match[1] : "Anonymous";
-    },    
+    },
 };
+
+module.exports = Container;

@@ -140,3 +140,5 @@ function Logger(filePath, filename, logLevel, wipe) {
 		this.file.encoding = 'UTF-8';
 	};	
 }
+
+module.exports = Logger;

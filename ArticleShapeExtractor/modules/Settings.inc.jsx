@@ -64,3 +64,5 @@ function Settings(defaultConfig, localConfig) {
         return this._configData.includeErrorDetailInAlerts;
     }
 }
+
+module.exports = Settings;

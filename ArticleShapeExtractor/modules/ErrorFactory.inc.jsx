@@ -73,3 +73,5 @@ Error.prototype._detailsAsString = function() {
     }
     return detail;
 }
+
+module.exports = ErrorFactory;

@@ -1,5 +1,4 @@
-//@include "bootstrap.jsx";
-
+require('./bootstrap.jsx');
 try {
     if (app.documents.length === 0) {
         throw new NoDocumentOpenedError(null, $.fileName, $.line);
@@ -16,6 +15,7 @@ try {
         throw new NoFolderSelectedError(null, $.fileName, $.line);
     }
 
+    const Container = require("./modules/Container.inc.jsx");
     var exportCounter = Container.resolve("ExportInDesignArticlesToPlaService").run(doc, folder);
     if (exportCounter === 0) {
         throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.", $.fileName, $.line);
@@ -24,3 +24,4 @@ try {
 } catch(error) {
     error.alert();
 }
+module.exports = ExtractArticleShapes;

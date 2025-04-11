@@ -160,3 +160,5 @@ function InDesignArticleService() {
         return this.isValidArticleTextFrame(pageItem) || this.isValidArticleGraphicFrame(pageItem)
     }
 }
+
+module.exports = InDesignArticleService;

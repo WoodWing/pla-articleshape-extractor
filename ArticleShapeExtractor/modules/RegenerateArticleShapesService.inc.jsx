@@ -125,3 +125,5 @@ function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToP
         }
     };
 }
+
+module.exports = RegenerateArticleShapesService;

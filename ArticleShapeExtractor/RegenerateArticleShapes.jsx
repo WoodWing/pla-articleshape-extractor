@@ -1,4 +1,4 @@
-//@include "bootstrap.jsx";
+require('./bootstrap.jsx');
 
 app.scriptPreferences.userInteractionLevel = UserInteractionLevels.neverInteract;
 
@@ -9,9 +9,12 @@ try {
         throw new NoFolderSelectedError(null, $.fileName, $.line);
     }
 
+    const Container = require("./modules/Container.inc.jsx");
     Container.resolve("RegenerateArticleShapesService").run(folder);
 } catch(error) {
     error.alert();
 }
 
 app.scriptPreferences.userInteractionLevel = UserInteractionLevels.interactWithAll;
+
+module.exports = RegenerateArticleShapes;
