@@ -33,7 +33,7 @@ function ExportInDesignArticlesToPlaService(
 
         app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
         for (var articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
-            var article = doc.articles[articleIndex];
+            var article = doc.articles.item(articleIndex);
             var pageItems = []; // Collect all associated page items for the article.
             var elements = article.articleMembers.everyItem().getElements();
             var outerBounds = this._getOuterboundOfArticleShape(elements);
@@ -57,7 +57,7 @@ function ExportInDesignArticlesToPlaService(
 
                     // Add the name of the first paragraph style used in the chain of threaded frames.
                     if (threadedFrames[0].paragraphs.length > 0) {
-                        textComponent.firstParagraphStyle = threadedFrames[0].paragraphs[0].appliedParagraphStyle.name
+                        textComponent.firstParagraphStyle = threadedFrames[0].paragraphs.item(0).appliedParagraphStyle.name
                     }
 
                     for (var frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
@@ -489,7 +489,7 @@ function ExportInDesignArticlesToPlaService(
 
         // Calculate line height based on line leading and base shift of first character.
         var leading = line.leading; // line spacing
-        var baselineShift = line.characters[0].baselineShift;
+        var baselineShift = line.characters.item(0).baselineShift;
 
         // If leading is set to Auto (value = -1), estimate it as 120% of font size.
         if (leading.equals(idd.Leading.AUTO)) {

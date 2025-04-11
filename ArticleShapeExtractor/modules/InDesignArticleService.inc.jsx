@@ -1,3 +1,5 @@
+const { app } = require("indesign");
+
 function InDesignArticleService() {
 
     /**
@@ -63,7 +65,7 @@ function InDesignArticleService() {
 
         // Loop through all articles to check if the frame is a member
         for (var i = 0; i < docArticles.length; i++) {
-            var docArticle = docArticles[i];
+            var docArticle = docArticles.item(i);
 
             // Check if the frame is in the article's members
             if (this._isFrameMemberOfInDesignArticle(docArticle, frame)) {
