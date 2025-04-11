@@ -3,12 +3,12 @@ ExtractArticleShapes = function() {
         require('./bootstrap.jsx');
         try {
             if (app.documents.length === 0) {
-                throw new NoDocumentOpenedError(null, $.fileName, $.line);
+                throw new NoDocumentOpenedError();
             }
         
             var doc = app.activeDocument;
             if (doc.articles.length === 0) {
-                throw new NoArticlesInDocumentError(null, $.fileName, $.line);
+                throw new NoArticlesInDocumentError();
             }
         
             // Prompt the user to select the folder for saving the snippets.
@@ -20,7 +20,7 @@ ExtractArticleShapes = function() {
             const Container = require("./modules/Container.inc.jsx");
             var exportCounter = Container.resolve("ExportInDesignArticlesToPlaService").run(doc, folder);
             if (exportCounter === 0) {
-                throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.", $.fileName, $.line);
+                throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.");
             }
             alert(exportCounter + " articles have been exported as Article Shapes.");
         } catch(error) {

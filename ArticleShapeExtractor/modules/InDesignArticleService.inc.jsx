@@ -12,16 +12,16 @@ function InDesignArticleService() {
      */
     this.addOrRenameInDesignArticle = function(articleName) {
         if (app.documents.length === 0) {
-            throw new NoDocumentOpenedError(null, $.fileName, $.line);
+            throw new NoDocumentOpenedError();
         }
 
         if (app.selection.length === 0) {
-            throw new NoFramesSelectedError(null, $.fileName, $.line);
+            throw new NoFramesSelectedError();
         }
 
         var frame = app.selection[0];
         if (!this.isValidArticleComponentFrame(frame)) {
-            throw new NoTextOrGraphicalFramesSelectedError(null, $.fileName, $.line);
+            throw new NoTextOrGraphicalFramesSelectedError();
         }
 
         // Add new InDesign Articles.

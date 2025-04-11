@@ -17,15 +17,9 @@ function ErrorFactory(logger, includeErrorDetailInAlerts) {
      * @returns {Error}
      */
 	this.make = function (errorClassname, defaultMessage) {
-        var error = function (msg, file, line) {
+        var error = function (msg) {
             this.name = errorClassname;
-            if(typeof file !== 'undefined')
-                this.file = file;
-            if(typeof line !== 'undefined')
-                this.line = line;
             this.message = msg || defaultMessage || "";
-            this.stack = $.stack;
-            this._includeErrorDetailInAlerts = includeErrorDetailInAlerts;
             logger.error(this._detailsAsString());
         }
         error.prototype = new Error();
@@ -62,12 +56,6 @@ Error.prototype.alert = function () {
  */
 Error.prototype._detailsAsString = function() {
     var detail = this.message + " (" + this.name + ")";
-    if (this.file) {
-        detail += "\n- file:" + this.file;
-    }
-    if (this.line) {
-        detail += "\n- line:" + this.line;
-    }
     if (this.stack) {
         detail += "\n- stack:\n" + this.stack;
     }

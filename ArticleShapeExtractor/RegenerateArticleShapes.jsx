@@ -8,7 +8,7 @@ RegenerateArticleShapes = function() {
             // Prompt the user to select the folder for saving the Article Shapes.
             var folder = Folder.selectDialog("Select a folder to save the Article Shapes:");
             if (!folder) {
-                throw new NoFolderSelectedError(null, $.fileName, $.line);
+                throw new NoFolderSelectedError();
             }
         
             const Container = require("./modules/Container.inc.jsx");

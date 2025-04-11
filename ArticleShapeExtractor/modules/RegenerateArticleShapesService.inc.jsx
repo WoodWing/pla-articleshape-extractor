@@ -23,7 +23,7 @@ function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToP
             //=======================================
             var query = app.storedUserQuery(this._userQueryName);
             if(query == undefined) {
-                throw new ConfigurationError("User Query '" + this._userQueryName + "' does not exist.", $.fileName, $.line);
+                throw new ConfigurationError("User Query '" + this._userQueryName + "' does not exist.");
             }
             
             //=======================================
