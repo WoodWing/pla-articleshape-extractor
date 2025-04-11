@@ -2,9 +2,9 @@ require("./extensions/String.js");
 require("./extensions/globals.js");
 const Container = require("./modules/Container.inc.jsx");
 
-//@include "config/config.jsx";
 Container.registerSingleton("Settings", function() {
     const Settings = require("./modules/Settings.inc.jsx");
+    require("./config/config.jsx");
     var localConfig = {};
     var scriptsFolder = File($.fileName).parent.fsName;
     var localConfigFilepath = scriptsFolder + "/config/config-local.jsx";
@@ -12,7 +12,7 @@ Container.registerSingleton("Settings", function() {
         $.evalFile(localConfigFilepath);
         localConfig = $.global.plaLocalConfig;
     }
-    return new Settings($.global.plaDefaultConfig, localConfig);
+    return new Settings(globalThis.plaDefaultConfig, localConfig);
 });
 
 Container.registerSingleton("Logger", function() {

@@ -1,6 +1,6 @@
 // DO NOT CHANGE THIS FILE! See README.md for instructions.
 
-$.global.plaDefaultConfig = {
+globalThis.plaDefaultConfig = {
     
     // URL of the PLA service.
     plaServiceUrl: "https://service.pla-poc.woodwing.cloud",
@@ -27,7 +27,7 @@ $.global.plaDefaultConfig = {
         filename: "pla.log",
         folder: Folder.desktop, // Directory where to create the log file.
         wipe: true, // Whether to clean the log file before starting a new operation.
-    },
+    },    
 
     // Whether to include all available error information in the alert dialogs.
     includeErrorDetailInAlerts: false,
