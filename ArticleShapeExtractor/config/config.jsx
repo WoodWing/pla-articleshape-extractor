@@ -25,7 +25,7 @@ globalThis.plaDefaultConfig = {
     logger: {
         level: "ERROR", // Supported values: "DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"
         filename: "pla.log",
-        folder: Folder.desktop, // Directory where to create the log file.
+        folder: "plugin-data:", // Directory where to create the log file.
         wipe: true, // Whether to clean the log file before starting a new operation.
     },    
 

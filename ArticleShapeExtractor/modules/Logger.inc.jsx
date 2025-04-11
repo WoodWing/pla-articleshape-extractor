@@ -1,3 +1,4 @@
+const fs = require('fs');
 
 /**
  * Understands how to write messages of given severity to a log file.
@@ -10,7 +11,6 @@
  */
 function Logger(filePath, filename, logLevel, wipe) {
 
-	this.file = null;
 	this.LOGLEVEL = ["DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"];
 
 	this.path = filePath;
@@ -99,15 +99,8 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @param {String} message 
 	 */
 	this._writeLine = function (logLevel, message) {
-		if (!this.file) {
-			return;
-		}
-		this.file.open("a");
-		this.file.writeln(
-			'[' + this._getDateTimeWithMsAsString() + '] '
-			+ '[' + this.LOGLEVEL[logLevel].padEnd(8) + '] '
-			+ message);
-		this.file.close();
+		const logLine = `[${this._getDateTimeWithMsAsString()}] [${this.LOGLEVEL[logLevel].padEnd(8)}] ${message}`;			
+        fs.writeFileSync(this._getLogFilepath(), logLine, {encoding: "utf-8", flag: "a+"});
 	};
 
 	/**
@@ -123,22 +116,20 @@ function Logger(filePath, filename, logLevel, wipe) {
 			+ ':' + date.getUTCSeconds().toString().padStart(2, "0")
 			+ '.' + date.getUTCMilliseconds().toString().padStart(3, "0");
 		return dateString + 'T' + timeString + 'Z';
-	}
+	};
 
-	this.init = function() {
-		var folder = new Folder(this.path);
-		if (!folder.exists) {
-			if (!folder.create()) {
-				alert("Could not create '" + this.path + "' log folder.");
-				return null;
+	this.init = async function() {
+		if(this.wipe) {
+			const stats = await fs.lstat(this._getLogFilepath());
+			if (stats.isFile()) {
+				await fs.unlink(this._getLogFilepath());
 			}
 		}
-		this.file = new File(this.name).at(folder);
-		if(this.wipe) {
-			this.file.remove();
-		}
-		this.file.encoding = 'UTF-8';
-	};	
+	};
+
+	this._getLogFilepath = function() {
+		return this.path.rtrim('/') + '/' + this.name;
+	};
 }
 
 module.exports = Logger;
