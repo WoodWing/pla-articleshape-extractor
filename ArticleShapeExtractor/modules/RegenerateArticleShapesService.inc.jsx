@@ -1,35 +1,29 @@
-//@include "ExtractArticleShapesLibrary.inc.jsx";
+/**
+ * @constructor
+ * @param {String} userQueryName
+ * @param {ExportInDesignArticlesToPlaService} exportInDesignArticlesToPlaService
+ */
+function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToPlaService) {
+    this._userQueryName = userQueryName;
+    this._exportInDesignArticlesToPlaService = exportInDesignArticlesToPlaService;
 
-//=======================================
-// Identify the desired query to use
-//=======================================
-var articleQueryName = "RegenerateArticleShapes";
-
-//=======================================
-// Set the user interaction level to 'never interact' this is set back to 'normal' 
-// at the end of the script
-//=======================================
-app.scriptPreferences.userInteractionLevel = UserInteractionLevels.neverInteract;
-
-var totalEntries = -1;
-var listedEntries = 0;
-
-// Prompt the user to select the folder for saving the ArticleShapes
-var folder = Folder.selectDialog("Select a folder to save the ArticleShapes:");
-if (folder) {
-    //=======================================
-    // Begin the work of the script...do the query and get the results back...
-    //=======================================
-    try {
-
-      while (totalEntries != listedEntries) {
+    /**
+     * @param {Folder} folder 
+     */
+    this.run = function(folder) {
+        var totalEntries = -1;
+        var listedEntries = 0;
+        
+        //=======================================
+        // Begin the work of the script...do the query and get the results back...
+        //=======================================
+        while (totalEntries != listedEntries) {
             //=======================================
             // Send a query to Enterprise
             //=======================================
-            var query = app.storedUserQuery(articleQueryName);
+            var query = app.storedUserQuery(this._userQueryName);
             if(query == undefined) {
-                alert(" User Query '" + articleQueryName + "' does not exist.");
-                exit();
+                throw new ConfigurationError("User Query '" + this._userQueryName + "' does not exist.", $.fileName, $.line);
             }
             
             //=======================================
@@ -121,7 +115,7 @@ if (folder) {
                         var objectId = newArrayOfRecords[x][0];
                         var openTheObject = app.openObject(objectId);
                         var theOpenDoc = app.documents.item(app.documents.length - 1);
-                        var exportCounter = exportArticlesAsSnippets(theOpenDoc, folder);
+                        var exportCounter = this._exportInDesignArticlesToPlaService.run(theOpenDoc, folder);
                         theOpenDoc.close(SaveOptions.no);
                         app.sendObjectToNext(objectId);
                     }
@@ -129,20 +123,5 @@ if (folder) {
                 } 
             }
         }
-    }
-    catch (e) {
-        desc = e.description;
-        num = e.number;
-        alert('error ' + num + ': ' + desc);
-    }
-
-
-    //=======================================
-    // Set the user interaction level
-    //=======================================		
-    app.scriptPreferences.userInteractionLevel = UserInteractionLevels.interactWithAll;
+    };
 }
-else {
-    alert("No folder selected. Export cancelled.");
-}
-

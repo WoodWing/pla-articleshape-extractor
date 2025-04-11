@@ -1,21 +1,26 @@
-//@include "ExtractArticleShapesLibrary.inc.jsx";
+//@include "bootstrap.jsx";
 
-var doc = app.activeDocument;
-if (doc.articles.length === 0) {
-    alert("No articles found in the document.");
-    exit();
-}
+try {
+    if (app.documents.length === 0) {
+        throw new NoDocumentOpenedError(null, $.fileName, $.line);
+    }
 
-// Prompt the user to select the folder for saving the snippets.
-var folder = Folder.selectDialog("Select a folder to save the Article Shapes:");
-if (!folder) {
-    alert("No folder selected. Export cancelled.");
-    exit();
-}
+    var doc = app.activeDocument;
+    if (doc.articles.length === 0) {
+        throw new NoArticlesInDocumentError(null, $.fileName, $.line);
+    }
 
-var exportCounter = exportArticlesAsSnippets(doc, folder);
-if (exportCounter === 0) {
-    alert("No articles exported. Check if articles are properly named and have frames defined.");
-    exit();
+    // Prompt the user to select the folder for saving the snippets.
+    var folder = Folder.selectDialog("Select a folder to save the Article Shapes:");
+    if (!folder) {
+        throw new NoFolderSelectedError(null, $.fileName, $.line);
+    }
+
+    var exportCounter = Container.resolve("ExportInDesignArticlesToPlaService").run(doc, folder);
+    if (exportCounter === 0) {
+        throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.", $.fileName, $.line);
+    }
+    alert(exportCounter + " articles have been exported as Article Shapes.");
+} catch(error) {
+    error.alert();
 }
-alert(exportCounter + " articles have been exported as Article Shapes.");
