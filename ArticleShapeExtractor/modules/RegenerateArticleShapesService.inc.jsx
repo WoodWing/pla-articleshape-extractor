@@ -1,3 +1,5 @@
+const { app } = require("indesign");
+
 /**
  * @constructor
  * @param {String} userQueryName
@@ -11,6 +13,12 @@ function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToP
      * @param {Folder} folder 
      */
     this.run = function(folder) {
+
+        // Bail out when user is currently not logged in.
+        if (!app.entSession || app.entSession.activeServer === '' || app.entSession.activeUser === '') {
+            throw new NoStudioSessionError();
+        }
+
         var totalEntries = -1;
         var listedEntries = 0;
         
