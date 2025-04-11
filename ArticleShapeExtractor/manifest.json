@@ -55,5 +55,8 @@
         "pluginList"
       ]
     }
-  ]
+  ],
+  "requiredPermissions": {
+    "localFileSystem": "fullAccess"
+  }
 }

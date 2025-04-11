@@ -2,16 +2,22 @@ require("./extensions/String.js");
 require("./extensions/globals.js");
 const Container = require("./modules/Container.inc.jsx");
 
+function loadLocalConfigFile() {
+    const fs = require("fs");
+    var localConfig = {};
+    try {
+        const configPath = "plugin-data:/config-local.json";
+        const configJson = fs.readFileSync(configPath, { encoding: "utf-8" }); 
+        localConfig = JSON.parse(configJson);       
+    } catch (error) {
+    }
+    return localConfig;
+}
+
 Container.registerSingleton("Settings", function() {
     const Settings = require("./modules/Settings.inc.jsx");
     require("./config/config.jsx");
-    var localConfig = {};
-    var scriptsFolder = File($.fileName).parent.fsName;
-    var localConfigFilepath = scriptsFolder + "/config/config-local.jsx";
-    if (File(localConfigFilepath).exists) {
-        $.evalFile(localConfigFilepath);
-        localConfig = $.global.plaLocalConfig;
-    }
+    const localConfig = loadLocalConfigFile();
     return new Settings(globalThis.plaDefaultConfig, localConfig);
 });
 

@@ -45,20 +45,40 @@ Extract Article Shapes from a layout in InDesign:
 The extracted Article Shapes can be converted to a Print Layout Automation configuration file (`csv` or `xls`) using [this link](https://woodwing.github.io/pla-articleshape-extractor/create-pla-config.html).
 
 # Configuration
-The factory defaults can be found in the [config.jsx](ArticleShapeExtractor/config/config.jsx) file. If you want to change settings, do ___not___ edit that file. Instead, create a new file named `config/config-local.jsx` with the following structure:
-```javascript
-$.global.plaLocalConfig = {
-};
-```
-Copy the setting you want to change, including its surrounding structure, into this file. Adjust the value for the copied setting. For example:
-```javascript
-$.global.plaLocalConfig = {
-    fallback: {
-        category: {
-            id: "2",
-            name: "Sport",
+Look up the plugin data folder:
+* Plugins Installed from CCD or Plugin Market Place (External)
+  * Windows: AppData\Roaming\Adobe\UXP\PluginsStorage\IDSN\{App Version}\External
+  * MacOSX: Library/Application Support/Adobe/UXP/PluginsStorage/IDSN/{App Version}/External
+* Plugins Installed from UDT or Developer Plugins (Developer)
+  * Windows: AppData\Roaming\Adobe\UXP\PluginsStorage\IDSN\{App Version}\Developer
+  * MacOSX: Library/Application Support/Adobe/UXP/PluginsStorage/IDSN/{App Version}/Developer
+See [source](https://developer.adobe.com/indesign/uxp/resources/recipes/persistent-storage-migration/)
+
+In the plugin data folder, create a new file named `config-local.json` (if not exists yet).
+Copy the following structure into the file:
+```json
+{
+    "plaServiceUrl": "https://service.pla-poc.woodwing.cloud",
+    "regenerateArticleShapesQueryName": "RegenerateArticleShapes",
+    "offlineFallback": {
+        "brand": {
+            "id": "1",
+            "name": "WW News"
         },
+        "category": {
+            "id": "1",
+            "name": "News"
+        }
     },
-};
+    "logger": {
+        "level": "ERROR",
+        "filename": "pla.log",
+        "folder": "plugin-data:",
+        "wipe": true
+    },
+    "includeErrorDetailInAlerts": true
+}
 ```
-Your settings added to the `config/config-local.jsx` file will locally override the factory defaults provided in the `config/config.jsx` file. 
+The values shown are the factory defaults. Any modification to this file will override the factory defaults. For example adjust the logger level from ERROR into DEBUG to see all log messages.
+
+> **Developer note:** The factory defaults can be found in the [config.jsx](ArticleShapeExtractor/config/config.jsx) file. If you want to temporary change settings, do ___not___ edit that file. Instead, adjust the `config-local.json` file which will locally override the factory defaults.
