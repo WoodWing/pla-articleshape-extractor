@@ -1,4 +1,5 @@
 //@include "modules/Container.inc.jsx";
+require("./extensions/String.js");
 
 //@include "config/config.jsx";
 //@include "modules/Settings.inc.jsx";

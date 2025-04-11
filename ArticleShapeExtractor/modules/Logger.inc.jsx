@@ -1,4 +1,3 @@
-//@include "libraries/_.jsx"
 
 /**
  * Understands how to write messages of given severity to a log file.
