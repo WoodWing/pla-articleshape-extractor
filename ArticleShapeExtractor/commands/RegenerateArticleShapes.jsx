@@ -1,6 +1,6 @@
 RegenerateArticleShapes = function() {
     this.run = async function() {
-        require('./bootstrap.jsx');
+        require('../bootstrap.jsx');
         const { app } = require("indesign");
         const idd = require("indesign");
         try {
@@ -13,7 +13,7 @@ RegenerateArticleShapes = function() {
                 throw new NoFolderSelectedError();
             }    
         
-            const Container = require("./modules/Container.inc.jsx");
+            const Container = require("../modules/Container.inc.jsx");
             app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
             Container.resolve("RegenerateArticleShapesService").run(folder);
             app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;

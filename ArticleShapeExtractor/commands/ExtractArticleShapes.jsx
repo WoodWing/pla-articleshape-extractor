@@ -1,6 +1,6 @@
 ExtractArticleShapes = function() {
     this.run = async function() {
-        require('./bootstrap.jsx');
+        require('../bootstrap.jsx');
         const { app } = require("indesign");
         try {
             if (app.documents.length === 0) {
@@ -21,7 +21,7 @@ ExtractArticleShapes = function() {
                 throw new NoFolderSelectedError();
             }
         
-            const Container = require("./modules/Container.inc.jsx");
+            const Container = require("../modules/Container.inc.jsx");
             var exportCounter = Container.resolve("ExportInDesignArticlesToPlaService").run(doc, folder);
             if (exportCounter === 0) {
                 throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.");
