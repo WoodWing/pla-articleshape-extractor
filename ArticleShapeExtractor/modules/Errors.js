@@ -1,4 +1,4 @@
-const Container = require("./Container.inc.jsx");
+const Container = require("./Container.js");
 const errorFactory = Container.resolve("ErrorFactory");
 
 ArgumentError = errorFactory.make("ArgumentError", "Bad argument provided.");

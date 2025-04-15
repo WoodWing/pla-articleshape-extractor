@@ -81,4 +81,4 @@ Copy the following structure into the file:
 ```
 The values shown are the factory defaults. Any modification to this file will override the factory defaults. For example adjust the logger level from ERROR into DEBUG to see all log messages.
 
-> **Developer note:** The factory defaults can be found in the [config.jsx](ArticleShapeExtractor/config/config.jsx) file. If you want to temporary change settings, do ___not___ edit that file. Instead, adjust the `config-local.json` file which will locally override the factory defaults.
+> **Developer note:** The factory defaults can be found in the [config.js](ArticleShapeExtractor/config/config.js) file. If you want to temporary change settings, do ___not___ edit that file. Instead, adjust the `config-local.json` file which will locally override the factory defaults.

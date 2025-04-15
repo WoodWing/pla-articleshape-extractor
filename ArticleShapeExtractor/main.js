@@ -37,32 +37,32 @@ entrypoints.setup({
     commands: {
         createLeadArticle: async () => {
             await ensureInit();
-            const CreateLeadArticle = require('./commands/CreateLeadArticle.jsx');
+            const CreateLeadArticle = require('./commands/CreateLeadArticle.js');
             (new CreateLeadArticle()).run();
         },
         createSecondaryArticle: async () => {
             await ensureInit();
-            const CreateSecondaryArticle = require('./commands/CreateSecondaryArticle.jsx');
+            const CreateSecondaryArticle = require('./commands/CreateSecondaryArticle.js');
             (new CreateSecondaryArticle()).run();
         },
         createThirdArticle: async () => {
             await ensureInit();
-            const CreateThirdArticle = require('./commands/CreateThirdArticle.jsx');
+            const CreateThirdArticle = require('./commands/CreateThirdArticle.js');
             (new CreateThirdArticle()).run();
         },
         createFillerArticle: async () => {
             await ensureInit();
-            const CreateFillerArticle = require('./commands/CreateFillerArticle.jsx');
+            const CreateFillerArticle = require('./commands/CreateFillerArticle.js');
             (new CreateFillerArticle()).run();
         },
         extractArticleShapes: async () => {
             await ensureInit();
-            const ExtractArticleShapes = require('./commands/ExtractArticleShapes.jsx');
+            const ExtractArticleShapes = require('./commands/ExtractArticleShapes.js');
             await (new ExtractArticleShapes()).run();
         },
         regenerateArticleShapes: async () => {
             await ensureInit();
-            const RegenerateArticleShapes = require('./commands/RegenerateArticleShapes.jsx');
+            const RegenerateArticleShapes = require('./commands/RegenerateArticleShapes.js');
             await (new RegenerateArticleShapes()).run();
             
         },
