@@ -22,7 +22,7 @@ await (async function main() {
         }
 
         const Container = require("../modules/Container.js");
-        var exportCounter = Container.resolve("ExportInDesignArticlesToPlaService").run(doc, folder);
+        var exportCounter = await Container.resolve("ExportInDesignArticlesToPlaService").run(doc, folder);
         if (exportCounter === 0) {
             throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.");
         }

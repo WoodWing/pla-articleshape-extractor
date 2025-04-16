@@ -15,7 +15,7 @@ await (async function main() {
 
         const Container = require("../modules/Container.js");
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
-        Container.resolve("RegenerateArticleShapesService").run(folder);
+        await Container.resolve("RegenerateArticleShapesService").run(folder);
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
     } catch(error) {
         // First enable the user interaction again to able to show the alert.

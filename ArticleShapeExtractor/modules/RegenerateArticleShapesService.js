@@ -12,7 +12,7 @@ function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToP
     /**
      * @param {Folder} folder 
      */
-    this.run = function(folder) {
+    this.run = async function(folder) {
 
         // Bail out when user is currently not logged in.
         if (!app.entSession || app.entSession.activeServer === '' || app.entSession.activeUser === '') {
@@ -123,7 +123,7 @@ function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToP
                         var objectId = newArrayOfRecords[x][0];
                         var openTheObject = app.openObject(objectId);
                         var theOpenDoc = app.documents.item(app.documents.length - 1);
-                        var exportCounter = this._exportInDesignArticlesToPlaService.run(theOpenDoc, folder);
+                        var exportCounter = await this._exportInDesignArticlesToPlaService.run(theOpenDoc, folder);
                         theOpenDoc.close(SaveOptions.no);
                         app.sendObjectToNext(objectId);
                     }

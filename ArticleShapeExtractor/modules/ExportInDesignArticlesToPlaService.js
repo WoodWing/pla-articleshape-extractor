@@ -27,7 +27,7 @@ function ExportInDesignArticlesToPlaService(
      * @param {Folder} folder
      * @returns {Number} Count of exported article shapes.
      */
-    this.run = function(doc, folder) {
+    this.run = async function(doc, folder) {
         this._logger.info("Extracting InDesign Articles for layout document '{}'.", doc.fullName);
         var exportCounter = 0;
 
@@ -107,7 +107,7 @@ function ExportInDesignArticlesToPlaService(
                 this._logger.error(message);
                 continue;
             }
-            this._exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
+            await this._exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
             exportCounter++;
         }
         app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
