@@ -63,6 +63,13 @@ function Settings(defaultConfig, localConfig) {
     this.getIncludeErrorDetailInAlerts = function() {
         return this._configData.includeErrorDetailInAlerts;
     }
+
+    /**
+     * @returns {String}
+     */
+    this.getMinimumRequiredInDesignVersion = function() {
+        return this._configData.minimumRequiredInDesignVersion;
+    }
 }
 
 module.exports = Settings;

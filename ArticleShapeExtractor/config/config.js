@@ -31,6 +31,9 @@ const plaDefaultConfig = {
 
     // Whether to include all available error information in the alert dialogs.
     includeErrorDetailInAlerts: false,
+
+    // Error on attempts running scripts on older InDesign versions that are not compatible.
+    minimumRequiredInDesignVersion: "19.0.0",
 };
 
 module.exports = plaDefaultConfig;
