@@ -130,7 +130,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	};
 
 	this._getLogFilepath = function() {
-		return this.path.rtrim('/') + '/' + this.name;
+		return `file:${this.path.rtrim('/')}/${this.name}`;
 	};
 }
 
