@@ -17,11 +17,11 @@ In InDesign, configure shortcut keys to the installed scripts:
 1. Click menu `Edit > Keyboard Shortcuts...` to open the `Keyboards Shortcuts` dialog.
 2. For the `Product Area` field, select the `Scripts` item.
 3. Attach the following keyboard shortcuts:
-   * `Cmd-1` to `ArticleShapeExtractor:command:CreateLeadArticle.idjs`
-   * `Cmd-2` to `ArticleShapeExtractor:command:CreateSecondaryArticle.idjs`
-   * `Cmd-3` to `ArticleShapeExtractor:command:CreateThirdArticle.idjs`
-   * `Cmd-4` to `ArticleShapeExtractor:command:CreateFillerArticle.idjs`
-   * `Shift-Cmd-E` to `ArticleShapeExtractor:command:ExtractArticleShapes.idjs`
+   * `Ctrl+Cmd+1` to `ArticleShapeExtractor:command:CreateLeadArticle.idjs`
+   * `Ctrl+Cmd+2` to `ArticleShapeExtractor:command:CreateSecondaryArticle.idjs`
+   * `Ctrl+Cmd+3` to `ArticleShapeExtractor:command:CreateThirdArticle.idjs`
+   * `Ctrl+Cmd+4` to `ArticleShapeExtractor:command:CreateFillerArticle.idjs`
+   * `Ctrl+Cmd+E` to `ArticleShapeExtractor:command:ExtractArticleShapes.idjs`
 4. Save it as a new set.
 
 # Usage
@@ -31,14 +31,14 @@ Extract Article Shapes from a layout in InDesign:
 3. For the frames on the layout you would like to export:
    1. Make a selection of frames that belong to the same article.
    2. Press one of the following shortcut keys:
-      * `Cmd-1` to create a `Lead` article.
-      * `Cmd-2` to create a `Secondary` article.
-      * `Cmd-3` to create a `Third` article.
-      * `Cmd-4` to create a `Filler` article.
+      * `Ctrl+Cmd+1` to create a `Lead` article.
+      * `Ctrl+Cmd+2` to create a `Secondary` article.
+      * `Ctrl+Cmd+3` to create a `Third` article.
+      * `Ctrl+Cmd+4` to create a `Filler` article.
    * In the `Articles` panel, a new InDesign Article should be created.
    * When manually editing the article name, assure it contains at least either `Lead`, `Secondary`, `Third` or `Filler`.
    3. Repeat the steps above for each article to export.
-4. Select menu `WoodWing Studio > Extract article shapes` (or press the `Shift-Cmd-E` shortcut key) and select a folder to export the shapes to.
+4. Press the `Ctrl+Cmd+E` shortcut key to run the `ExtractArticleShapes.idjs` script and select a folder to export the shapes to.
    * For each InDesign Article a `idms`, `jpg` and `json` file is created.
    * You can use the `jpg` files to verify if the export was correct.
 
