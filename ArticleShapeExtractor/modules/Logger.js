@@ -101,8 +101,18 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @param {String} message 
 	 */
 	this._writeLine = function (logLevel, message) {
-		const logLine = `[${this._getDateTimeWithMsAsString()}] [${this.LOGLEVEL[logLevel].padEnd(8)}] ${message}`;			
-        fs.writeFileSync(this._getLogFilepath(), logLine, {encoding: "utf-8", flag: "a+"});
+		const logLine = `[${this._getDateTimeWithMsAsString()}] [${this.LOGLEVEL[logLevel].padEnd(8)}] ${message}\n`;
+		const logPath = this._getLogFilepath();
+		try {
+			let mode = "a"; // append or create
+			if (this.wipe) {
+				mode = "w"; // overwrite or create
+				this.wipe = false;
+			}
+        	fs.writeFileSync(logPath, logLine, {encoding: "utf-8", flag: mode});		
+		} catch(error) {
+			alert(`Failed to write into log file '${logPath}' - ${error}`);
+		}
 	};
 
 	/**
@@ -118,15 +128,6 @@ function Logger(filePath, filename, logLevel, wipe) {
 			+ ':' + date.getUTCSeconds().toString().padStart(2, "0")
 			+ '.' + date.getUTCMilliseconds().toString().padStart(3, "0");
 		return dateString + 'T' + timeString + 'Z';
-	};
-
-	this.init = async function() {
-		if(this.wipe) {
-			const stats = await fs.lstat(this._getLogFilepath());
-			if (stats.isFile()) {
-				await fs.unlink(this._getLogFilepath());
-			}
-		}
 	};
 
 	this._getLogFilepath = function() {

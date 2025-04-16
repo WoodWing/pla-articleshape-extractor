@@ -17,7 +17,6 @@ Container.registerSingleton("Logger", function() {
     const Logger = require("./modules/Logger.js");
     const config = Container.resolve("Settings").getLoggerConfig();
     var logger = new Logger(config.folder, config.filename, config.level, config.wipe);
-    logger.init();
     return logger;
 });
 
