@@ -1,12 +1,9 @@
-CreateThirdArticle = function() {
-    this.run = function() {
+await (async function main() {
+    try {
         require('../bootstrap.js');
-        try {
-            const Container = require("../modules/Container.js");
-            Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Third");
-        } catch (error) {
-            error.alert();
-        }
-    };
-}
-module.exports = CreateThirdArticle;
+        const Container = require("../modules/Container.js");
+        Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Third");
+    } catch (error) {
+        error.alert();
+    }
+})();

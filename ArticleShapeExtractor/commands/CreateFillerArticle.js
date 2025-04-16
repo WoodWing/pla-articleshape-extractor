@@ -1,12 +1,9 @@
-CreateFillerArticle = function() {
-    this.run = function() {
+(async function main() {
+    try {
         require('../bootstrap.js');
-        try {
-            const Container = require("../modules/Container.js");
-            Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Filler");
-        } catch (error) {
-            error.alert();
-        }
-    };
-}
-module.exports = CreateFillerArticle;
+        const Container = require("../modules/Container.js");
+        Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Filler");
+    } catch (error) {
+        error.alert();
+    }
+})();
