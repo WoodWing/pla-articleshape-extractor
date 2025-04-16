@@ -18,6 +18,13 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this.level = this.LOGLEVEL.indexOf(logLevel);
 	this.wipe = wipe;
 
+	if (this.level > 0 && (!filePath || !logLevel) ) {
+        throw new Error("No log folder or filename provided.");
+    }
+	if (this.level === -1) {
+		throw new Error(`Unknown log level '${logLevel}' provided.`);
+	}
+
 	/**
 	 * Log a debug message, to provide diagnostically helpful information.
 	 * @param {String} message

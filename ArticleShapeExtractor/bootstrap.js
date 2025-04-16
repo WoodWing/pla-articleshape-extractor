@@ -16,8 +16,12 @@ Container.registerSingleton("Settings", function() {
 Container.registerSingleton("Logger", function() {
     const Logger = require("./modules/Logger.js");
     const config = Container.resolve("Settings").getLoggerConfig();
-    var logger = new Logger(config.folder, config.filename, config.level, config.wipe);
-    return logger;
+    try {
+        var logger = new Logger(config.folder, config.filename, config.level, config.wipe);    
+        return logger;
+    } catch(error) {
+        throw new Error(error + " Please check your settings in config/config.js and config/config-local.js files.");
+    }
 });
 
 Container.registerSingleton("ErrorFactory", function() {
