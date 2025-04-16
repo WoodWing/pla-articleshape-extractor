@@ -2,7 +2,7 @@ const Container = require("./Container.js");
 const errorFactory = Container.resolve("ErrorFactory");
 
 ArgumentError = errorFactory.make("ArgumentError", "Bad argument provided.");
-ConfigurationError = errorFactory.make("ConfigurationError", "Valid configuration.");
+ConfigurationError = errorFactory.make("ConfigurationError", "Invalid configuration.");
 
 NoStudioSessionError = errorFactory.make("NoStudioSessionError", "Not logged in to WoodWing Studio.");
 NoDocumentOpenedError = errorFactory.make("NoDocumentOpenedError", "No document opened.");
