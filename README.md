@@ -17,11 +17,11 @@ In InDesign, configure shortcut keys to the installed scripts:
 1. Click menu `Edit > Keyboard Shortcuts...` to open the `Keyboards Shortcuts` dialog.
 2. For the `Product Area` field, select the `Scripts` item.
 3. Attach the following keyboard shortcuts:
-   * `Cmd-1` to `ArticleShapeExtractor:CreateLeadArticle.jsx`
-   * `Cmd-2` to `ArticleShapeExtractor:CreateSecondaryArticle.jsx`
-   * `Cmd-3` to `ArticleShapeExtractor:CreateThirdArticle.jsx`
-   * `Cmd-4` to `ArticleShapeExtractor:CreateFillerArticle.jsx`
-   * `Shift-Cmd-E` to `ArticleShapeExtractor:ExtractArticleShapes.jsx`
+   * `Cmd-1` to `ArticleShapeExtractor:command:CreateLeadArticle.idjs`
+   * `Cmd-2` to `ArticleShapeExtractor:command:CreateSecondaryArticle.idjs`
+   * `Cmd-3` to `ArticleShapeExtractor:command:CreateThirdArticle.idjs`
+   * `Cmd-4` to `ArticleShapeExtractor:command:CreateFillerArticle.idjs`
+   * `Shift-Cmd-E` to `ArticleShapeExtractor:command:ExtractArticleShapes.idjs`
 4. Save it as a new set.
 
 # Usage
