@@ -45,40 +45,35 @@ Extract Article Shapes from a layout in InDesign:
 The extracted Article Shapes can be converted to a Print Layout Automation configuration file (`csv` or `xls`) using [this link](https://woodwing.github.io/pla-articleshape-extractor/create-pla-config.html).
 
 # Configuration
-Look up the plugin data folder:
-* Plugins Installed from CCD or Plugin Market Place (External)
-  * Windows: AppData\Roaming\Adobe\UXP\PluginsStorage\IDSN\{App Version}\External
-  * MacOSX: Library/Application Support/Adobe/UXP/PluginsStorage/IDSN/{App Version}/External
-* Plugins Installed from UDT or Developer Plugins (Developer)
-  * Windows: AppData\Roaming\Adobe\UXP\PluginsStorage\IDSN\{App Version}\Developer
-  * MacOSX: Library/Application Support/Adobe/UXP/PluginsStorage/IDSN/{App Version}/Developer
-See [source](https://developer.adobe.com/indesign/uxp/resources/recipes/persistent-storage-migration/)
+The [config.js](ArticleShapeExtractor/config/config.js) file contains factory settings. All supported settings are listed and explained in that file. Don't edit this file directly, but first copy any setting to your [config-local.js](ArticleShapeExtractor/config/config-local.js) file and make adjustments in that file instead. Make sure you also copy the surrounding/parental structure elements, if any.
 
-In the plugin data folder, create a new file named `config-local.json` (if not exists yet).
-Copy the following structure into the file:
-```json
-{
-    "plaServiceUrl": "https://service.pla-poc.woodwing.cloud",
-    "regenerateArticleShapesQueryName": "RegenerateArticleShapes",
-    "offlineFallback": {
-        "brand": {
-            "id": "1",
-            "name": "WW News"
-        },
-        "category": {
-            "id": "1",
-            "name": "News"
-        }
-    },
-    "logger": {
-        "level": "ERROR",
-        "filename": "pla.log",
-        "folder": "plugin-data:",
-        "wipe": true
-    },
-    "includeErrorDetailInAlerts": true
-}
-```
-The values shown are the factory defaults. Any modification to this file will override the factory defaults. For example adjust the logger level from ERROR into DEBUG to see all log messages.
+Note that settings added to your `config-local.js` file will override the factory settings provided in the `config.js` file. Keep an eye on both files to understand which setting is effective.
 
-> **Developer note:** The factory defaults can be found in the [config.js](ArticleShapeExtractor/config/config.js) file. If you want to temporary change settings, do ___not___ edit that file. Instead, adjust the `config-local.json` file which will locally override the factory defaults.
+An example - By default, the logging feature is disabled. To enable it:
+1. First time only - If the `config-local.js` file does not exist yet, create a new one with the following content:
+   ```javascript
+   const plaLocalConfig = {
+   };
+   module.exports = plaLocalConfig;
+   ```
+2. Copy the `logger` structure from the `config.js` file to your `config-local.js` file:
+   ```javascript
+   const plaLocalConfig = {
+      logger: {
+      },
+   };
+   module.exports = plaLocalConfig;
+   ```
+3. Inside the `logger` structure, copy the `level` and `folder` settings and adjust their values:
+   ```javascript
+   const plaLocalConfig = {
+      logger: {
+         level: "INFO",
+         folder: "/Users/[YOUR-NAME]/Desktop",
+      },
+   };
+   module.exports = plaLocalConfig;
+   ```
+   > Note that in the provided example your should replace `[YOUR-NAME]` with your actual user name as known on your machine. 
+
+4. Optionally - In case you want to automatically clean the log file before each script execution, also include the `wipe` setting and set it to `true`.

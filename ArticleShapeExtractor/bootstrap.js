@@ -2,23 +2,15 @@ require("./extensions/String.js");
 require("./extensions/globals.js");
 const Container = require("./modules/Container.js");
 
-function loadLocalConfigFile() {
-    const fs = require("fs");
-    var localConfig = {};
-    try {
-        const configPath = "plugin-data:/config-local.json";
-        const configJson = fs.readFileSync(configPath, { encoding: "utf-8" }); 
-        localConfig = JSON.parse(configJson);       
-    } catch (error) {
-    }
-    return localConfig;
-}
-
 Container.registerSingleton("Settings", function() {
     const Settings = require("./modules/Settings.js");
-    require("./config/config.js");
-    const localConfig = loadLocalConfigFile();
-    return new Settings(globalThis.plaDefaultConfig, localConfig);
+    const plaDefaultConfig = require("./config/config.js");
+    let plaLocalConfig = {}
+    try {
+        plaLocalConfig = require("./config/config-local.js");
+    } catch (error) {
+    }
+    return new Settings(plaDefaultConfig, plaLocalConfig);
 });
 
 Container.registerSingleton("Logger", function() {
