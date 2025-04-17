@@ -58,13 +58,6 @@ function Settings(defaultConfig, localConfig) {
     }
     
     /**
-     * @returns {Boolean}
-     */
-    this.getIncludeErrorDetailInAlerts = function() {
-        return this._configData.includeErrorDetailInAlerts;
-    }
-
-    /**
      * @returns {String}
      */
     this.getMinimumRequiredInDesignVersion = function() {

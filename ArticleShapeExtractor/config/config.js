@@ -29,9 +29,6 @@ const plaDefaultConfig = {
         wipe: true, // Whether to clean the log file before starting a new operation.
     },    
 
-    // Whether to include all available error information in the alert dialogs.
-    includeErrorDetailInAlerts: false,
-
     // Error on attempts running scripts on older InDesign versions that are not compatible.
     minimumRequiredInDesignVersion: "19.0.0",
 };
