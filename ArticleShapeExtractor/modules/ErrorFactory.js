@@ -17,7 +17,7 @@ function ErrorFactory(logger, includeErrorDetailInAlerts) {
      * @returns {Error}
      */
 	this.make = function (errorClassname, defaultMessage) {
-        var error = function (msg) {
+        let error = function (msg) {
             this.name = errorClassname;
             this.message = msg || defaultMessage || "";
             logger.error(this._detailsAsString());
@@ -33,7 +33,7 @@ function ErrorFactory(logger, includeErrorDetailInAlerts) {
  * @returns {Boolean}
  */    
 Error.prototype.isInstanceOf = function (constructor) {
-    var thatClassname = this._getClassnameOfBuiltinError(constructor) || constructor.prototype.name;
+    const thatClassname = this._getClassnameOfBuiltinError(constructor) || constructor.prototype.name;
     return this.name === thatClassname;
 }
 
@@ -42,12 +42,12 @@ Error.prototype.isInstanceOf = function (constructor) {
  * @returns {String|null} Classname for builtin error, or null for custom error.
  */    
 Error.prototype._getClassnameOfBuiltinError = function (constructor) {
-    var match = constructor.toString().match(/function\s+([^\s(]+)/);
+    const match = constructor.toString().match(/function\s+([^\s(]+)/);
     return match ? match[1] : null;
 }
 
 Error.prototype.alert = function () {
-    var message = this._includeErrorDetailInAlerts ? this._detailsAsString() : this.message;
+    const message = this._includeErrorDetailInAlerts ? this._detailsAsString() : this.message;
     alert(message);
 }
 
@@ -55,7 +55,7 @@ Error.prototype.alert = function () {
  * @returns {String}
  */
 Error.prototype._detailsAsString = function() {
-    var detail = this.message + " (" + this.name + ")";
+    let detail = this.message + " (" + this.name + ")";
     if (this.stack) {
         detail += "\n- stack:\n" + this.stack;
     }

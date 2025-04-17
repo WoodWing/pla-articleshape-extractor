@@ -21,14 +21,14 @@ function InDesignArticleService() {
             throw new NoFramesSelectedError();
         }
 
-        var frame = app.selection[0];
+        const frame = app.selection[0];
         if (!this.isValidArticleComponentFrame(frame)) {
             throw new NoTextOrGraphicalFramesSelectedError();
         }
 
         // Add new InDesign Articles.
-        var doc = app.activeDocument;
-        var articles = this._getInDesignArticles(doc, frame);
+        const doc = app.activeDocument;
+        const articles = this._getInDesignArticles(doc, frame);
         if (articles.length == 0) {
             this._createNewInDesignArticleWithSelectedFrames(doc, articleName);
             alert("A new article '" + articleName + "' has been created, and selected frames have been added.");
@@ -36,14 +36,14 @@ function InDesignArticleService() {
         }
 
         // Rename existing InDesign Articles.
-        for (var articleIndex = 0; articleIndex < articles.length; articleIndex++) {
-            var article = articles[articleIndex];
-            var newName = article.name;
-            var oldName = article.name;
+        for (let articleIndex = 0; articleIndex < articles.length; articleIndex++) {
+            const article = articles[articleIndex];
+            let newName = article.name;
+            let oldName = article.name;
 
-            var storyTypeNames = ["Lead", "Secondary", "Third", "Filler"];
-            for (var storyTypeIndex = 0; storyTypeIndex < storyTypeNames.length; storyTypeIndex++) {
-                var storyTypeName = storyTypeNames[storyTypeIndex];
+            const storyTypeNames = ["Lead", "Secondary", "Third", "Filler"];
+            for (let storyTypeIndex = 0; storyTypeIndex < storyTypeNames.length; storyTypeIndex++) {
+                const storyTypeName = storyTypeNames[storyTypeIndex];
                 newName = this._replaceTextCaseInsensitive(newName, storyTypeName, articleName);
                 newName = this._cleanWhitespaces(newName)
             };
@@ -60,12 +60,12 @@ function InDesignArticleService() {
      * @returns {Array<Article>}
      */
     this._getInDesignArticles = function(doc, frame) {
-        var docArticles = doc.articles;
-        var frameArticles = [];
+        const docArticles = doc.articles;
+        let frameArticles = [];
 
         // Loop through all articles to check if the frame is a member
-        for (var i = 0; i < docArticles.length; i++) {
-            var docArticle = docArticles.item(i);
+        for (let i = 0; i < docArticles.length; i++) {
+            const docArticle = docArticles.item(i);
 
             // Check if the frame is in the article's members
             if (this._isFrameMemberOfInDesignArticle(docArticle, frame)) {
@@ -82,8 +82,8 @@ function InDesignArticleService() {
      * @returns {Boolean} - True if the frame is already a member of the article, false otherwise.
      */
     this._isFrameMemberOfInDesignArticle = function(article, frame) {
-        var articleMembers = article.articleMembers.everyItem().getElements(); // Get all members as an array
-        for (var i = 0; i < articleMembers.length; i++) {
+        const articleMembers = article.articleMembers.everyItem().getElements(); // Get all members as an array
+        for (let i = 0; i < articleMembers.length; i++) {
             if (articleMembers[i].itemRef.equals(frame)) {
                 return true; // The frame is already a member of the article
             }
@@ -98,12 +98,12 @@ function InDesignArticleService() {
     this._createNewInDesignArticleWithSelectedFrames = function(doc, articleName) {
 
         // Create a new InDesign Article (even if an article with the same name already exists).
-        var article = doc.articles.add();
+        const article = doc.articles.add();
         article.name = articleName;
 
         // Add selected frames to the new article.
-        for (var i = 0; i < app.selection.length; i++) {
-            var frame = app.selection[i];
+        for (let i = 0; i < app.selection.length; i++) {
+            const frame = app.selection[i];
             if (this.isValidArticleComponentFrame(frame)) {
                 try {
                     article.articleMembers.add(frame);
@@ -121,7 +121,7 @@ function InDesignArticleService() {
      * @returns {String} Text with substitutes.
      */
     this._replaceTextCaseInsensitive = function(text, search, replacement) {
-        var regex = new RegExp(search, "gi"); // "g" = global, "i" = case insensitive
+        const regex = new RegExp(search, "gi"); // "g" = global, "i" = case insensitive
         return text.replace(regex, replacement);
     };
 

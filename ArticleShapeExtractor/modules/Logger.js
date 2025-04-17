@@ -33,7 +33,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this.debug = function () {
 		if(5 > this.level)
 			return;
-		var args = Array.prototype.slice.call(arguments);
+		const args = Array.prototype.slice.call(arguments);
 		this._log(5, args);
 	};
 
@@ -45,7 +45,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this.info = function () {
 		if(4 > this.level)
 			return;
-		var args = Array.prototype.slice.call(arguments);
+		const args = Array.prototype.slice.call(arguments);
 		this._log(4, args);
 	};
 
@@ -57,7 +57,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this.warning = function () {
 		if(3 > this.level)
 			return;
-		var args = Array.prototype.slice.call(arguments);
+		const args = Array.prototype.slice.call(arguments);
 		this._log(3, args);
 	};
 
@@ -69,7 +69,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this.error = function () {
 		if(2 > this.level)
 			return;
-		var args = Array.prototype.slice.call(arguments);
+		const args = Array.prototype.slice.call(arguments);
 		this._log(2, args);
 	};
 
@@ -81,7 +81,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this.critical = function () {
 		if(1 > this.level)
 			return;
-		var args = Array.prototype.slice.call(arguments);
+		const args = Array.prototype.slice.call(arguments);
 		this._log(1, args);
 	};
 
@@ -90,7 +90,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @param {String} args 
 	 */
 	this._log = function (logLevel, args) {
-		var template = args.shift();
+		const template = args.shift();
 		// Replace undefined arguments with '*undefined*' to distinguish from ''
 		args.forEach(function(replacement, i) {
 			if (typeof replacement === 'undefined') {
@@ -126,11 +126,11 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @returns {String} UTC date and time with milliseconds in ISO 8601 format.
 	 */
 	this._getDateTimeWithMsAsString = function() {
-		var date = new Date();
-		var dateString = date.getUTCFullYear() 
+		const date = new Date();
+		const dateString = date.getUTCFullYear() 
 			+ '-' + date.getUTCMonth().toString().padStart(2, "0") 
 			+ '-' + date.getUTCDay().toString().padStart(2, "0");
-		var timeString = date.getUTCHours().toString().padStart(2, "0") 
+		const timeString = date.getUTCHours().toString().padStart(2, "0") 
 			+ ':' + date.getUTCMinutes().toString().padStart(2, "0") 
 			+ ':' + date.getUTCSeconds().toString().padStart(2, "0")
 			+ '.' + date.getUTCMilliseconds().toString().padStart(3, "0");

@@ -47,18 +47,18 @@ const Container = {
         if (!this._registrations[service]) {
             throw new Error("Service '" + service + "' not registered.");
         }
-        var registration = this._registrations[service];
+        let registration = this._registrations[service];
         if (
             (registration.providerType === 'singleton' && registration.lastInstance === null) 
             || registration.providerType === 'factory'
         ) {
-            var createdInstance = registration.factoryFunction();
+            const createdInstance = registration.factoryFunction();
             if(typeof createdInstance !== "object") {
                 throw new Error(
                     "Factory function for service '" + service + "' created '" + typeof createdInstance + "', " 
                     + "but expected an object.");
             }
-            var actualService = this._getClassname(createdInstance)
+            const actualService = this._getClassname(createdInstance)
             if( actualService !== service) {
                 throw new Error(
                     "Factory function for service '" + service + "' created instance of '" + actualService + "', "
@@ -77,7 +77,7 @@ const Container = {
         if (!obj || !obj.constructor) {
             return "Unknown";
         }
-        var match = obj.constructor.toString().match(/function\s+([^\s(]+)/);
+        const match = obj.constructor.toString().match(/function\s+([^\s(]+)/);
         return match ? match[1] : "Anonymous";
     },
 };

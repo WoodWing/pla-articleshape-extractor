@@ -9,13 +9,13 @@
 function Settings(defaultConfig, localConfig) {
 
     this._deepMerge = function(defaultData, localData) {
-        var merged = {};
-        for (var key in defaultData) {
+        let merged = {};
+        for (let key in defaultData) {
             if (defaultData.hasOwnProperty(key)) {
                 merged[key] = defaultData[key];
             }
         }
-        for (var key in localData) {
+        for (let key in localData) {
             if (localData.hasOwnProperty(key)) {
                 if (typeof localData[key] === "object" && typeof defaultData[key] === "object") {
                     merged[key] = this._deepMerge(defaultData[key], localData[key]);

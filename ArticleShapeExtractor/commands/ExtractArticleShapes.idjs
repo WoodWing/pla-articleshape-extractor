@@ -7,7 +7,7 @@ await (async function main() {
             throw new NoDocumentOpenedError();
         }
 
-        var doc = app.activeDocument;
+        const doc = app.activeDocument;
         if (doc.articles.length === 0) {
             throw new NoArticlesInDocumentError();
         }
@@ -22,7 +22,7 @@ await (async function main() {
         }
 
         const Container = require("../modules/Container.js");
-        var exportCounter = await Container.resolve("ExportInDesignArticlesToPlaService").run(doc, folder);
+        let exportCounter = await Container.resolve("ExportInDesignArticlesToPlaService").run(doc, folder);
         if (exportCounter === 0) {
             throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.");
         }
