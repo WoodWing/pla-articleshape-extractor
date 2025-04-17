@@ -28,7 +28,9 @@ function ExportInDesignArticlesToPlaService(
      * @returns {Number} Count of exported article shapes.
      */
     this.run = async function(doc, folder) {
-        this._logger.info("Extracting InDesign Articles for layout document '{}'.", doc.fullName);
+        const lfs = require('uxp').storage.localFileSystem;
+        const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
+        this._logger.info("Extracting InDesign Articles for layout document '{}'.", docName);
         var exportCounter = 0;
 
         app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
