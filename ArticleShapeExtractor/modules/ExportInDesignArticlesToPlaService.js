@@ -305,7 +305,9 @@ function ExportInDesignArticlesToPlaService(
             alert("Error exporting the snippet: " + e.message);
         } finally {
             // Ungroup the items after export
-            group.ungroup();
+            if (group) {
+                group.ungroup();
+            }
         }
 
         // Export JSON.
