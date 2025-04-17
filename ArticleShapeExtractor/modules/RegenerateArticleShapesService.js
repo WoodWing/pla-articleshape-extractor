@@ -1,4 +1,5 @@
 const { app } = require("indesign");
+const idd = require("indesign");
 
 /**
  * @constructor
@@ -115,7 +116,7 @@ function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToP
                         app.openObject(objectId);
                         const theOpenDoc = app.documents.item(app.documents.length - 1);
                         await this._exportInDesignArticlesToPlaService.run(theOpenDoc, folder);
-                        theOpenDoc.close(SaveOptions.no);
+                        theOpenDoc.close(idd.SaveOptions.no);
                         app.sendObjectToNext(objectId);
                     }
 
