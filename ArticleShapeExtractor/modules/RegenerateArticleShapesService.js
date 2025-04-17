@@ -113,8 +113,7 @@ function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToP
                         // Get the id of the file
                         //=======================================
                         const objectId = newArrayOfRecords[x][0];
-                        app.openObject(objectId);
-                        const theOpenDoc = app.documents.item(app.documents.length - 1);
+                        const theOpenDoc = app.openObject(objectId);
                         await this._exportInDesignArticlesToPlaService.run(theOpenDoc, folder);
                         theOpenDoc.close(idd.SaveOptions.no);
                         app.sendObjectToNext(objectId);
