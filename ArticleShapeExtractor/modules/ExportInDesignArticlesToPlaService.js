@@ -286,8 +286,11 @@ function ExportInDesignArticlesToPlaService(
         const jsonFile = await fs.createEntryWithUrl(baseFileName + ".json", { overwrite: true });
 
         // Export IDMS snippet.
-        doc.select(pageItems);
-        doc.exportPageItemsSelectionToSnippet(snippetFile);
+        let pageItemsIds = [];
+        for (let index = 0; index < pageItems.length; index++) {
+            pageItemsIds.push(pageItems[index].id);
+        }    
+        doc.exportPageItemsToSnippet(snippetFile, pageItemsIds);
 
         // Export JPEG image.
         let group = null;
