@@ -140,6 +140,19 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this._getLogFilepath = function() {
 		return `file:${this.path.rtrim('/')}/${this.name}`;
 	};
+
+	/**
+	 * Log an Error object.
+	 * @param {Error} error 
+	 * @returns 
+	 */
+	this.logError = function(error) {
+		let message = error.message + " (" + error.name + ")";
+		if (error.stack) {
+			message += "\n- stack:\n" + error.stack;
+		}
+		this.error(message);
+	}	
 }
 
 module.exports = Logger;

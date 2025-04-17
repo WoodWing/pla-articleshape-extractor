@@ -1,7 +1,9 @@
 await (async function main() {
     const { app } = require("indesign");
+    const initBootstrap = require('../bootstrap.js');
+    const Container = require("../modules/Container.js");
     try {
-        require('../bootstrap.js');
+        initBootstrap();
 
         if (app.documents.length === 0) {
             throw new NoDocumentOpenedError();
@@ -21,15 +23,13 @@ await (async function main() {
             throw new NoFolderSelectedError();
         }
 
-        const Container = require("../modules/Container.js");
         let exportCounter = await Container.resolve("ExportInDesignArticlesToPlaService").run(doc, folder);
         if (exportCounter === 0) {
             throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.");
         }
         alert(exportCounter + " articles have been exported as Article Shapes.");
     } catch(error) {
-        error.alert();
-    } finally {
-
+        Container.resolve("Logger").logError(error);
+        alert(error);
     }
 })();

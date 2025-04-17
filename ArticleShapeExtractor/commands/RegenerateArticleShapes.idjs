@@ -1,8 +1,10 @@
 await (async function main() {
     const { app } = require("indesign");
     const idd = require("indesign");
+    const initBootstrap = require('../bootstrap.js');
+    const Container = require("../modules/Container.js");
     try {
-        require('../bootstrap.js');
+        initBootstrap();
 
         // Prompt the user to select the folder for saving the Article Shapes.
         alert("Select a folder to save the Article Shapes.");
@@ -13,13 +15,13 @@ await (async function main() {
             throw new NoFolderSelectedError();
         }    
 
-        const Container = require("../modules/Container.js");
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
         await Container.resolve("RegenerateArticleShapesService").run(folder);
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
     } catch(error) {
         // First enable the user interaction again to able to show the alert.
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
-        error.alert();
+        Container.resolve("Logger").logError(error);
+        alert(error.message);
     }
 })();

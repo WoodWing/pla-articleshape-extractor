@@ -1,9 +1,11 @@
 await (async function main() {
+    const initBootstrap = require('../bootstrap.js');
+    const Container = require("../modules/Container.js");
     try {
-        require('../bootstrap.js');
-        const Container = require("../modules/Container.js");
+        initBootstrap();
         Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Secondary");
     } catch (error) {
-        error.alert();
+        Container.resolve("Logger").logError(error);
+        alert(error);
     }
 })();

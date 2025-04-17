@@ -1,5 +1,6 @@
 require("./extensions/String.js");
 require("./extensions/globals.js");
+require("./modules/Errors.js");
 const Container = require("./modules/Container.js");
 
 Container.registerSingleton("Settings", function() {
@@ -23,18 +24,8 @@ Container.registerSingleton("Logger", function() {
     }
 });
 
-Container.registerSingleton("ErrorFactory", function() {
-    const ErrorFactory = require("./modules/ErrorFactory.js");
-    return new ErrorFactory(
-        Container.resolve("Logger"),
-        Container.resolve("Settings").getIncludeErrorDetailInAlerts(),
-    );
-});
-// Late initialize custom errors (once after ErrorFactory is registered).
-require("./modules/Errors.js");
-
 // Assure this script is running on a compatible InDesign version.
-(function validateHost() {
+function validateHost() {
     const logger = Container.resolve("Logger");
     try {
         const minRequiredVersion = Container.resolve("Settings").getMinimumRequiredInDesignVersion();
@@ -48,7 +39,7 @@ require("./modules/Errors.js");
     } catch(error) { // This may happen when debugging with the Adobe UXP Developer Tool.
         logger.error(error.toString());        
     }
-})();
+};
 
 Container.registerSingleton("ArticleShapeGateway", function() {
     const ArticleShapeGateway = require("./modules/ArticleShapeGateway.js");
@@ -81,3 +72,9 @@ Container.registerFactory("RegenerateArticleShapesService", function() {
         Container.resolve("ExportInDesignArticlesToPlaService"),
     );
 });
+
+function initBootstrap() {
+    validateHost();
+}
+
+module.exports = initBootstrap;
