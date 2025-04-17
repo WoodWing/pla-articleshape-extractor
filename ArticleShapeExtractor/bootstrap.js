@@ -17,8 +17,7 @@ Container.registerSingleton("Logger", function() {
     const Logger = require("./modules/Logger.js");
     const config = Container.resolve("Settings").getLoggerConfig();
     try {
-        var logger = new Logger(config.folder, config.filename, config.level, config.wipe);    
-        return logger;
+        return new Logger(config.folder, config.filename, config.level, config.wipe);    
     } catch(error) {
         throw new Error(error + " Please check your settings in config/config.js and config/config-local.js files.");
     }
@@ -32,10 +31,7 @@ Container.registerSingleton("ErrorFactory", function() {
     );
 });
 // Late initialize custom errors (once after ErrorFactory is registered).
-function delayedRequireErrorsModule() {
-    require("./modules/Errors.js");
-}
-delayedRequireErrorsModule();
+require("./modules/Errors.js");
 
 // Assure this script is running on a compatible InDesign version.
 (function validateHost() {
