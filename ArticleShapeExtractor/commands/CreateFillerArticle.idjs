@@ -6,6 +6,6 @@
         Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Filler");
     } catch (error) {
         Container.resolve("Logger").logError(error);
-        alert(error);
+        alert(error.message, "Error");
     }
 })();

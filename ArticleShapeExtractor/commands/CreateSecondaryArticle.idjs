@@ -6,6 +6,6 @@ await (async function main() {
         Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Secondary");
     } catch (error) {
         Container.resolve("Logger").logError(error);
-        alert(error);
+        alert(error.message, "Error");
     }
 })();

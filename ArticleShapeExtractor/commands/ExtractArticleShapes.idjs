@@ -30,6 +30,6 @@ await (async function main() {
         alert(exportCounter + " articles have been exported as Article Shapes.");
     } catch(error) {
         Container.resolve("Logger").logError(error);
-        alert(error);
+        alert(error.message, "Error");
     }
 })();
