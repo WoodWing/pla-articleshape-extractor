@@ -36,14 +36,17 @@ require("./modules/Errors.js");
 // Assure this script is running on a compatible InDesign version.
 (function validateHost() {
     const logger = Container.resolve("Logger");
-    const minRequiredVersion = Container.resolve("Settings").getMinimumRequiredInDesignVersion();
-    const host = require('uxp').host;
-    const os = require('os');
-    logger.info(`Started log for host ${host.name} v${host.version} (${host.uiLocale}) `
-        + `running on OS ${os.platform()}/${os.arch()} v${os.release()}`);
-    if (versionCompare(host.version, minRequiredVersion) < 0) {
-        throw new Error(`InDesign ${host.version} is not supported. `
-            +`Minimum required version is ${minRequiredVersion}.`);
+    try {
+        const minRequiredVersion = Container.resolve("Settings").getMinimumRequiredInDesignVersion();
+        const host = require('uxp').host;
+        logger.info(`Started log for host ${host.name} v${host.version} (${host.uiLocale}) `
+            + `running on OS ${os.platform()}/${os.arch()} v${os.release()}`);
+        if (versionCompare(host.version, minRequiredVersion) < 0) {
+            throw new Error(`InDesign ${host.version} is not supported. `
+                +`Minimum required version is ${minRequiredVersion}.`);
+        }
+    } catch(error) { // This may happen when debugging with the Adobe UXP Developer Tool.
+        logger.error(error.toString());        
     }
 })();
 
