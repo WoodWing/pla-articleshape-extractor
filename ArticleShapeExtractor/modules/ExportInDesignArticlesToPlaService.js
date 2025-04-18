@@ -288,21 +288,28 @@ function ExportInDesignArticlesToPlaService(
         // Export IDMS snippet.
         let pageItemsIds = [];
         for (let index = 0; index < pageItems.length; index++) {
-            pageItemsIds.push(pageItems[index].id);
+            const pageItem = pageItems[index];
+            this._logger.info(`Exporting '${pageItem.constructor.name}' page item with id '${pageItem.id}'.`);
+            pageItemsIds.push(pageItem.id);
         }    
         doc.exportPageItemsToSnippet(snippetFile, pageItemsIds);
 
         // Export JPEG image.
         let group = null;
         try {
-            group = doc.groups.add(pageItems);
-
             // Define JPEG export options
             app.jpegExportPreferences.jpegQuality = idd.JPEGOptionsQuality.HIGH;
             app.jpegExportPreferences.exportResolution = 144; // DPI, screen resolution
-            group.exportFile(idd.ExportFormat.JPG, imgFile);
-        } catch (e) {
-            alert("Error exporting the snippet: " + e.message);
+
+            if (pageItems.length === 1) {
+                pageItems[0].exportFile(idd.ExportFormat.JPG, imgFile);
+            } else {
+                group = doc.groups.add(pageItems);
+                group.exportFile(idd.ExportFormat.JPG, imgFile);
+            }
+        } catch (error) {
+            this._logger.logError(error);
+            alert("Error exporting the snippet: " + error.message);
         } finally {
             // Ungroup the items after export
             if (group) {
