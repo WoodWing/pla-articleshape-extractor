@@ -30,6 +30,7 @@ function validateHost() {
     try {
         const minRequiredVersion = Container.resolve("Settings").getMinimumRequiredInDesignVersion();
         const host = require('uxp').host;
+        const os = require('os');
         logger.info(`Started log for host ${host.name} v${host.version} (${host.uiLocale}) `
             + `running on OS ${os.platform()}/${os.arch()} v${os.release()}`);
         if (versionCompare(host.version, minRequiredVersion) < 0) {
