@@ -295,12 +295,21 @@ function ExportInDesignArticlesToPlaService(
         doc.exportPageItemsToSnippet(snippetFile, pageItemsIds);
 
         // Export JPEG image.
+        const PreferencesManager = require('./PreferencesManager.js');
+        const preferencesManager = new PreferencesManager(app.jpegExportPreferences);
+        let originalPreferences = null;
         let group = null;
         try {
-            // Define JPEG export options
-            app.jpegExportPreferences.jpegQuality = idd.JPEGOptionsQuality.HIGH;
-            app.jpegExportPreferences.exportResolution = 144; // DPI, screen resolution
-
+            originalPreferences = preferencesManager.overridePreferences({
+                embedColorProfile: true,
+                antiAlias: true,
+                useDocumentBleeds: false,
+                simulateOverprint: false,
+                jpegQuality: idd.JPEGOptionsQuality.HIGH,
+                jpegRenderingStyle: idd.JPEGOptionsFormat.BASELINE_ENCODING,
+                exportResolution: 144, // DPI, screen resolution
+                jpegColorSpace: idd.JpegColorSpaceEnum.RGB,
+            });
             if (pageItems.length === 1) {
                 pageItems[0].exportFile(idd.ExportFormat.JPG, imgFile);
             } else {
@@ -311,9 +320,11 @@ function ExportInDesignArticlesToPlaService(
             this._logger.logError(error);
             alert("Error exporting the snippet: " + error.message);
         } finally {
-            // Ungroup the items after export
             if (group) {
                 group.ungroup();
+            }
+            if (originalPreferences) {
+                preferencesManager.restoreOriginalPreferences(originalPreferences);
             }
         }
 
