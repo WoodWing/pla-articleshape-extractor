@@ -63,7 +63,7 @@ class NoFolderSelectedError extends Error {
 globalThis.NoFolderSelectedError = NoFolderSelectedError;
 
 class PrintLayoutAutomationError extends Error {
-    constructor() {
+    constructor(message) {
         super(message);
         this.name = this.constructor.name;
     }
