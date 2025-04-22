@@ -4,7 +4,6 @@ class ArgumentError extends Error {
         this.name = this.constructor.name;
     }
 }
-globalThis.ArgumentError = ArgumentError;
 
 class ConfigurationError extends Error {
     constructor(message) {
@@ -12,7 +11,6 @@ class ConfigurationError extends Error {
         this.name = this.constructor.name;
     }
 }
-globalThis.ConfigurationError = ConfigurationError;
 
 class NoStudioSessionError extends Error {
     constructor() {
@@ -20,7 +18,6 @@ class NoStudioSessionError extends Error {
         this.name = this.constructor.name;
     }
 }
-globalThis.NoStudioSessionError = NoStudioSessionError;
 
 class NoDocumentOpenedError extends Error {
     constructor() {
@@ -28,7 +25,6 @@ class NoDocumentOpenedError extends Error {
         this.name = this.constructor.name;
     }
 }
-globalThis.NoDocumentOpenedError = NoDocumentOpenedError;
 
 class NoFramesSelectedError extends Error {
     constructor() {
@@ -36,7 +32,6 @@ class NoFramesSelectedError extends Error {
         this.name = this.constructor.name;
     }
 }
-globalThis.NoFramesSelectedError = NoFramesSelectedError;
 
 class NoTextOrGraphicalFramesSelectedError extends Error {
     constructor() {
@@ -44,7 +39,6 @@ class NoTextOrGraphicalFramesSelectedError extends Error {
         this.name = this.constructor.name;
     }
 }
-globalThis.NoTextOrGraphicalFramesSelectedError = NoTextOrGraphicalFramesSelectedError;
 
 class NoArticlesInDocumentError extends Error {
     constructor() {
@@ -52,7 +46,6 @@ class NoArticlesInDocumentError extends Error {
         this.name = this.constructor.name;
     }
 }
-globalThis.NoArticlesInDocumentError = NoArticlesInDocumentError;
 
 class NoFolderSelectedError extends Error {
     constructor() {
@@ -60,7 +53,6 @@ class NoFolderSelectedError extends Error {
         this.name = this.constructor.name;
     }
 }
-globalThis.NoFolderSelectedError = NoFolderSelectedError;
 
 class PrintLayoutAutomationError extends Error {
     constructor(message) {
@@ -68,4 +60,15 @@ class PrintLayoutAutomationError extends Error {
         this.name = this.constructor.name;
     }
 }
-globalThis.PrintLayoutAutomationError = PrintLayoutAutomationError;
+
+module.exports = {
+    ArgumentError,
+    ConfigurationError,
+    NoStudioSessionError,
+    NoDocumentOpenedError,
+    NoFramesSelectedError,
+    NoTextOrGraphicalFramesSelectedError,
+    NoArticlesInDocumentError,
+    NoFolderSelectedError,
+    PrintLayoutAutomationError,
+}

@@ -6,11 +6,13 @@ await (async function main() {
         initBootstrap();
 
         if (app.documents.length === 0) {
+            const { NoDocumentOpenedError } = require('../modules/Errors.js');
             throw new NoDocumentOpenedError();
         }
 
         const doc = app.activeDocument;
         if (doc.articles.length === 0) {
+            const { NoArticlesInDocumentError } = require('../modules/Errors.js');
             throw new NoArticlesInDocumentError();
         }
 
@@ -20,11 +22,13 @@ await (async function main() {
         const domains = require('uxp').storage.domains;
         const folder = await lfs.getFolder({initialDomain: domains.userDocuments});
         if (!folder || !folder.isFolder) {
+            const { NoFolderSelectedError } = require('../modules/Errors.js');
             throw new NoFolderSelectedError();
         }
 
         let exportCounter = await Container.resolve("ExportInDesignArticlesToPlaService").run(doc, folder);
         if (exportCounter === 0) {
+            const { PrintLayoutAutomationError } = require('../modules/Errors.js');
             throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.");
         }
         alert(exportCounter + " articles have been exported as Article Shapes.");

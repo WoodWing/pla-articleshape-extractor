@@ -12,6 +12,7 @@ await (async function main() {
         const domains = require('uxp').storage.domains;
         const folder = await lfs.getFolder({initialDomain: domains.userDocuments});
         if (!folder || !folder.isFolder) {
+            const { NoFolderSelectedError } = require('../modules/Errors.js');
             throw new NoFolderSelectedError();
         }    
 

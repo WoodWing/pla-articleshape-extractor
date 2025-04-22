@@ -17,6 +17,7 @@ function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToP
 
         // Bail out when user is currently not logged in.
         if (!app.entSession || app.entSession.activeServer === '' || app.entSession.activeUser === '') {
+            const { NoStudioSessionError } = require('./Errors.js');
             throw new NoStudioSessionError();
         }
 
@@ -32,6 +33,7 @@ function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToP
             //=======================================
             const query = app.storedUserQuery(this._userQueryName);
             if(query == undefined) {
+                const { ConfigurationError } = require('./Errors.js');
                 throw new ConfigurationError("User Query '" + this._userQueryName + "' does not exist.");
             }
             
