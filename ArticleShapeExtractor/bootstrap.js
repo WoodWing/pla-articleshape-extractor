@@ -24,16 +24,22 @@ Container.registerSingleton("Logger", function() {
     }
 });
 
+Container.registerSingleton("VersionUtils", function() {
+    const VersionUtils = require("./modules/VersionUtils.js");
+    return new VersionUtils();
+});
+
 // Assure this script is running on a compatible InDesign version.
 function validateHost() {
     const logger = Container.resolve("Logger");
     try {
+        const versionUtils = Container.resolve("VersionUtils");
         const minRequiredVersion = Container.resolve("Settings").getMinimumRequiredInDesignVersion();
         const host = require('uxp').host;
         const os = require('os');
         logger.info(`Started log for host ${host.name} v${host.version} (${host.uiLocale}) `
             + `running on OS ${os.platform()}/${os.arch()} v${os.release()}`);
-        if (versionCompare(host.version, minRequiredVersion) < 0) {
+        if (versionUtils.versionCompare(host.version, minRequiredVersion) < 0) {
             throw new Error(`InDesign ${host.version} is not supported. `
                 +`Minimum required version is ${minRequiredVersion}.`);
         }
