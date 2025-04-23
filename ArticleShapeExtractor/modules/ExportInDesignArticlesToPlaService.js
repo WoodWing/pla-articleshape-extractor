@@ -246,8 +246,11 @@ function ExportInDesignArticlesToPlaService(
             "textComponents": [],
             "imageComponents": []
         }
+        // Set the foldLine property when the article shape does crossover the fold line of the spread.
         const geometricBoundsRight = articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
-        const crossoverFoldLine = doc.documentPreferences.pageWidth < geometricBoundsRight;
+        const crossoverFoldLine = 
+            articleShapeJson.geometricBounds.x < doc.documentPreferences.pageWidth 
+            && doc.documentPreferences.pageWidth < geometricBoundsRight;
         if (crossoverFoldLine) {
             articleShapeJson.foldLine = doc.documentPreferences.pageWidth - articleShapeJson.geometricBounds.x;
         }
