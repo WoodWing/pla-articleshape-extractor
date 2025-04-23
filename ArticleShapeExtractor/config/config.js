@@ -1,6 +1,6 @@
 // DO NOT CHANGE THIS FILE! See README.md for instructions.
 
-$.global.plaDefaultConfig = {
+const plaDefaultConfig = {
     
     // URL of the PLA service.
     plaServiceUrl: "https://service.pla-poc.woodwing.cloud",
@@ -23,12 +23,14 @@ $.global.plaDefaultConfig = {
     // A log file can be created in a certain log folder.
     // The level tells the minimum severity of messages to include.
     logger: {
-        level: "ERROR", // Supported values: "DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"
+        level: "DISABLED", // Supported values: "DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"
         filename: "pla.log",
-        folder: Folder.desktop, // Directory where to create the log file.
+        folder: "", // Directory where to create the log file.
         wipe: true, // Whether to clean the log file before starting a new operation.
-    },
+    },    
 
-    // Whether to include all available error information in the alert dialogs.
-    includeErrorDetailInAlerts: false,
+    // Error on attempts running scripts on older InDesign versions that are not compatible.
+    minimumRequiredInDesignVersion: "19.0.0",
 };
+
+module.exports = plaDefaultConfig;

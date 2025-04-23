@@ -5,3 +5,5 @@
 function ArticleShapeGateway(plaServiceUrl) {
     this._plaServiceUrl = plaServiceUrl;
 }
+
+module.exports = ArticleShapeGateway;

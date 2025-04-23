@@ -1,5 +1,5 @@
-//@include "libraries/_.jsx";
-//@include "libraries/Json2.js";
+const { app } = require("indesign");
+const idd = require("indesign");
 
 /**
  * @constructor
@@ -27,27 +27,29 @@ function ExportInDesignArticlesToPlaService(
      * @param {Folder} folder
      * @returns {Number} Count of exported article shapes.
      */
-    this.run = function(doc, folder) {
-        this._logger.info("Extracting InDesign Articles for layout document '{}'.", doc.fullName);
-        var exportCounter = 0;
+    this.run = async function(doc, folder) {
+        const lfs = require('uxp').storage.localFileSystem;
+        const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
+        this._logger.info("Extracting InDesign Articles for layout document '{}'.", docName);
+        let exportCounter = 0;
 
-        app.scriptPreferences.measurementUnit = MeasurementUnits.POINTS;
-        for (var articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
-            var article = doc.articles[articleIndex];
-            var pageItems = []; // Collect all associated page items for the article.
-            var elements = article.articleMembers.everyItem().getElements();
-            var outerBounds = this._getOuterboundOfArticleShape(elements);
-            var articleShapeJson = this._composeArticleShapeJson(doc, article.name, outerBounds);
+        app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
+        for (let articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
+            const article = doc.articles.item(articleIndex);
+            let pageItems = []; // Collect all associated page items for the article.
+            const elements = article.articleMembers.everyItem().getElements();
+            const outerBounds = this._getOuterboundOfArticleShape(elements);
+            let articleShapeJson = this._composeArticleShapeJson(doc, article.name, outerBounds);
             if (articleShapeJson === null) {
                 this._logger.warning("Excluded article '{}' from export because conversion to JSON failed.", article.name);
                 continue;
             }
 
-            for (var elementIndex = 0; elementIndex < elements.length; elementIndex++) {
-                var element = elements[elementIndex];
+            for (let elementIndex = 0; elementIndex < elements.length; elementIndex++) {
+                const element = elements[elementIndex];
                 if (this._inDesignArticleService.isValidArticleTextFrame(element.itemRef)) {
-                    var threadedFrames = this._getThreadedFrames(element.itemRef);
-                    var textComponent = {
+                    const threadedFrames = this._getThreadedFrames(element.itemRef);
+                    let textComponent = {
                         "type": element.itemRef.elementLabel,
                         "words": 0,
                         "characters": 0,
@@ -57,14 +59,14 @@ function ExportInDesignArticlesToPlaService(
 
                     // Add the name of the first paragraph style used in the chain of threaded frames.
                     if (threadedFrames[0].paragraphs.length > 0) {
-                        textComponent.firstParagraphStyle = threadedFrames[0].paragraphs[0].appliedParagraphStyle.name
+                        textComponent.firstParagraphStyle = threadedFrames[0].paragraphs.item(0).appliedParagraphStyle.name
                     }
 
-                    for (var frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
-                        var frame = threadedFrames[frameIndex];
+                    for (let frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
+                        const frame = threadedFrames[frameIndex];
                         pageItems.push(frame);
                         if (this._inDesignArticleService.isValidArticleTextFrame(frame)) {
-                            var textStats = this._getTextStatisticsWithoutOverset(frame);
+                            const textStats = this._getTextStatisticsWithoutOverset(frame);
                             textComponent.frames.push({
                                 "geometricBounds": this._composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
                                 "columns": frame.textFramePreferences.textColumnCount,
@@ -89,14 +91,14 @@ function ExportInDesignArticlesToPlaService(
                     this._logger.info("Article '{}' has a page item '{}' placed at ({},{}). " 
                         + "The page item is either not valid or not a text/graphic frame. "
                         + "Hence the item is excluded from the article export operation.",
-                        article.name, element.itemRef.constructor.name, 
+                        article.name, element.itemRef.constructorName, 
                         element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0]);
                 }
             }
             if (pageItems.length === 0) {
                 continue;
             }
-            var managedArticle = this._getManagedArticleFromPageItems(pageItems)
+            const managedArticle = this._getManagedArticleFromPageItems(pageItems)
             if (managedArticle) {
                 articleShapeJson.genreId = this._resolveGenreFromManagedArticle(managedArticle);
             }
@@ -107,10 +109,10 @@ function ExportInDesignArticlesToPlaService(
                 this._logger.error(message);
                 continue;
             }
-            this._exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
+            await this._exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
             exportCounter++;
         }
-        app.scriptPreferences.measurementUnit = AutoEnum.AUTO_VALUE;    
+        app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
         return exportCounter;    
     }
 
@@ -119,7 +121,7 @@ function ExportInDesignArticlesToPlaService(
      * @returns {Object|null}
      */
     this._resolveShapeTypeFromArticleName = function(articleName) {
-        var shapeType = { id: null, name: null };
+        let shapeType = { id: null, name: null };
         articleName = articleName.toLowerCase();
         if (articleName.indexOf("lead") != -1) {
             shapeType.name = "lead";
@@ -148,28 +150,22 @@ function ExportInDesignArticlesToPlaService(
      * @param {Number} articleIndex 
      * @returns {String}
      */
-    this._getFileBaseName = function(doc, folder, shapeTypeName, articleIndex) {
-        var baseFileName = folder.fsName + "/" + doc.name + ' ' + shapeTypeName + ' ' + (articleIndex + 1);
+    this._getFileBaseName = async function(doc, folder, shapeTypeName, articleIndex) {
+        let fileName = doc.name + ' ' + shapeTypeName + ' ' + (articleIndex + 1);
         try {
             // Get workflow object ID and Version from Studio.
-            baseFileName = baseFileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';
+            fileName = fileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';
         } catch (error) {
             // Use path of layout to make file name unique.
             if (doc.saved) {
-                var suffix = doc.filePath.absoluteURI;
-                if ((suffix.indexOf("~\\") === 0) || (suffix.indexOf("~/") === 0)) {
-                    suffix = suffix.replace("~\\", "").replace("~/", "");
-                }
-                while ((suffix.indexOf("\\") === 0) || (suffix.indexOf("/") === 0)) {
-                    suffix = suffix.replace("\\", "").replace("/", "");
-                }
-                while ((suffix.indexOf("\\") != -1) || (suffix.indexOf("/") != -1)) {
-                    suffix = suffix.replace("\\", "-").replace("/", "-");
-                }
-                baseFileName = baseFileName + ' (' + suffix + ")";
+                const docFile  = await doc.fullName;
+                let suffix = window.path.dirname(docFile);
+                suffix = suffix.ltrim(window.path.sep).rtrim(window.path.sep);
+                suffix = suffix.replaceAll(window.path.sep, "-");
+                fileName = fileName + ' (' + suffix + ")";
             }
         }
-        return baseFileName;
+        return window.path.join(folder, fileName)
     }
 
     /**
@@ -194,7 +190,7 @@ function ExportInDesignArticlesToPlaService(
      * @returns {Number}
      */
     this._roundTo3Decimals = function(precisionNumber) {
-        return Math.round(precisionNumber * 1000) / 1000
+        return Math.round(precisionNumber * 1000) / 1000;
     }
 
     /**
@@ -207,30 +203,32 @@ function ExportInDesignArticlesToPlaService(
     this._composeArticleShapeJson = function(doc, articleName, outerBounds) {
 
         // Resolve Brand/Category. Fallback to defaults when no Studio session.
+        let brand = null;
+        let category = null;
         try {
-            var brand = app.entSessions.getPublication(
+            brand = app.entSessions.getPublication(
                 doc.entMetaData.get("Core_Publication")
             );
-            var category = app.entSession.getCategory(
+            category = app.entSession.getCategory(
                 doc.entMetaData.get("Core_Publication"), 
                 doc.entMetaData.get("Core_Section"), 
                 doc.entMetaData.get("Core_Issue")
             );
         } catch (error) {
-            var brand = this._fallbackBrand;
-            var category = this._fallbackCategory;
+            brand = this._fallbackBrand;
+            category = this._fallbackCategory;
         }
         this._logger.info("Resolved brand '{}' (id={}) and category '{}' (id={}).", 
             brand.name, brand.id, category.name, category.id);
 
         // Resolve the shape type. Bail out when article has bad naming convention.
-        var shapeType = this._resolveShapeTypeFromArticleName(articleName)
+        const shapeType = this._resolveShapeTypeFromArticleName(articleName)
         if(shapeType === null) {
             return null;
         }
 
         // Compose a base structure in the Article Shape JSON export format.
-        var articleShapeJson = {
+        let articleShapeJson = {
             "brandName": brand.name,
             "brandId": brand.id,
             "sectionName": category.name,
@@ -262,9 +260,9 @@ function ExportInDesignArticlesToPlaService(
         if (pageItems.length === 0) {
             return true;
         }
-        var firstItemSpread = pageItems[0].parent;
-        for (var i = 1; i < pageItems.length; i++) {
-            if (pageItems[i].parent !== firstItemSpread) {
+        const firstItemSpread = pageItems[0].parent;
+        for (let i = 1; i < pageItems.length; i++) {
+            if (!pageItems[i].parent.equals(firstItemSpread)) {
                 return false; // Different spread found
             }
         }
@@ -279,56 +277,74 @@ function ExportInDesignArticlesToPlaService(
      * @param {Array} pageItems
      * @param {Object} articleShapeJson
      */
-    this._exportArticlePageItems = function(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
-        var baseFileName = this._getFileBaseName(doc, folder, shapeTypeName, articleIndex)
-        var snippetFile = File(baseFileName + ".idms");
-        var imgFile = File(baseFileName + ".jpg");
-        var jsonFileName = baseFileName + ".json";
+    this._exportArticlePageItems = async function(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
+        const fs = require('uxp').storage.localFileSystem;
+
+        const baseFileName = await this._getFileBaseName(doc, folder, shapeTypeName, articleIndex);
+        const snippetFile = await fs.createEntryWithUrl(baseFileName + ".idms", { overwrite: true });
+        const imgFile = await fs.createEntryWithUrl(baseFileName + ".jpg", { overwrite: true });
+        const jsonFile = await fs.createEntryWithUrl(baseFileName + ".json", { overwrite: true });
 
         // Export IDMS snippet.
-        doc.select(pageItems);
-        doc.exportPageItemsSelectionToSnippet(snippetFile);
+        let pageItemsIds = [];
+        for (let index = 0; index < pageItems.length; index++) {
+            const pageItem = pageItems[index];
+            this._logger.info(`Exporting '${pageItem.constructor.name}' page item with id '${pageItem.id}'.`);
+            pageItemsIds.push(pageItem.id);
+        }    
+        doc.exportPageItemsToSnippet(snippetFile, pageItemsIds);
 
         // Export JPEG image.
+        const PreferencesManager = require('./PreferencesManager.js');
+        const preferencesManager = new PreferencesManager(app.jpegExportPreferences);
+        let originalPreferences = null;
+        let group = null;
         try {
-            var group = doc.groups.add(pageItems);
-
-            // Define JPEG export options
-            app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.HIGH;
-            app.jpegExportPreferences.exportResolution = 144; // DPI, screen resolution
-            group.exportFile(ExportFormat.JPG, imgFile);
-        } catch (e) {
-            alert("Error exporting the snippet: " + e.message);
+            originalPreferences = preferencesManager.overridePreferences({
+                embedColorProfile: true,
+                antiAlias: true,
+                useDocumentBleeds: false,
+                simulateOverprint: false,
+                jpegQuality: idd.JPEGOptionsQuality.HIGH,
+                jpegRenderingStyle: idd.JPEGOptionsFormat.BASELINE_ENCODING,
+                exportResolution: 144, // DPI, screen resolution
+                jpegColorSpace: idd.JpegColorSpaceEnum.RGB,
+            });
+            if (pageItems.length === 1) {
+                pageItems[0].exportFile(idd.ExportFormat.JPG, imgFile);
+            } else {
+                group = doc.groups.add(pageItems);
+                group.exportFile(idd.ExportFormat.JPG, imgFile);
+            }
+        } catch (error) {
+            this._logger.logError(error);
+            alert("Error exporting the snippet: " + error.message);
         } finally {
-            // Ungroup the items after export
-            group.ungroup();
+            if (group) {
+                group.ungroup();
+            }
+            if (originalPreferences) {
+                preferencesManager.restoreOriginalPreferences(originalPreferences);
+            }
         }
 
         // Export JSON.
-        this._saveJsonToDisk(articleShapeJson, jsonFileName);    
+        this._saveJsonToDisk(articleShapeJson, jsonFile);    
     }
 
     /**
     * Save JSON data to a file on disk.
     * @param {Object} jsonData - The JSON object to save.
-    * @param {String} filePath - The full path to save the file (including file name and .json extension).
+    * @param {File} file
     */
-    this._saveJsonToDisk = function(jsonData, filePath) {
+    this._saveJsonToDisk = function(jsonData, file) {
         try {
             // Convert JSON object to a string
-            var jsonString = JSON.stringify(jsonData, null, 4);
+            const jsonString = JSON.stringify(jsonData, null, 4);
 
-            // Create a File object
-            var file = new File(filePath);
-            file.encoding = "UTF-8";
-
-            // Open the file for writing
-            if (file.open("w")) {
-                file.write(jsonString); // Write the JSON string to the file
-                file.close(); // Close the file
-            } else {
-                alert("Failed to open the file for writing.");
-            }
+            // Write the JSON string to the file
+            const formats = require('uxp').storage.formats;
+            file.write(jsonString, {format: formats.utf8}); 
         } catch (e) {
             alert("An error occurred: " + e.message);
         }
@@ -342,18 +358,19 @@ function ExportInDesignArticlesToPlaService(
     this._getTextStatisticsWithoutOverset = function(textFrame) {
 
         // Extract only the visible text (not overset)
-        var visibleText = textFrame.lines;
-        var wordCount = 0;
-        var charCount = 0;
-        var text = "";
-        var totalLineHeight = 0;
+        const visibleText = textFrame.lines;
+        let wordCount = 0;
+        let charCount = 0;
+        let text = "";
+        let totalLineHeight = 0;
 
         // Loop through visible lines to count words and characters
-        for (var i = 0; i < visibleText.length; i++) {
-            wordCount += visibleText[i].words.length;
-            charCount += visibleText[i].characters.length;
-            text += visibleText[i].contents;
-            totalLineHeight += this._getLineHeight(visibleText[i]);
+        for (let i = 0; i < visibleText.length; i++) {
+            const visibleTextItem = visibleText.item(i);
+            wordCount += visibleTextItem.words.length;
+            charCount += visibleTextItem.characters.length;
+            text += visibleTextItem.contents;
+            totalLineHeight += this._getLineHeight(visibleTextItem);
         }
 
         return { 
@@ -379,14 +396,14 @@ function ExportInDesignArticlesToPlaService(
      *                     }
      */
     this._getOuterboundOfArticleShape = function(elements) {
-        var topLeftX = 0;
-        var topLeftY = 0;
-        var bottomRightX = 0;
-        var bottomRightY = 0;
+        let topLeftX = 0;
+        let topLeftY = 0;
+        let bottomRightX = 0;
+        let bottomRightY = 0;
 
-        for (var j = 0; j < elements.length; j++) {
-            var element = elements[j];
-            var threadedFrames;
+        for (let j = 0; j < elements.length; j++) {
+            const element = elements[j];
+            let threadedFrames;
 
             if (j == 0) {
                 topLeftX = element.itemRef.geometricBounds[1];
@@ -402,7 +419,7 @@ function ExportInDesignArticlesToPlaService(
                 threadedFrames = [element.itemRef];
             }
 
-            for (var k = 0; k < threadedFrames.length; k++) {
+            for (let k = 0; k < threadedFrames.length; k++) {
                 frame = threadedFrames[k];
 
                 if (frame.geometricBounds[1] < topLeftX) {
@@ -430,8 +447,8 @@ function ExportInDesignArticlesToPlaService(
      * @returns {Array} - An array of all threaded text frames, including the starting frame.
      */
     this._getThreadedFrames = function(textFrame) {
-        var threadedFrames = [];
-        var currentFrame = textFrame;
+        let threadedFrames = [];
+        let currentFrame = textFrame;
 
         // Traverse forward through the thread chain
         while (currentFrame) {
@@ -460,17 +477,17 @@ function ExportInDesignArticlesToPlaService(
             return null;
         }
 
-        var textWrapPrefs = frame.textWrapPreferences;
+        const textWrapPrefs = frame.textWrapPreferences;
 
-        if (textWrapPrefs.textWrapMode == TextWrapModes.NONE) {
+        if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.NONE)) {
             return "none"
-        } else if (textWrapPrefs.textWrapMode == TextWrapModes.BOUNDING_BOX_TEXT_WRAP) {
+        } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.BOUNDING_BOX_TEXT_WRAP)) {
             return "bounding_box"
-        } else if (textWrapPrefs.textWrapMode == TextWrapModes.CONTOUR) {
+        } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.CONTOUR)) {
             return "contour"
-        } else if (textWrapPrefs.textWrapMode == TextWrapModes.JUMP_OBJECT_TEXT_WRAP) {
+        } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.JUMP_OBJECT_TEXT_WRAP)) {
             return "jump_object"
-        } else if (textWrapPrefs.textWrapMode == TextWrapModes.NEXT_COLUMN_TEXT_WRAP) {
+        } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.NEXT_COLUMN_TEXT_WRAP)) {
             return "jump_to_next_column"
         } else {
             return ""
@@ -488,12 +505,12 @@ function ExportInDesignArticlesToPlaService(
         }
 
         // Calculate line height based on line leading and base shift of first character.
-        var leading = line.leading; // line spacing
-        var baselineShift = line.characters[0].baselineShift;
+        let leading = line.leading; // line spacing
+        const baselineShift = line.characters.item(0).baselineShift;
 
         // If leading is set to Auto (value = -1), estimate it as 120% of font size.
-        if (leading === Leading.AUTO) {
-            var fontSize = line.characters[0].pointSize;
+        if (leading.equals(idd.Leading.AUTO)) {
+            const fontSize = line.characters.item(0).pointSize;
             leading = fontSize * 1.2;
         }
 
@@ -506,10 +523,10 @@ function ExportInDesignArticlesToPlaService(
      * @returns {ManagedArticle|null}
      */
     this._getManagedArticleFromPageItems = function(pageItems) {
-        for (var i = 0; i < pageItems.length; i++) {
-            var pageItem = pageItems[i];        
+        for (let i = 0; i < pageItems.length; i++) {
+            const pageItem = pageItems[i];        
             try {
-                if (pageItem.managedArticle instanceof ManagedArticle) {
+                if (pageItem.managedArticle.constructorName === "ManagedArticle") {
                     return pageItem.managedArticle;
                 }                
             } catch (error) {}
@@ -522,13 +539,13 @@ function ExportInDesignArticlesToPlaService(
      * @return {String|null}
      */
     this._resolveGenreFromManagedArticle = function(managedArticle) {
-        if (!managedArticle.entMetaData instanceof EntMetaData) {
+        if (!managedArticle.entMetaData.constructorName === "EntMetaData") {
             return null;
         }
         if (!managedArticle.entMetaData.has("C_PLA_GENRE")) {
             return null;
         }
-        var genreId = managedArticle.entMetaData.get("C_PLA_GENRE");
+        let genreId = managedArticle.entMetaData.get("C_PLA_GENRE");
         if (!genreId instanceof String) {
             return null;
         }
@@ -539,3 +556,5 @@ function ExportInDesignArticlesToPlaService(
         return genreId;
     }
 }
+
+module.exports = ExportInDesignArticlesToPlaService;

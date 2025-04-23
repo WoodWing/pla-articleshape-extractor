@@ -1,0 +1,11 @@
+(async function main() {
+    const initBootstrap = require('../bootstrap.js');
+    const Container = require("../modules/Container.js");
+    try {
+        initBootstrap();
+        Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Filler");
+    } catch (error) {
+        Container.resolve("Logger").logError(error);
+        alert(error.message, "Error");
+    }
+})();

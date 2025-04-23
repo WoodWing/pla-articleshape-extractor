@@ -1,4 +1,4 @@
-//@include "libraries/_.jsx"
+const fs = require('fs');
 
 /**
  * Understands how to write messages of given severity to a log file.
@@ -11,13 +11,19 @@
  */
 function Logger(filePath, filename, logLevel, wipe) {
 
-	this.file = null;
 	this.LOGLEVEL = ["DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"];
 
 	this.path = filePath;
 	this.name = filename;
 	this.level = this.LOGLEVEL.indexOf(logLevel);
 	this.wipe = wipe;
+
+	if (this.level > 0 && (!filePath || !logLevel) ) {
+        throw new Error("No log folder or filename provided.");
+    }
+	if (this.level === -1) {
+		throw new Error(`Unknown log level '${logLevel}' provided.`);
+	}
 
 	/**
 	 * Log a debug message, to provide diagnostically helpful information.
@@ -27,7 +33,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this.debug = function () {
 		if(5 > this.level)
 			return;
-		var args = Array.prototype.slice.call(arguments);
+		const args = Array.prototype.slice.call(arguments);
 		this._log(5, args);
 	};
 
@@ -39,7 +45,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this.info = function () {
 		if(4 > this.level)
 			return;
-		var args = Array.prototype.slice.call(arguments);
+		const args = Array.prototype.slice.call(arguments);
 		this._log(4, args);
 	};
 
@@ -51,7 +57,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this.warning = function () {
 		if(3 > this.level)
 			return;
-		var args = Array.prototype.slice.call(arguments);
+		const args = Array.prototype.slice.call(arguments);
 		this._log(3, args);
 	};
 
@@ -63,7 +69,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this.error = function () {
 		if(2 > this.level)
 			return;
-		var args = Array.prototype.slice.call(arguments);
+		const args = Array.prototype.slice.call(arguments);
 		this._log(2, args);
 	};
 
@@ -75,7 +81,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	this.critical = function () {
 		if(1 > this.level)
 			return;
-		var args = Array.prototype.slice.call(arguments);
+		const args = Array.prototype.slice.call(arguments);
 		this._log(1, args);
 	};
 
@@ -84,14 +90,16 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @param {String} args 
 	 */
 	this._log = function (logLevel, args) {
-		var template = args.shift();
+		const template = args.shift();
 		// Replace undefined arguments with '*undefined*' to distinguish from ''
-		_.each(args, function(replacement, i){
-			if(typeof replacement === 'undefined') {
-				args[i] = '*undefined*';
+		args.forEach(function(replacement, i) {
+			if (typeof replacement === 'undefined') {
+			  args[i] = '*undefined*';
 			}
-		});
-		var message = template.contains('{}') ? template.format.apply(template, args) : template;
+		  });		
+		const message = template.includes('{') && template.includes('}')
+			? template.replace(/{}/g, () => args.shift())
+			: template;		
 		this._writeLine(logLevel, message);
 	};
 
@@ -100,44 +108,51 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @param {String} message 
 	 */
 	this._writeLine = function (logLevel, message) {
-		if (!this.file) {
-			return;
+		const logLine = `[${this._getDateTimeWithMsAsString()}] [${this.LOGLEVEL[logLevel].padEnd(8)}] ${message}\n`;
+		const logPath = this._getLogFilepath();
+		try {
+			let mode = "a"; // append or create
+			if (this.wipe) {
+				mode = "w"; // overwrite or create
+				this.wipe = false;
+			}
+        	fs.writeFileSync(logPath, logLine, {encoding: "utf-8", flag: mode});		
+		} catch(error) {
+			alert(`Failed to write into log file '${logPath}' - ${error}`);
 		}
-		this.file.open("a");
-		this.file.writeln(
-			'[' + this._getDateTimeWithMsAsString() + '] '
-			+ '[' + this.LOGLEVEL[logLevel].padEnd(8) + '] '
-			+ message);
-		this.file.close();
 	};
 
 	/**
 	 * @returns {String} UTC date and time with milliseconds in ISO 8601 format.
 	 */
 	this._getDateTimeWithMsAsString = function() {
-		var date = new Date();
-		var dateString = date.getUTCFullYear() 
+		const date = new Date();
+		const dateString = date.getUTCFullYear() 
 			+ '-' + date.getUTCMonth().toString().padStart(2, "0") 
 			+ '-' + date.getUTCDay().toString().padStart(2, "0");
-		var timeString = date.getUTCHours().toString().padStart(2, "0") 
+		const timeString = date.getUTCHours().toString().padStart(2, "0") 
 			+ ':' + date.getUTCMinutes().toString().padStart(2, "0") 
 			+ ':' + date.getUTCSeconds().toString().padStart(2, "0")
 			+ '.' + date.getUTCMilliseconds().toString().padStart(3, "0");
 		return dateString + 'T' + timeString + 'Z';
-	}
+	};
 
-	this.init = function() {
-		var folder = new Folder(this.path);
-		if (!folder.exists) {
-			if (!folder.create()) {
-				alert("Could not create '" + this.path + "' log folder.");
-				return null;
-			}
+	this._getLogFilepath = function() {
+		return `file:${this.path.rtrim('/')}/${this.name}`;
+	};
+
+	/**
+	 * Log an Error object.
+	 * @param {Error} error 
+	 * @returns 
+	 */
+	this.logError = function(error) {
+		let message = error.message + " (" + error.name + ")";
+		if (error.stack) {
+			message += "\n- stack:\n" + error.stack;
 		}
-		this.file = new File(this.name).at(folder);
-		if(this.wipe) {
-			this.file.remove();
-		}
-		this.file.encoding = 'UTF-8';
-	};	
+		this.error(message);
+	}	
 }
+
+module.exports = Logger;

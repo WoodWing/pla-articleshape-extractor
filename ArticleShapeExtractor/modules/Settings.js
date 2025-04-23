@@ -1,5 +1,3 @@
-//@include "libraries/_.jsx";
-
 /**
  * Understands how to merge the local settings into the default settings.
  * Provides a getter function for each individual setting.
@@ -11,13 +9,13 @@
 function Settings(defaultConfig, localConfig) {
 
     this._deepMerge = function(defaultData, localData) {
-        var merged = {};
-        for (var key in defaultData) {
+        let merged = {};
+        for (let key in defaultData) {
             if (defaultData.hasOwnProperty(key)) {
                 merged[key] = defaultData[key];
             }
         }
-        for (var key in localData) {
+        for (let key in localData) {
             if (localData.hasOwnProperty(key)) {
                 if (typeof localData[key] === "object" && typeof defaultData[key] === "object") {
                     merged[key] = this._deepMerge(defaultData[key], localData[key]);
@@ -60,9 +58,11 @@ function Settings(defaultConfig, localConfig) {
     }
     
     /**
-     * @returns {Boolean}
+     * @returns {String}
      */
-    this.getIncludeErrorDetailInAlerts = function() {
-        return this._configData.includeErrorDetailInAlerts;
+    this.getMinimumRequiredInDesignVersion = function() {
+        return this._configData.minimumRequiredInDesignVersion;
     }
 }
+
+module.exports = Settings;
