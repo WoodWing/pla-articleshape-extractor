@@ -11,7 +11,7 @@
     "width": 0.0,
     "height": 0.0
   },
-  "overlapsesFold": false,
+  "foldLine": null,
   "textComponents": [
     {
       "type": "head|intro|body|quote|caption", 

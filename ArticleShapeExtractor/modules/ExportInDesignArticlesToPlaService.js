@@ -242,14 +242,13 @@ function ExportInDesignArticlesToPlaService(
                 "width": this._roundTo3Decimals(outerBounds.bottomRightX - outerBounds.topLeftX),
                 "height": this._roundTo3Decimals(outerBounds.bottomRightY - outerBounds.topLeftY)
             },
-            "overlapsesFold": false,
             "foldLine": null,
             "textComponents": [],
             "imageComponents": []
         }
         const geometricBoundsRight = articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
-        articleShapeJson.overlapsesFold = doc.documentPreferences.pageWidth < geometricBoundsRight;
-        if (articleShapeJson.overlapsesFold) {
+        const crossoverFoldLine = doc.documentPreferences.pageWidth < geometricBoundsRight;
+        if (crossoverFoldLine) {
             articleShapeJson.foldLine = doc.documentPreferences.pageWidth - articleShapeJson.geometricBounds.x;
         }
         return articleShapeJson;
