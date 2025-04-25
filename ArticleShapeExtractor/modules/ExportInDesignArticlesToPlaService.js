@@ -242,11 +242,18 @@ function ExportInDesignArticlesToPlaService(
                 "width": this._roundTo3Decimals(outerBounds.bottomRightX - outerBounds.topLeftX),
                 "height": this._roundTo3Decimals(outerBounds.bottomRightY - outerBounds.topLeftY)
             },
-            "overlapsesFold": false,
+            "foldLine": null,
             "textComponents": [],
             "imageComponents": []
         }
-        articleShapeJson.overlapsesFold = doc.documentPreferences.pageWidth < articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
+        // Set the foldLine property when the article shape does crossover the fold line of the spread.
+        const geometricBoundsRight = articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
+        const crossoverFoldLine = 
+            articleShapeJson.geometricBounds.x < doc.documentPreferences.pageWidth 
+            && doc.documentPreferences.pageWidth < geometricBoundsRight;
+        if (crossoverFoldLine) {
+            articleShapeJson.foldLine = doc.documentPreferences.pageWidth - articleShapeJson.geometricBounds.x;
+        }
         return articleShapeJson;
     }
 

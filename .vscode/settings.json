@@ -1,5 +1,8 @@
 {
     "files.associations": {
         "*.idjs": "javascript"
-    }
+    },
+    "cSpell.words": [
+        "malpositioned"
+    ]
 }
