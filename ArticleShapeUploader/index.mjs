@@ -18,37 +18,33 @@ dotenv.config();
  * Settings that are effective for this script.
  * Manually adjust any of the factory settings if needed.
  */
-function getSettings() {
-    return {
+const settings = {
 
-        // Connection URL to the PLA service.
-        //plaServiceUrl: "https://service.pla-poc.woodwing.cloud",
-        plaServiceUrl: "http://127.0.0.1:8000",
+    // Connection URL to the PLA service.
+    //plaServiceUrl: "https://service.pla-poc.woodwing.cloud",
+    plaServiceUrl: "http://127.0.0.1:8000",
 
-        // For PLA a layout page has a simple grid of rows and columns.
-        // The space between the page borders in points divided by the column count
-        // gives a rough column width in points to be configured here. Same for rows.
-        columnWidth: 112,
-        rowHeight: 90,
+    // For PLA a layout page has a simple grid of rows and columns.
+    // The space between the page borders in points divided by the column count
+    // gives a rough column width in points to be configured here. Same for rows.
+    columnWidth: 112,
+    rowHeight: 90,
 
-        // For text components 'body' and 'quote' the customer may use different terms.
-        // The options below allow specifying which terms are used instead.
-        bodyTypes: [ 'body' ],
-        quoteTypes: ['quote'],
-    };
-}
+    // For text components 'body' and 'quote' the customer may use different terms.
+    // The options below allow specifying which terms are used instead.
+    bodyTypes: [ 'body' ],
+    quoteTypes: ['quote'],
+};
 
 /**
  * Top level execution path of this script.
  */
 async function main() {
 
-    const settings = getSettings();
     try {
         const accessToken = resolveAccessToken();
         const brandId = "1"; // TODO: resolve from JSON
-        const layoutSettings = await getPageLayoutSettings(
-            settings.plaServiceUrl, accessToken, brandId); // TODO: validate against JSON
+        const layoutSettings = await getPageLayoutSettings(accessToken, brandId); // TODO: validate against JSON
         if (layoutSettings === null) {
             // TODO: save settings, taken from JSON
         }
@@ -57,10 +53,10 @@ async function main() {
             logger.warn("Script aborted!");
             return;
         }
-        await deleteArticleShapes(settings.plaServiceUrl, accessToken, brandId);
+        await deleteArticleShapes(accessToken, brandId);
         await scanAndGenerateFilenames(
             resolveInputPath(), 
-            await uploadArticleShapeWithFiles(settings, accessToken, brandId)
+            await uploadArticleShapeWithFiles(accessToken, brandId)
         );
     } catch(error) {
         logger.error(error.message);
@@ -106,13 +102,12 @@ function resolveInputPath() {
  * Retrieve the Document Setup settings from PLA service.
  * These settings are configured per brand.
  * When settings have not been made yet, it returns null.
- * @param {string} plaServiceUrl 
  * @param {string} accessToken 
  * @param {string} brandId 
  * @returns {{margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}}|null} Settings, or null when not found.
  */
-async function getPageLayoutSettings(plaServiceUrl, accessToken, brandId) {
-    const url = `${plaServiceUrl}/brands/${brandId}/admin/setting/page-layout`;
+async function getPageLayoutSettings(accessToken, brandId) {
+    const url = `${settings.plaServiceUrl}/brands/${brandId}/admin/setting/page-layout`;
     try {
         const request = new Request(url, requestInitForPlaService(accessToken, 'GET'));
         const response = await fetch(request);
@@ -173,12 +168,11 @@ function askConfirmation(question) {
 
 /**
  * Remove all article shapes from the PLA service that were previously configured for a brand.
- * @param {string} plaServiceUrl 
  * @param {string} accessToken
  * @param {string} brandId 
  */
-async function deleteArticleShapes(plaServiceUrl, accessToken, brandId) {
-    const url = `${plaServiceUrl}/brands/${brandId}/admin/article-shapes`;
+async function deleteArticleShapes(accessToken, brandId) {
+    const url = `${settings.plaServiceUrl}/brands/${brandId}/admin/article-shapes`;
     try {
         const request = new Request(url, requestInitForPlaService(accessToken, 'DELETE'));
         const response = await fetch(request);
@@ -274,27 +268,21 @@ function composeFileRenditionDto(renditionName, contentType, fileExtension) {
 /**
  * Callback function, to be called for each article shape to upload.
  * Create a new article shape configuration in the PLA service and upload files to S3.
- * @param {Object} settings 
  * @param {string} accessToken 
  * @param {string} brandId 
  */
-async function uploadArticleShapeWithFiles(settings, accessToken, brandId) {
+async function uploadArticleShapeWithFiles(accessToken, brandId) {
     return async function (articleShapeName, localFiles, fileRenditions) {
         logger.info(`Processing article shape "${articleShapeName}".`);
         const raw = fs.readFileSync(localFiles.json, 'utf8');
         const articleShapeJson = JSON.parse(raw);
-        const articleShapeDto = articleShapeJsonToDto(
-            articleShapeJson, articleShapeName,
-            settings.columnWidth, settings.rowHeight, // TODO: take these from the layout settings
-            settings.bodyTypes, settings.quoteTypes
-        );
+        const articleShapeDto = articleShapeJsonToDto(articleShapeJson, articleShapeName);
         const articleShapeWithRenditionsDto = {
             article_shape: articleShapeDto,
             renditions: fileRenditions,
         };
         const fileRenditionsWithUploadUrls = await createArticleShape(
-            settings.plaServiceUrl, accessToken, brandId,
-            articleShapeName, articleShapeWithRenditionsDto
+            accessToken, brandId, articleShapeName, articleShapeWithRenditionsDto
         );
         if (fileRenditionsWithUploadUrls === null) {
             return;
@@ -314,32 +302,28 @@ async function uploadArticleShapeWithFiles(settings, accessToken, brandId) {
  * The DTO is used to communicate an article shape configuration with the PLA service.
  * @param {Object} articleShapeJson 
  * @param {string} articleShapeName
- * @param {number} columnWidth
- * @param {number} rowHeight
- * @param {Object} bodyTypes
- * @param {Object} quoteTypes
  * @returns {Object} DTO
  */
-function articleShapeJsonToDto(articleShapeJson, articleShapeName, columnWidth, rowHeight, bodyTypes, quoteTypes) {
+function articleShapeJsonToDto(articleShapeJson, articleShapeName) {
     let articleShapeDto = {
         name: articleShapeName,
         section_id: articleShapeJson.sectionId,
         genre_id: articleShapeJson.genreId,
         shape_type: articleShapeJson.shapeTypeId,
-        width: Math.round(articleShapeJson.geometricBounds.width / columnWidth),
-        height: Math.round(articleShapeJson.geometricBounds.height / rowHeight),
+        width: Math.round(articleShapeJson.geometricBounds.width / settings.columnWidth),
+        height: Math.round(articleShapeJson.geometricBounds.height / settings.rowHeight),
         body_length: 0,
         quote_count: 0,
         image_count: articleShapeJson.imageComponents?.length || 0,
-        fold_line: determineFoldLineApproximately(articleShapeJson.foldLine, columnWidth),
-    }
+        fold_line: determineFoldLineApproximately(articleShapeJson.foldLine, settings.columnWidth),
+    }; // TODO: take columnWidth and rowHeight from the layout settings instead
 
     // Count text components in the JSON.
     if (articleShapeJson.textComponents) {
         articleShapeJson.textComponents.forEach(textComponent => {
-            if (bodyTypes.includes(textComponent.type)) {
+            if (settings.bodyTypes.includes(textComponent.type)) {
                 articleShapeDto.body_length += textComponent.characters;
-            } else if (quoteTypes.includes(textComponent.type)) {
+            } else if (settings.quoteTypes.includes(textComponent.type)) {
                 articleShapeDto.quote_count++;
             }
         });
@@ -377,15 +361,14 @@ function determineFoldLineApproximately(foldLineInPoints, columnWidthInPoints, a
 
 /**
  * Create an article shape configuration in the PLA service.
- * @param {string} plaServiceUrl 
  * @param {string} accessToken 
  * @param {string} brandId 
  * @param {string} articleShapeName 
  * @param {Object} articleShapeWithRenditionsDto
  * @returns {Array<Object>|null} File renditions, with pre-signed URLs, otherwise null.
  */
-async function createArticleShape(plaServiceUrl, accessToken, brandId, articleShapeName, articleShapeWithRenditionsDto) {
-    const url = `${plaServiceUrl}/brands/${brandId}/admin/article-shape/${articleShapeName}`;
+async function createArticleShape(accessToken, brandId, articleShapeName, articleShapeWithRenditionsDto) {
+    const url = `${settings.plaServiceUrl}/brands/${brandId}/admin/article-shape/${articleShapeName}`;
     try {
         const requestBody = JSON.stringify(articleShapeWithRenditionsDto);
         const request = new Request(url, requestInitForPlaService(accessToken, 'POST', requestBody));
