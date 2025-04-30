@@ -1,12 +1,5 @@
 /**
- * First, use the ArticleShapeExtractor tool in InDesign to extract the article shapes from 
- * the layouts and to save the article shape files on your local disk.
- * 
- * Second, use the ArticleShapeUploader tool on the CLI to pickup those files and to create 
- * article shape configurations in the PLA service and to upload the files to S3.
- * 
- * Execute this script on CLI, e.g. as follows:
- *    node index.mjs --input_path=~/extracted-article-shapes
+ * See README.md for installation and usage of this script.
  */
 
 import fs from 'fs';
