@@ -6,7 +6,7 @@ Refer to [here](../README.md) for an overview of the available tools.
 ```bash
 cd ArticleShapeUploader
 npm install
-export PLA_ACCESS_TOKEN=[your_token_here]
+echo "PLA_ACCESS_TOKEN=[your_token_here]" >> .env
 ```
 
 # Usage

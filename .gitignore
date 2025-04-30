@@ -1,2 +1,3 @@
 ArticleShapeExtractor/config/config-local.js
 ArticleShapeUploader/node_modules/*
+ArticleShapeUploader/.env

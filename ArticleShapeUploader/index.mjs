@@ -12,7 +12,6 @@ import dotenv from 'dotenv';
 import { ColoredLogger } from "./ColoredLogger.mjs";
 
 const logger = new ColoredLogger();
-dotenv.config();
 
 /**
  * Settings that are effective for this script.
@@ -46,8 +45,8 @@ const settings = {
  * Top level execution path of this script.
  */
 async function main() {
-
     try {
+        dotenv.config();
         const accessToken = resolveAccessToken();
         const brandId = settings.brandId; // TODO: resolve from JSON
         const layoutSettings = await getPageLayoutSettings(accessToken, brandId); // TODO: validate against JSON
