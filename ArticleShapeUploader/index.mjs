@@ -24,6 +24,9 @@ const settings = {
     //plaServiceUrl: "https://service.pla-poc.woodwing.cloud",
     plaServiceUrl: "http://127.0.0.1:8000",
 
+    // The brand to work in.
+    brandId: "1",
+
     // For PLA a layout page has a simple grid of rows and columns.
     // The space between the page borders in points divided by the column count
     // gives a rough column width in points to be configured here. Same for rows.
@@ -34,6 +37,9 @@ const settings = {
     // The options below allow specifying which terms are used instead.
     bodyTypes: [ 'body' ],
     quoteTypes: ['quote'],
+
+    // Whether to log HTTP communication details (of the PLA service and S3) to the console.
+    logNetworkTraffic: false,
 };
 
 /**
@@ -43,7 +49,7 @@ async function main() {
 
     try {
         const accessToken = resolveAccessToken();
-        const brandId = "1"; // TODO: resolve from JSON
+        const brandId = settings.brandId; // TODO: resolve from JSON
         const layoutSettings = await getPageLayoutSettings(accessToken, brandId); // TODO: validate against JSON
         if (layoutSettings === null) {
             // TODO: save settings, taken from JSON
@@ -394,6 +400,9 @@ async function createArticleShape(accessToken, brandId, articleShapeName, articl
  * @param {string|null} responseJson 
  */
 function logHttpTraffic(request, requestJson, response, responseJson) {
+    if (!settings.logNetworkTraffic) {
+        return;
+    }
     const dottedLine = "- - - - - - - - - - - - - - - - - - - - - - -";
     let message = `Network traffic:\n${dottedLine}\nRequest: HTTP ${request.method} ${request.url}\n`;
     if (requestJson) {
