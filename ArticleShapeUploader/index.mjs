@@ -55,7 +55,7 @@ async function main() {
         }
         const confirmed = await askConfirmation("Do you want to permanently delete all previously configured article shapes at PLA service?");
         if (!confirmed) {
-            logger.warn("Script aborted!");
+            logger.warning("Script aborted!");
             return;
         }
         await deleteArticleShapes(accessToken, brandId);
@@ -96,7 +96,7 @@ function resolveInputPath() {
     if (!fs.existsSync(inputPath) || !fs.lstatSync(inputPath).isDirectory()) {
         throw new Error(`Directory "${inputPath}" does not exist.`);
     }
-    logger.debug("Input directory:", inputPath);
+    logger.debug("Input directory: {}", inputPath);
     return inputPath;
 }
 
@@ -121,7 +121,7 @@ async function getPageLayoutSettings(accessToken, brandId) {
             return settingsValue;
         }
         if (response.status === StatusCodes.NOT_FOUND) {
-            logger.warn("Page layout settings not defined yet.");
+            logger.warning("Page layout settings not defined yet.");
             return null;
         }
         throw new Error(`HTTP ${response.status} ${response.statusText}`);
