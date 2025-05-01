@@ -78,4 +78,16 @@ export class ColoredLogger {
 		const args = Array.prototype.slice.call(arguments);
         this._format("CRITICAL", chalk.red, args);
     }
+
+	/**
+	 * Log an Error object.
+	 * @param {Error} error 
+	 */
+	logError(error) {
+		let message = error.message + " (" + error.name + ")";
+		if (error.stack) {
+			message += "\n- stack:\n" + error.stack;
+		}
+		this.error(message);
+	}    
 }
