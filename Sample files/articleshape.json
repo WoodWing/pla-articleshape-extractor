@@ -12,7 +12,7 @@
     "width": 0.0,
     "height": 0.0
   },
-  "foldLine": null,
+  "foldLine": 0.0,
   "textComponents": [
     {
       "type": "head|intro|body|quote|caption", 
