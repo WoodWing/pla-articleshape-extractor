@@ -12,8 +12,10 @@ import dotenv from 'dotenv';
 import Ajv from 'ajv';
 
 import { ColoredLogger } from "./ColoredLogger.mjs";
+import { ArticleShapeHasher } from "./ArticleShapeHasher.mjs";
 
 const logger = new ColoredLogger();
+const hasher = new ArticleShapeHasher();
 const articleShapeSchema = JSON.parse(fs.readFileSync('./article-shape.schema.json', 'utf-8'));
 
 /**
@@ -203,23 +205,25 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId) {
     const files = fs.readdirSync(folderPath);
     for (const file of files) {
         if (file.toLowerCase().endsWith('.json')) {
-            const articleShapeJson = validateArticleShapeJson(path.join(folderPath,file));
-            if (articleShapeJson === null) {
-                continue;
-            }
             const baseName = path.basename(file, '.json');
-            const localFiles = {
-                json: composePathAndAssertExists(folderPath, baseName, 'json'),
-                jpeg: composePathAndAssertExists(folderPath, baseName, 'jpg'),
-                idms: composePathAndAssertExists(folderPath, baseName, 'idms'),
-            };
-            const fileRenditions = [
-                composeFileRenditionDto('composition', 'application/json; charset=utf-8', 'json'),
-                composeFileRenditionDto('snapshot', 'image/jpeg', 'jpg'),
-                composeFileRenditionDto('definition', 'application/xml', 'idms'),
-            ]
-            await uploadArticleShapeWithFiles(
-                accessToken, brandId, baseName, localFiles, fileRenditions);
+            try {
+                const articleShapeJson = validateArticleShapeJson(path.join(folderPath,file));
+                const compositionHash = hasher.hash(articleShapeJson);
+                const localFiles = {
+                    json: composePathAndAssertExists(folderPath, baseName, 'json'),
+                    jpeg: composePathAndAssertExists(folderPath, baseName, 'jpg'),
+                    idms: composePathAndAssertExists(folderPath, baseName, 'idms'),
+                };
+                const fileRenditions = [
+                    composeFileRenditionDto('composition', 'application/json; charset=utf-8', 'json'),
+                    composeFileRenditionDto('snapshot', 'image/jpeg', 'jpg'),
+                    composeFileRenditionDto('definition', 'application/xml', 'idms'),
+                ]
+                await uploadArticleShapeWithFiles(
+                    accessToken, brandId, baseName, localFiles, fileRenditions, compositionHash);
+            } catch (error) {
+                logger.error(`Failed to process article shape "${baseName}" - ` + error.message);
+            }
         }
     }
 }
@@ -227,7 +231,7 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId) {
 /**
  * Validates an article shape JSON file against the schema.
  * @param {string} jsonFilePath 
- * @returns {Object} The valid article shape JSON, or null otherwise.
+ * @returns {Object} The valid article shape JSON.
  */
 function validateArticleShapeJson(jsonFilePath) {
     const basename = path.basename(jsonFilePath);
@@ -235,22 +239,20 @@ function validateArticleShapeJson(jsonFilePath) {
     try {
         jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf-8'));
     } catch(error) {
-        logger.error(`The file "${basename}" is not valid JSON - ${error}`);
-        return null;
+        throw new Error(`The file "${basename}" is not valid JSON - ${error}`);
     }
     const ajv = new Ajv();
     const validate = ajv.compile(articleShapeSchema);
     if (!validate(jsonData)) {
-        logger.error(`The file "${basename}" is not valid according to the article-shape.schema.json file:`);
+        let errorMessage = `The file "${basename}" is not valid according to the article-shape.schema.json file:\n`;
         for (const validationError of validate.errors) {
-            console.error(
+            errorMessage +=
                 `- [${validationError.instancePath || '/'}] ${validationError.message}. Details:\n`
                 + `  keyword: ${validationError.keyword}\n`
                 + `  params: ${JSON.stringify(validationError.params, null, 2)}\n`
                 + `  schemaPath: ${validationError.schemaPath}`
-            );
         }
-        return null;
+        throw new Error(errorMessage);
     }
     return jsonData;
 }
@@ -315,12 +317,15 @@ function composeFileRenditionDto(renditionName, contentType, fileExtension) {
  * @param {string} articleShapeName 
  * @param {Array<Object>} localFiles
  * @param {Array<string>} fileRenditions 
+ * @param {string} compositionHash
  */
-async function uploadArticleShapeWithFiles(accessToken, brandId, articleShapeName, localFiles, fileRenditions) {
+async function uploadArticleShapeWithFiles(
+    accessToken, brandId, articleShapeName, localFiles, fileRenditions, compositionHash
+) {
     logger.info(`Processing article shape "${articleShapeName}".`);
     const raw = fs.readFileSync(localFiles.json, 'utf8');
     const articleShapeJson = JSON.parse(raw);
-    const articleShapeDto = articleShapeJsonToDto(articleShapeJson, articleShapeName);
+    const articleShapeDto = articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash);
     const articleShapeWithRenditionsDto = {
         article_shape: articleShapeDto,
         renditions: fileRenditions,
@@ -345,9 +350,10 @@ async function uploadArticleShapeWithFiles(accessToken, brandId, articleShapeNam
  * The DTO is used to communicate an article shape configuration with the PLA service.
  * @param {Object} articleShapeJson 
  * @param {string} articleShapeName
+ * @param {string} compositionHash
  * @returns {Object} DTO
  */
-function articleShapeJsonToDto(articleShapeJson, articleShapeName) {
+function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash) {
     let articleShapeDto = {
         name: articleShapeName,
         section_id: articleShapeJson.sectionId,
@@ -359,6 +365,7 @@ function articleShapeJsonToDto(articleShapeJson, articleShapeName) {
         quote_count: 0,
         image_count: articleShapeJson.imageComponents?.length || 0,
         fold_line: determineFoldLineApproximately(articleShapeJson.foldLine, settings.columnWidth),
+        // composition_hash: compositionHash, // TODO
     }; // TODO: take columnWidth and rowHeight from the layout settings instead
 
     // Count text components in the JSON.
