@@ -33,7 +33,7 @@ export class ArticleShapeHasher {
      */
     hash(articleShape) {
         const significantKeys = [
-            "brandId", "sectionId", "genreId", "shapeTypeName", "shapeTypeId",
+            "brandId", "sectionId", "genreId", "shapeTypeId",
             "foldLine", "textComponents", "imageComponents"
             // Don't simply add properties here. See class header first.
         ];
