@@ -1,26 +1,29 @@
 import crypto from 'crypto';
 
 /**
- * Composes a hash of the just the compositional data of an article shape.
+ * Composes a hash of mostly the compositional data of an article shape.
  * The hash can be used to check if a similar article shape already exists.
  * 
- * Internally it creates a sanitized version of the article shape JSON.
- * That JSON is then serialized and hashed with SHA256.
+ * Internally it creates a sanitized extract from the article shape JSON.
+ * The extract, also in JSON format, is then serialized and hashed with SHA256.
  * 
  * It is crucial to generate the very same hash when the shape information is 
- * essentially the same. This comes with some challenges:
- * - Text content related data and properties are irrelevant, hence those are removed.
- * - The geometry of frames is important but very precise, hence numbers are rounded.
- * - The sequence properties occur in the JSON is irrelevant, hence they are recomposed.
+ * essentially the same. For that it takes the following precautions:
+ * - The geometry of the whole article on the page is irrelevant, hence removed.
+ * - For id-name pairs, the name may change (the id won't), hence names are removed.
+ * - Text content and derived properties are irrelevant, hence those are removed.
+ * - The geometry of frames is important but too precise/sensitive, hence numbers are rounded.
+ * - The sequence properties occur in the JSON is irrelevant, hence recomposed in fixed order.
  * - The sequence of components and frames in the JSON is irrelevant, hence they are sorted.
+ * - Geometrical information is sorted on y, then x. Text components are sorted on type.
  * 
- * IMPORTANT: Both significant and irrelevant properties are taken into consideration.
- * The objects in JSON should exactly match with the combination of both collections.
- * When e.g. a new property got officially introduced, an conscious and explicit decision
- * has to be made; It should become either a significant or irrelevant property. When it
- * turns out to be significant, it will have an impact on the hash. In that case, all 
- * article shapes have to be re-imported into the configuration to be able to compare.
- * Or else, the detection on duplicate article shapes will get broken.
+ * IMPORTANT: Both significant- and irrelevant properties are taken into consideration.
+ * Objects in the JSON file should exactly match with the combination of both collections.
+ * When a new property got officially introduced, an conscious and explicit decision has
+ * to be made for this checksum feature; It should become either a significant or irrelevant 
+ * property. When it turns out to be significant, it will have an impact on the hash. In that 
+ * case, all existing article shapes have to be re-imported into the configuration to be able 
+ * to compare. Or else, the detection on duplicate article shapes will get broken.
  */
 export class ArticleShapeHasher {
 
