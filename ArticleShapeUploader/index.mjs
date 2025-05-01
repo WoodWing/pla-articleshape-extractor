@@ -9,9 +9,12 @@ import readline from "readline";
 import { StatusCodes } from 'http-status-codes';
 import minimist from 'minimist';
 import dotenv from 'dotenv';
+import Ajv from 'ajv';
+
 import { ColoredLogger } from "./ColoredLogger.mjs";
 
 const logger = new ColoredLogger();
+const articleShapeSchema = JSON.parse(fs.readFileSync('./article-shape.schema.json', 'utf-8'));
 
 /**
  * Settings that are effective for this script.
@@ -200,6 +203,10 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId) {
     const files = fs.readdirSync(folderPath);
     for (const file of files) {
         if (file.toLowerCase().endsWith('.json')) {
+            const articleShapeJson = validateArticleShapeJson(path.join(folderPath,file));
+            if (articleShapeJson === null) {
+                continue;
+            }
             const baseName = path.basename(file, '.json');
             const localFiles = {
                 json: composePathAndAssertExists(folderPath, baseName, 'json'),
@@ -215,6 +222,37 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId) {
                 accessToken, brandId, baseName, localFiles, fileRenditions);
         }
     }
+}
+
+/**
+ * Validates an article shape JSON file against the schema.
+ * @param {string} jsonFilePath 
+ * @returns {Object} The valid article shape JSON, or null otherwise.
+ */
+function validateArticleShapeJson(jsonFilePath) {
+    const basename = path.basename(jsonFilePath);
+    let jsonData = null;
+    try {
+        jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf-8'));
+    } catch(error) {
+        logger.error(`The file "${basename}" is not valid JSON - ${error}`);
+        return null;
+    }
+    const ajv = new Ajv();
+    const validate = ajv.compile(articleShapeSchema);
+    if (!validate(jsonData)) {
+        logger.error(`The file "${basename}" is not valid according to the article-shape.schema.json file:`);
+        for (const validationError of validate.errors) {
+            console.error(
+                `- [${validationError.instancePath || '/'}] ${validationError.message}. Details:\n`
+                + `  keyword: ${validationError.keyword}\n`
+                + `  params: ${JSON.stringify(validationError.params, null, 2)}\n`
+                + `  schemaPath: ${validationError.schemaPath}`
+            );
+        }
+        return null;
+    }
+    return jsonData;
 }
 
 /**

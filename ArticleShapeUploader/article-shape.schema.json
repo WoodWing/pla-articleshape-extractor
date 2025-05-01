@@ -1,0 +1,171 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://www.woodwing.com/pla/article-shape.schema.json",
+    "type": "object",
+    "properties": {
+        "brandName": {
+            "type": "string"
+        },
+        "brandId": {
+            "type": "string"
+        },
+        "sectionName": {
+            "type": "string"
+        },
+        "sectionId": {
+            "type": "string"
+        },
+        "genreId": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "shapeTypeName": {
+            "type": "string"
+        },
+        "shapeTypeId": {
+            "type": "string"
+        },
+        "geometricBounds": {
+            "$ref": "#/$defs/GeometricBounds"
+        },
+        "foldLine": {
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "textComponents": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    },
+                    "words": {
+                        "type": "integer"
+                    },
+                    "characters": {
+                        "type": "integer"
+                    },
+                    "firstParagraphStyle": {
+                        "type": "string"
+                    },
+                    "frames": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "geometricBounds": {
+                                    "$ref": "#/$defs/GeometricBounds"
+                                },
+                                "columns": {
+                                    "type": "integer"
+                                },
+                                "words": {
+                                    "type": "integer"
+                                },
+                                "characters": {
+                                    "type": "integer"
+                                },
+                                "textWrapMode": {
+                                    "$ref": "#/$defs/TextWrapMode"
+                                },
+                                "totalLineHeight": {
+                                    "type": "number"
+                                },
+                                "text": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "geometricBounds",
+                                "columns",
+                                "words",
+                                "characters",
+                                "textWrapMode",
+                                "totalLineHeight",
+                                "text"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "type",
+                    "words",
+                    "characters",
+                    "firstParagraphStyle",
+                    "frames"
+                ]
+            }
+        },
+        "imageComponents": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "geometricBounds": {
+                        "$ref": "#/$defs/GeometricBounds"
+                    },
+                    "textWrapMode": {
+                        "$ref": "#/$defs/TextWrapMode"
+                    }
+                },
+                "required": [
+                    "geometricBounds",
+                    "textWrapMode"
+                ]
+            }
+        }
+    },
+    "required": [
+        "brandName",
+        "brandId",
+        "sectionName",
+        "sectionId",
+        "genreId",
+        "shapeTypeName",
+        "shapeTypeId",
+        "geometricBounds",
+        "foldLine",
+        "textComponents",
+        "imageComponents"
+    ],
+    "$defs": {
+        "GeometricBounds": {
+            "type": "object",
+            "properties": {
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                },
+                "width": {
+                    "type": "number"
+                },
+                "height": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "x",
+                "y",
+                "width",
+                "height"
+            ]
+        },
+        "TextWrapMode": {
+            "type": "string",
+            "enum": [
+                "none",
+                "bounding_box",
+                "contour",
+                "jump_object",
+                "jump_to_next_column"
+            ]
+        }
+    }
+}
