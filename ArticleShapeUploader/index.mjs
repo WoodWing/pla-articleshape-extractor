@@ -59,10 +59,7 @@ async function main() {
             return;
         }
         await deleteArticleShapes(accessToken, brandId);
-        await scanAndGenerateFilenames(
-            resolveInputPath(), 
-            await uploadArticleShapeWithFiles(accessToken, brandId)
-        );
+        await scanDirAndUploadFiles(resolveInputPath(), accessToken, brandId);
     } catch(error) {
         logger.error(error.message);
     }
@@ -196,9 +193,10 @@ async function deleteArticleShapes(accessToken, brandId) {
  * The basename of each set of 3 files should be the same and represents the article shape name.
  * The JSON file holds the definition, the JPEG holds the preview and IDMS holds the snippet.
  * @param {string} folderPath - Folder to scan.
- * @param {(baseName: String, files: {json: String, jpeg: String, idms: String}) => void} callback
+ * @param {string} accessToken
+ * @param {string} brandId
  */
-async function scanAndGenerateFilenames(folderPath, callback) {
+async function scanDirAndUploadFiles(folderPath, accessToken, brandId) {
     const files = fs.readdirSync(folderPath);
     for (const file of files) {
         if (file.toLowerCase().endsWith('.json')) {
@@ -213,7 +211,8 @@ async function scanAndGenerateFilenames(folderPath, callback) {
                 composeFileRenditionDto('snapshot', 'image/jpeg', 'jpg'),
                 composeFileRenditionDto('definition', 'application/xml', 'idms'),
             ]
-            await callback(baseName, localFiles, fileRenditions);
+            await uploadArticleShapeWithFiles(
+                accessToken, brandId, baseName, localFiles, fileRenditions);
         }
     }
 }
@@ -275,31 +274,32 @@ function composeFileRenditionDto(renditionName, contentType, fileExtension) {
  * Create a new article shape configuration in the PLA service and upload files to S3.
  * @param {string} accessToken 
  * @param {string} brandId 
+ * @param {string} articleShapeName 
+ * @param {Array<Object>} localFiles
+ * @param {Array<string>} fileRenditions 
  */
-async function uploadArticleShapeWithFiles(accessToken, brandId) {
-    return async function (articleShapeName, localFiles, fileRenditions) {
-        logger.info(`Processing article shape "${articleShapeName}".`);
-        const raw = fs.readFileSync(localFiles.json, 'utf8');
-        const articleShapeJson = JSON.parse(raw);
-        const articleShapeDto = articleShapeJsonToDto(articleShapeJson, articleShapeName);
-        const articleShapeWithRenditionsDto = {
-            article_shape: articleShapeDto,
-            renditions: fileRenditions,
-        };
-        const fileRenditionsWithUploadUrls = await createArticleShape(
-            accessToken, brandId, articleShapeName, articleShapeWithRenditionsDto
-        );
-        if (fileRenditionsWithUploadUrls === null) {
-            return;
-        }
-        for (const fileRendition of fileRenditionsWithUploadUrls) {
-            const localFilePath = lookupLocalFileByRendition(fileRendition.rendition_name, localFiles);
-            if (!fileRendition.presigned_url) {
-                throw Error(`No pre-signed upload URL for the "${fileRendition.rendition_name} file rendition."`);
-            }
-            uploadFileToS3(localFilePath, fileRendition.presigned_url, fileRendition.content_type);
-        }
+async function uploadArticleShapeWithFiles(accessToken, brandId, articleShapeName, localFiles, fileRenditions) {
+    logger.info(`Processing article shape "${articleShapeName}".`);
+    const raw = fs.readFileSync(localFiles.json, 'utf8');
+    const articleShapeJson = JSON.parse(raw);
+    const articleShapeDto = articleShapeJsonToDto(articleShapeJson, articleShapeName);
+    const articleShapeWithRenditionsDto = {
+        article_shape: articleShapeDto,
+        renditions: fileRenditions,
     };
+    const fileRenditionsWithUploadUrls = await createArticleShape(
+        accessToken, brandId, articleShapeName, articleShapeWithRenditionsDto
+    );
+    if (fileRenditionsWithUploadUrls === null) {
+        return;
+    }
+    for (const fileRendition of fileRenditionsWithUploadUrls) {
+        const localFilePath = lookupLocalFileByRendition(fileRendition.rendition_name, localFiles);
+        if (!fileRendition.presigned_url) {
+            throw Error(`No pre-signed upload URL for the "${fileRendition.rendition_name} file rendition."`);
+        }
+        await uploadFileToS3(localFilePath, fileRendition.presigned_url, fileRendition.content_type);
+    }
 }
 
 /**
