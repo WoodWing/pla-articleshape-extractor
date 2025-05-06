@@ -48,13 +48,6 @@ function validateHost() {
     }
 };
 
-Container.registerSingleton("ArticleShapeGateway", function() {
-    const ArticleShapeGateway = require("./modules/ArticleShapeGateway.js");
-    return new ArticleShapeGateway(
-        Container.resolve("Settings").getPlaServiceUrl(),
-    );
-});
-
 Container.registerFactory("InDesignArticleService", function() {
     const InDesignArticleService = require("./modules/InDesignArticleService.js");
     return new InDesignArticleService();
@@ -66,7 +59,6 @@ Container.registerFactory("ExportInDesignArticlesToPlaService", function() {
     return new ExportInDesignArticlesToPlaService(
         Container.resolve("Logger"), 
         Container.resolve("InDesignArticleService"), 
-        Container.resolve("ArticleShapeGateway"), 
         settings.getOfflineFallbackConfig().brand,
         settings.getOfflineFallbackConfig().category,
     );

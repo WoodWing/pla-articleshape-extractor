@@ -30,13 +30,6 @@ function Settings(defaultConfig, localConfig) {
     this._configData = this._deepMerge(defaultConfig, localConfig);
 
     /**
-     * @returns {String}
-     */
-    this.getPlaServiceUrl = function() {
-        return this._configData.plaServiceUrl.rtrim('/')
-    };
-
-    /**
      * @returns {Object}
      */
     this.getOfflineFallbackConfig = function() {

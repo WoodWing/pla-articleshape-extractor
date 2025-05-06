@@ -5,20 +5,17 @@ const idd = require("indesign");
  * @constructor
  * @param {Logger} logger
  * @param {InDesignArticleService} inDesignArticleService
- * @param {ArticleShapeGateway} articleShapeGateway
  * @param {Object} fallbackBrand
  * @param {Object} fallbackCategory
  */
 function ExportInDesignArticlesToPlaService(
     logger,
     inDesignArticleService, 
-    articleShapeGateway, 
     fallbackBrand, 
     fallbackCategory,
 ) {
     this._logger = logger;
     this._inDesignArticleService = inDesignArticleService;
-    this._articleShapeGateway = articleShapeGateway;
     this._fallbackBrand = fallbackBrand;
     this._fallbackCategory = fallbackCategory;
 
