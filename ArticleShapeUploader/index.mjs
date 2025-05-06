@@ -12,11 +12,8 @@ import dotenv from 'dotenv';
 import Ajv from 'ajv';
 
 import { ColoredLogger } from "./ColoredLogger.mjs";
+import { ElementLabelMapper } from './ElementLabelMapper.mjs';
 import { ArticleShapeHasher } from "./ArticleShapeHasher.mjs";
-
-const logger = new ColoredLogger();
-const hasher = new ArticleShapeHasher();
-const articleShapeSchema = JSON.parse(fs.readFileSync('./article-shape.schema.json', 'utf-8'));
 
 /**
  * Settings that are effective for this script.
@@ -37,14 +34,38 @@ const settings = {
     columnWidth: 112,
     rowHeight: 90,
 
-    // For text components 'body' and 'quote' the customer may use different terms.
-    // The options below allow specifying which terms are used instead.
-    bodyTypes: [ 'body' ],
-    quoteTypes: ['quote'],
+    // For the element labels of text components, the customer may use different terms than
+    // provided by default. The options below allow specifying which terms are used instead.
+    // On the LHS the factory defaults are listed. Do not change them.
+    // On the RHS the custom labels are listed. Regular expressions are allowed here.
+    // This example maps custom labels "brood 1", "brood 2" etc to the standard "body":
+    //    body: '^(brood \\d)$',
+    // Mappings are made in case insensitive manner. Make sure that for all custom labels 
+    // there is a mapping available. When no mapping is found, an error is raised.
+    // Note that a null value indicates the default should be used (no custom mapping).
+    elementLabels: {
+        body: null,
+        breakout: null,
+        byline: null,
+        caption: null,
+        credit: null,
+        crosshead: null,
+        // graphic: null, // Excluded, because this does not indicate a text component.
+        head: null,
+        highlight: null,
+        intro: null,
+        quote: null,
+        subhead: null,
+    },
 
     // Whether to log HTTP communication details (of the PLA service and S3) to the console.
     logNetworkTraffic: false,
 };
+
+const logger = new ColoredLogger();
+const articleShapeSchema = JSON.parse(fs.readFileSync('./article-shape.schema.json', 'utf-8'));
+const elementLabelMapper = new ElementLabelMapper(settings.elementLabels);
+const hasher = new ArticleShapeHasher(elementLabelMapper);
 
 /**
  * Top level execution path of this script.
@@ -371,10 +392,14 @@ function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHa
     // Count text components in the JSON.
     if (articleShapeJson.textComponents) {
         articleShapeJson.textComponents.forEach(textComponent => {
-            if (settings.bodyTypes.includes(textComponent.type)) {
-                articleShapeDto.body_length += textComponent.characters;
-            } else if (settings.quoteTypes.includes(textComponent.type)) {
-                articleShapeDto.quote_count++;
+            const standardLabel = elementLabelMapper.mapCustomToStandardLabel(textComponent.type);
+            switch(standardLabel) {
+                case 'body':
+                    articleShapeDto.body_length += textComponent.characters;
+                break;
+                case 'quote':
+                    articleShapeDto.quote_count++;
+                break;
             }
         });
     }

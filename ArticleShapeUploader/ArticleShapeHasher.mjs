@@ -28,6 +28,13 @@ import crypto from 'crypto';
 export class ArticleShapeHasher {
 
     /**
+     * @param {ElementLabelMapper} elementLabelMapper 
+     */
+    constructor(elementLabelMapper) {
+        this.elementLabelMapper = elementLabelMapper;
+    }
+
+    /**
      * @param {Object} articleShape 
      * @returns {string} The hash.
      */
@@ -146,7 +153,7 @@ export class ArticleShapeHasher {
             });
 
             return {
-                type: textComponent.type,
+                type: this.elementLabelMapper.mapCustomToStandardLabel(textComponent.type),
                 firstParagraphStyle: textComponent.firstParagraphStyle,
                 frames: sanitizedFrames
             };
