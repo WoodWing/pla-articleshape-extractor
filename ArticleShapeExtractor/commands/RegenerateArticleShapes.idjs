@@ -14,7 +14,7 @@ await (async function main() {
         if (!folder || !folder.isFolder) {
             const { NoFolderSelectedError } = require('../modules/Errors.js');
             throw new NoFolderSelectedError();
-        }    
+        }
 
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
         await Container.resolve("RegenerateArticleShapesService").run(folder);

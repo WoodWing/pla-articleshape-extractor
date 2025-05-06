@@ -110,7 +110,7 @@ function ExportInDesignArticlesToPlaService(
             exportCounter++;
         }
         app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
-        return exportCounter;    
+        return exportCounter;
     }
 
     /**
@@ -178,7 +178,7 @@ function ExportInDesignArticlesToPlaService(
             "y": this._roundTo3Decimals(pageItem.geometricBounds[0] - topLeftY),
             "width": this._roundTo3Decimals(pageItem.geometricBounds[3] - pageItem.geometricBounds[1]),
             "height": this._roundTo3Decimals(pageItem.geometricBounds[2] - pageItem.geometricBounds[0])
-        }    
+        }
     }
 
     /**
@@ -271,7 +271,7 @@ function ExportInDesignArticlesToPlaService(
             }
         }
         return true;
-    }    
+    }
 
     /**
      * @param {Document} doc 
@@ -295,7 +295,7 @@ function ExportInDesignArticlesToPlaService(
             const pageItem = pageItems[index];
             this._logger.info(`Exporting '${pageItem.constructor.name}' page item with id '${pageItem.id}'.`);
             pageItemsIds.push(pageItem.id);
-        }    
+        }
         doc.exportPageItemsToSnippet(snippetFile, pageItemsIds);
 
         // Export JPEG image.
@@ -333,7 +333,7 @@ function ExportInDesignArticlesToPlaService(
         }
 
         // Export JSON.
-        this._saveJsonToDisk(articleShapeJson, jsonFile);    
+        this._saveJsonToDisk(articleShapeJson, jsonFile);
     }
 
     /**
@@ -528,11 +528,11 @@ function ExportInDesignArticlesToPlaService(
      */
     this._getManagedArticleFromPageItems = function(pageItems) {
         for (let i = 0; i < pageItems.length; i++) {
-            const pageItem = pageItems[i];        
+            const pageItem = pageItems[i];
             try {
                 if (pageItem.managedArticle.constructorName === "ManagedArticle") {
                     return pageItem.managedArticle;
-                }                
+                }
             } catch (error) {}
         }
         return null;

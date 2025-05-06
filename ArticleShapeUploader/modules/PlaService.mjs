@@ -44,7 +44,7 @@ export class PlaService {
             throw new Error(`HTTP ${response.status} ${response.statusText}`);
         } catch (error) {
             throw new Error(`Could not retrieve page layout settings - ${error}`);
-        }    
+        }
     }
 
     /**
@@ -169,5 +169,5 @@ export class PlaService {
             this._logger.error(`Error uploading file "${path.basename(localFilePath)}" - ${error.message}`);
             return false;
         }
-    }    
+    }
 }

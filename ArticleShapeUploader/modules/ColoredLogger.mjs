@@ -89,5 +89,5 @@ export class ColoredLogger {
 			message += "\n- stack:\n" + error.stack;
 		}
 		this.error(message);
-	}    
+	}
 }

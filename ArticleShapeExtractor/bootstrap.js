@@ -18,7 +18,7 @@ Container.registerSingleton("Logger", function() {
     const Logger = require("./modules/Logger.js");
     const config = Container.resolve("Settings").getLoggerConfig();
     try {
-        return new Logger(config.folder, config.filename, config.level, config.wipe);    
+        return new Logger(config.folder, config.filename, config.level, config.wipe);
     } catch(error) {
         throw new Error(error + " Please check your settings in config/config.js and config/config-local.js files.");
     }
@@ -44,7 +44,7 @@ function validateHost() {
                 +`Minimum required version is ${minRequiredVersion}.`);
         }
     } catch(error) { // This may happen when debugging with the Adobe UXP Developer Tool.
-        logger.error(error.toString());        
+        logger.error(error.toString());
     }
 };
 
