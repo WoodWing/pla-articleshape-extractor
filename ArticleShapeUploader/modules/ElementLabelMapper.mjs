@@ -1,17 +1,5 @@
 /**
  * Understands how to map custom element labels to the standard element labels.
- * 
- * An element label tells the type of a text component. Custom labels may be freely picked 
- * by the customer. Standard labels are the factory defaults provided by the Studio product.
- * 
- * For example, the custom could use custom element labels "brood 1" and "brood 2" which
- * both represent the standard "body" label. 
- * 
- * Context: The text components are counted per type for the PLA service so that it can 
- * apply a beam kNN search to find similar article shapes. It either needs to know how many 
- * text components of a type are provided by an article (e.g. quote_count) or it needs to
- * know to sum of characters fitted into all components of a certain type (e.g. body_length).
- * In both cases, it needs to know to map custom element labels to standard element labels.
  */
 
 export class ElementLabelMapper {

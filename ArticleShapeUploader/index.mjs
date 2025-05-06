@@ -11,60 +11,22 @@ import minimist from 'minimist';
 import dotenv from 'dotenv';
 import Ajv from 'ajv';
 
+import { Settings } from "./modules/Settings.mjs";
 import { ColoredLogger } from "./modules/ColoredLogger.mjs";
 import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
 import { ArticleShapeHasher } from "./modules/ArticleShapeHasher.mjs";
 
-/**
- * Settings that are effective for this script.
- * Manually adjust any of the factory settings if needed.
- */
-const settings = {
-
-    // Connection URL to the PLA service.
-    //plaServiceUrl: "https://service.pla-poc.woodwing.cloud",
-    plaServiceUrl: "http://127.0.0.1:8000",
-
-    // The brand to work in.
-    brandId: "1",
-
-    // For PLA a layout page has a simple grid of rows and columns.
-    // The space between the page borders in points divided by the column count
-    // gives a rough column width in points to be configured here. Same for rows.
-    columnWidth: 112,
-    rowHeight: 90,
-
-    // For the element labels of text components, the customer may use different terms than
-    // provided by default. The options below allow specifying which terms are used instead.
-    // On the LHS the factory defaults are listed. Do not change them.
-    // On the RHS the custom labels are listed. Regular expressions are allowed here.
-    // This example maps custom labels "brood 1", "brood 2" etc to the standard "body":
-    //    body: '^(brood \\d)$',
-    // Mappings are made in case insensitive manner. Make sure that for all custom labels 
-    // there is a mapping available. When no mapping is found, an error is raised.
-    // Note that a null value indicates the default should be used (no custom mapping).
-    elementLabels: {
-        body: null,
-        breakout: null,
-        byline: null,
-        caption: null,
-        credit: null,
-        crosshead: null,
-        // graphic: null, // Excluded, because this does not indicate a text component.
-        head: null,
-        highlight: null,
-        intro: null,
-        quote: null,
-        subhead: null,
-    },
-
-    // Whether to log HTTP communication details (of the PLA service and S3) to the console.
-    logNetworkTraffic: false,
-};
-
+import { uploaderDefaultConfig } from "./config/config.mjs";
+let uploaderLocalConfig = {}
+try {
+    const localModule = await import("./config/config-local.mjs");
+    uploaderLocalConfig = localModule.uploaderLocalConfig;
+} catch (error) {
+}
+const settings = new Settings(uploaderDefaultConfig, uploaderLocalConfig);
 const logger = new ColoredLogger();
 const articleShapeSchema = JSON.parse(fs.readFileSync('./article-shape.schema.json', 'utf-8'));
-const elementLabelMapper = new ElementLabelMapper(settings.elementLabels);
+const elementLabelMapper = new ElementLabelMapper(settings.getElementLabels());
 const hasher = new ArticleShapeHasher(elementLabelMapper);
 
 /**
@@ -74,7 +36,7 @@ async function main() {
     try {
         dotenv.config();
         const accessToken = resolveAccessToken();
-        const brandId = settings.brandId; // TODO: resolve from JSON
+        const brandId = settings.getBrandId(); // TODO: resolve from JSON
         const layoutSettings = await getPageLayoutSettings(accessToken, brandId); // TODO: validate against JSON
         if (layoutSettings === null) {
             // TODO: save settings, taken from JSON
@@ -135,14 +97,14 @@ function resolveInputPath() {
  * @returns {{margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}}|null} Settings, or null when not found.
  */
 async function getPageLayoutSettings(accessToken, brandId) {
-    const url = `${settings.plaServiceUrl}/brands/${brandId}/admin/setting/page-layout`;
+    const url = `${settings.getPlaServiceUrl()}/brands/${brandId}/admin/setting/page-layout`;
     try {
         const request = new Request(url, requestInitForPlaService(accessToken, 'GET'));
         const response = await fetch(request);
-        const settings = await response.json();
-        logHttpTraffic(request, null, response, settings);
+        const pageSettings = await response.json();
+        logHttpTraffic(request, null, response, pageSettings);
         if (response.ok) {
-            const settingsValue = JSON.parse(settings.value);
+            const settingsValue = JSON.parse(pageSettings.value);
             logger.debug("Retrieved page layout settings: ", settingsValue);
             return settingsValue;
         }
@@ -200,7 +162,7 @@ function askConfirmation(question) {
  * @param {string} brandId 
  */
 async function deleteArticleShapes(accessToken, brandId) {
-    const url = `${settings.plaServiceUrl}/brands/${brandId}/admin/article-shapes`;
+    const url = `${settings.getPlaServiceUrl()}/brands/${brandId}/admin/article-shapes`;
     try {
         const request = new Request(url, requestInitForPlaService(accessToken, 'DELETE'));
         const response = await fetch(request);
@@ -380,12 +342,12 @@ function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHa
         section_id: articleShapeJson.sectionId,
         genre_id: articleShapeJson.genreId,
         shape_type: articleShapeJson.shapeTypeId,
-        width: Math.round(articleShapeJson.geometricBounds.width / settings.columnWidth),
-        height: Math.round(articleShapeJson.geometricBounds.height / settings.rowHeight),
+        width: Math.round(articleShapeJson.geometricBounds.width / settings.getColumnWidth()),
+        height: Math.round(articleShapeJson.geometricBounds.height / settings.getRowHeight()),
         body_length: 0,
         quote_count: 0,
         image_count: articleShapeJson.imageComponents?.length || 0,
-        fold_line: determineFoldLineApproximately(articleShapeJson.foldLine, settings.columnWidth),
+        fold_line: determineFoldLineApproximately(articleShapeJson.foldLine, settings.getColumnWidth()),
         // composition_hash: compositionHash, // TODO
     }; // TODO: take columnWidth and rowHeight from the layout settings instead
 
@@ -443,7 +405,7 @@ function determineFoldLineApproximately(foldLineInPoints, columnWidthInPoints, a
  * @returns {Array<Object>|null} File renditions, with pre-signed URLs, otherwise null.
  */
 async function createArticleShape(accessToken, brandId, articleShapeName, articleShapeWithRenditionsDto) {
-    const url = `${settings.plaServiceUrl}/brands/${brandId}/admin/article-shape/${articleShapeName}`;
+    const url = `${settings.getPlaServiceUrl()}/brands/${brandId}/admin/article-shape/${articleShapeName}`;
     try {
         const requestBody = JSON.stringify(articleShapeWithRenditionsDto);
         const request = new Request(url, requestInitForPlaService(accessToken, 'POST', requestBody));
@@ -469,7 +431,7 @@ async function createArticleShape(accessToken, brandId, articleShapeName, articl
  * @param {string|null} responseJson 
  */
 function logHttpTraffic(request, requestJson, response, responseJson) {
-    if (!settings.logNetworkTraffic) {
+    if (!settings.getLogNetworkTraffic()) {
         return;
     }
     const dottedLine = "- - - - - - - - - - - - - - - - - - - - - - -";
