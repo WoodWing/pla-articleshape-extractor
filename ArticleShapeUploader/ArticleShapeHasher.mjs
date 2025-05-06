@@ -55,7 +55,7 @@ export class ArticleShapeHasher {
             sectionId: articleShape.sectionId,
             genreId: articleShape.genreId,
             shapeTypeId: articleShape.shapeTypeId,
-            foldLine: articleShape.foldLine === null ? null : this._roundToInteger(articleShape.foldLine),
+            foldLine: articleShape.foldLine,
             textComponents: this._sanitizeTextComponents(articleShape.textComponents || []),
             imageComponents: this._sanitizeImageComponents(articleShape.imageComponents || [])
         };
@@ -85,15 +85,6 @@ export class ArticleShapeHasher {
     }
 
     /**
-     * Round a precision number to the nearest integer.
-     * @param {number} value 
-     * @returns {number}
-     */
-    _roundToInteger(value) {
-        return typeof value === "number" ? Math.round(value) : value;
-    }
-
-    /**
      * @param {Object} geometricBounds 
      * @param {string} path
      * @returns {Object} The sanitized geometricBounds.
@@ -107,11 +98,11 @@ export class ArticleShapeHasher {
             // Don't simply add properties here. See class header first.
         ];
         this._validateKeys(geometricBounds, significantKeys, irrelevantKeys, path);
-        const rounded = {};
+        const significantGeo = {};
         for (const key of significantKeys) {
-            rounded[key] = this._roundToInteger(geometricBounds[key]);
+            significantGeo[key] = geometricBounds[key];
         }
-        return rounded;
+        return significantGeo;
     }
 
     /**
