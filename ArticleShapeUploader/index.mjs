@@ -6,7 +6,6 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import readline from "readline";
-import { StatusCodes } from 'http-status-codes';
 import minimist from 'minimist';
 import dotenv from 'dotenv';
 import Ajv from 'ajv';
@@ -15,6 +14,7 @@ import { Settings } from "./modules/Settings.mjs";
 import { ColoredLogger } from "./modules/ColoredLogger.mjs";
 import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
 import { ArticleShapeHasher } from "./modules/ArticleShapeHasher.mjs";
+import { PlaService } from "./modules/PlaService.mjs";
 
 import { uploaderDefaultConfig } from "./config/config.mjs";
 let uploaderLocalConfig = {}
@@ -28,6 +28,7 @@ const logger = new ColoredLogger();
 const articleShapeSchema = JSON.parse(fs.readFileSync('./article-shape.schema.json', 'utf-8'));
 const elementLabelMapper = new ElementLabelMapper(settings.getElementLabels());
 const hasher = new ArticleShapeHasher(elementLabelMapper);
+const plaService = new PlaService(settings.getPlaServiceUrl(), settings.getLogNetworkTraffic(), logger);
 
 /**
  * Top level execution path of this script.
@@ -37,7 +38,7 @@ async function main() {
         dotenv.config();
         const accessToken = resolveAccessToken();
         const brandId = settings.getBrandId(); // TODO: resolve from JSON
-        const layoutSettings = await getPageLayoutSettings(accessToken, brandId); // TODO: validate against JSON
+        const layoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId); // TODO: validate against JSON
         if (layoutSettings === null) {
             // TODO: save settings, taken from JSON
         }
@@ -46,7 +47,7 @@ async function main() {
             logger.warning("Script aborted!");
             return;
         }
-        await deleteArticleShapes(accessToken, brandId);
+        await plaService.deleteArticleShapes(accessToken, brandId);
         await scanDirAndUploadFiles(resolveInputPath(), accessToken, brandId);
     } catch(error) {
         logger.error(error.message);
@@ -89,56 +90,6 @@ function resolveInputPath() {
 }
 
 /**
- * Retrieve the Document Setup settings from PLA service.
- * These settings are configured per brand.
- * When settings have not been made yet, it returns null.
- * @param {string} accessToken 
- * @param {string} brandId 
- * @returns {{margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}}|null} Settings, or null when not found.
- */
-async function getPageLayoutSettings(accessToken, brandId) {
-    const url = `${settings.getPlaServiceUrl()}/brands/${brandId}/admin/setting/page-layout`;
-    try {
-        const request = new Request(url, requestInitForPlaService(accessToken, 'GET'));
-        const response = await fetch(request);
-        const pageSettings = await response.json();
-        logHttpTraffic(request, null, response, pageSettings);
-        if (response.ok) {
-            const settingsValue = JSON.parse(pageSettings.value);
-            logger.debug("Retrieved page layout settings: ", settingsValue);
-            return settingsValue;
-        }
-        if (response.status === StatusCodes.NOT_FOUND) {
-            logger.warning("Page layout settings not defined yet.");
-            return null;
-        }
-        throw new Error(`HTTP ${response.status} ${response.statusText}`);
-    } catch (error) {
-        throw new Error(`Could not retrieve page layout settings - ${error}`);
-    }    
-}
-
-/**
- * Compose request options for the PLA service.
- * @param {string} accessToken 
- * @param {string} method 
- * @param {String|null} body 
- * @returns {RequestInit}
- */
-function requestInitForPlaService(accessToken, method, body=null) {
-    return {
-        mode: 'cors',
-        withCredentials: false,
-        headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'content-type': 'application/json'
-        },
-        body: body,
-        method: method
-    }
-}
-
-/**
  * Ask user for confirmation (y/n) on CLI.
  * @param {string} question 
  * @returns 
@@ -154,26 +105,6 @@ function askConfirmation(question) {
             resolve(answer.trim().toLowerCase() === 'y');
         });
     });
-}
-
-/**
- * Remove all article shapes from the PLA service that were previously configured for a brand.
- * @param {string} accessToken
- * @param {string} brandId 
- */
-async function deleteArticleShapes(accessToken, brandId) {
-    const url = `${settings.getPlaServiceUrl()}/brands/${brandId}/admin/article-shapes`;
-    try {
-        const request = new Request(url, requestInitForPlaService(accessToken, 'DELETE'));
-        const response = await fetch(request);
-        logHttpTraffic(request, null, response, null);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status} ${response.statusText}`);
-        }
-        logger.info("Deleted previously configured article shapes.");
-    } catch (error) {
-        throw new Error(`Could not deleted previously configured article shapes." - ${error.message}`);
-    }
 }
 
 /**
@@ -313,7 +244,7 @@ async function uploadArticleShapeWithFiles(
         article_shape: articleShapeDto,
         renditions: fileRenditions,
     };
-    const fileRenditionsWithUploadUrls = await createArticleShape(
+    const fileRenditionsWithUploadUrls = await plaService.createArticleShape(
         accessToken, brandId, articleShapeName, articleShapeWithRenditionsDto
     );
     if (fileRenditionsWithUploadUrls === null) {
@@ -324,7 +255,7 @@ async function uploadArticleShapeWithFiles(
         if (!fileRendition.presigned_url) {
             throw Error(`No pre-signed upload URL for the "${fileRendition.rendition_name} file rendition."`);
         }
-        await uploadFileToS3(localFilePath, fileRendition.presigned_url, fileRendition.content_type);
+        await plaService.uploadFileToS3(localFilePath, fileRendition.presigned_url, fileRendition.content_type);
     }
 }
 
@@ -397,57 +328,6 @@ function determineFoldLineApproximately(foldLineInPoints, columnWidthInPoints, a
 }
 
 /**
- * Create an article shape configuration in the PLA service.
- * @param {string} accessToken 
- * @param {string} brandId 
- * @param {string} articleShapeName 
- * @param {Object} articleShapeWithRenditionsDto
- * @returns {Array<Object>|null} File renditions, with pre-signed URLs, otherwise null.
- */
-async function createArticleShape(accessToken, brandId, articleShapeName, articleShapeWithRenditionsDto) {
-    const url = `${settings.getPlaServiceUrl()}/brands/${brandId}/admin/article-shape/${articleShapeName}`;
-    try {
-        const requestBody = JSON.stringify(articleShapeWithRenditionsDto);
-        const request = new Request(url, requestInitForPlaService(accessToken, 'POST', requestBody));
-        const response = await fetch(request);
-        const responseJson = await response.json();
-        logHttpTraffic(request, articleShapeWithRenditionsDto, response, responseJson);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status} ${response.statusText}`);
-        }
-        logger.info(`Created article shape "${articleShapeName}".`);
-        return responseJson.renditions;
-    } catch (error) {
-        logger.error(`Could not create article shape "${articleShapeName}" - ${error.message}`);
-        return null;
-    }
-}
-
-/**
- * Log the URL, request JSON body (optional), response status and response JSON body (optional).
- * @param {Request} request
- * @param {string|null} requestJson 
- * @param {Response} response 
- * @param {string|null} responseJson 
- */
-function logHttpTraffic(request, requestJson, response, responseJson) {
-    if (!settings.getLogNetworkTraffic()) {
-        return;
-    }
-    const dottedLine = "- - - - - - - - - - - - - - - - - - - - - - -";
-    let message = `Network traffic:\n${dottedLine}\nRequest: HTTP ${request.method} ${request.url}\n`;
-    if (requestJson) {
-        message += `${JSON.stringify(requestJson, null, 3)}\n`;
-    }
-    message += `${dottedLine}\nResponse: HTTP ${response.status} ${response.statusText}\n`;
-    if (responseJson) {
-        message += `${JSON.stringify(responseJson, null, 3)}\n`;
-    }
-    message += dottedLine;
-    logger.debug(message);
-}
-
-/**
  * Lookup the local filepath based on a given file rendition name.
  * @param {string} fileRenditionName 
  * @param {Array<Object>} localFiles 
@@ -469,39 +349,6 @@ function lookupLocalFileByRendition(fileRenditionName, localFiles) {
             throw new Error(`Unsupported file rendition "${fileRenditionName}".`);
     }
     return localFilePath;
-}
-
-/**
- * Upload a local file to S3 using a pre-signed URL.
- * @param {string} localFilePath
- * @param {string} presignedUrl
- * @param {string} contentType
- * @returns {boolean} Whether the upload was successful.
- */
-async function uploadFileToS3(localFilePath, presignedUrl, contentType) {
-    try {
-        const fileStream = fs.createReadStream(localFilePath);
-        const stats = fs.statSync(localFilePath);
-        const request = new Request(presignedUrl, {
-            method: 'PUT',
-            body: fileStream,
-            headers: {
-                "Content-Length": stats.size,
-                'Content-Type': contentType,
-            },
-            duplex: "half" // Required when sending a stream
-        });
-        const response = await fetch(request);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status} ${response.statusText}`);
-        }
-        logHttpTraffic(request, null, response, null);
-        logger.info(`Uploaded file "${path.basename(localFilePath)}" successfully to S3.`);
-        return true;
-    } catch (error) {
-        logger.error(`Error uploading file "${path.basename(localFilePath)}" - ${error.message}`);
-        return false;
-    }
 }
 
 main();
