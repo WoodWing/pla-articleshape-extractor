@@ -11,9 +11,9 @@ import minimist from 'minimist';
 import dotenv from 'dotenv';
 import Ajv from 'ajv';
 
-import { ColoredLogger } from "./ColoredLogger.mjs";
-import { ElementLabelMapper } from './ElementLabelMapper.mjs';
-import { ArticleShapeHasher } from "./ArticleShapeHasher.mjs";
+import { ColoredLogger } from "./modules/ColoredLogger.mjs";
+import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
+import { ArticleShapeHasher } from "./modules/ArticleShapeHasher.mjs";
 
 /**
  * Settings that are effective for this script.
