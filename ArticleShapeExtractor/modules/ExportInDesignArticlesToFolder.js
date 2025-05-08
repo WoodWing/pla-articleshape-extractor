@@ -342,10 +342,10 @@ function ExportInDesignArticlesToFolder(
     }
 
     /**
-    * Save JSON data to a file on disk.
-    * @param {Object} jsonData - The JSON object to save.
-    * @param {File} file
-    */
+     * Save JSON data to a file on disk.
+     * @param {Object} jsonData - The JSON object to save.
+     * @param {File} file
+     */
     this._saveJsonToDisk = function(jsonData, file) {
         try {
             // Convert JSON object to a string
@@ -354,8 +354,9 @@ function ExportInDesignArticlesToFolder(
             // Write the JSON string to the file
             const formats = require('uxp').storage.formats;
             file.write(jsonString, {format: formats.utf8}); 
-        } catch (e) {
-            alert("An error occurred: " + e.message);
+        } catch (error) {
+            this._logger.logError(error);
+            alert("An error occurred: " + error.message);
         }
     }
 
