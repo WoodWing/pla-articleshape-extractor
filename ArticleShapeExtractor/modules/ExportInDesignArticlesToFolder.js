@@ -287,12 +287,12 @@ function ExportInDesignArticlesToFolder(
      * @param {Object} articleShapeJson
      */
     this._exportArticlePageItems = async function(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
-        const fs = require('uxp').storage.localFileSystem;
+        const lfs = require('uxp').storage.localFileSystem;
 
         const baseFileName = await this._getFileBaseName(doc, folder, shapeTypeName, articleIndex);
-        const snippetFile = await fs.createEntryWithUrl(baseFileName + ".idms", { overwrite: true });
-        const imgFile = await fs.createEntryWithUrl(baseFileName + ".jpg", { overwrite: true });
-        const jsonFile = await fs.createEntryWithUrl(baseFileName + ".json", { overwrite: true });
+        const snippetFile = await lfs.createEntryWithUrl(baseFileName + ".idms", { overwrite: true });
+        const imgFile = await lfs.createEntryWithUrl(baseFileName + ".jpg", { overwrite: true });
+        const jsonFile = await lfs.createEntryWithUrl(baseFileName + ".json", { overwrite: true });
 
         // Export IDMS snippet.
         let pageItemsIds = [];
