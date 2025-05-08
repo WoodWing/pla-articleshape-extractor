@@ -26,6 +26,13 @@ class NoDocumentOpenedError extends Error {
     }
 }
 
+class NoDocumentPagesError extends Error {
+    constructor() {
+        super("Document does not have pages.");
+        this.name = this.constructor.name;
+    }
+}
+
 class NoFramesSelectedError extends Error {
     constructor() {
         super("No frames selected.");
@@ -61,14 +68,23 @@ class PrintLayoutAutomationError extends Error {
     }
 }
 
+class UnexpectedPageSetupError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = this.constructor.name;
+    }
+}
+
 module.exports = {
     ArgumentError,
     ConfigurationError,
     NoStudioSessionError,
     NoDocumentOpenedError,
+    NoDocumentPagesError,
     NoFramesSelectedError,
     NoTextOrGraphicalFramesSelectedError,
     NoArticlesInDocumentError,
     NoFolderSelectedError,
     PrintLayoutAutomationError,
+    UnexpectedPageSetupError,
 }

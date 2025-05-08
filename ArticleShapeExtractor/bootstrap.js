@@ -53,12 +53,18 @@ Container.registerFactory("InDesignArticleService", function() {
     return new InDesignArticleService();
 });
 
+Container.registerFactory("LayoutDocumentSettings", function() {
+    const LayoutDocumentSettings = require("./modules/LayoutDocumentSettings.js");
+    return new LayoutDocumentSettings(Container.resolve("Logger"));
+});
+
 Container.registerFactory("ExportInDesignArticlesToFolder", function() {
     const ExportInDesignArticlesToFolder = require("./modules/ExportInDesignArticlesToFolder.js");
     const settings = Container.resolve("Settings");
     return new ExportInDesignArticlesToFolder(
         Container.resolve("Logger"), 
         Container.resolve("InDesignArticleService"), 
+        Container.resolve("LayoutDocumentSettings"), 
         settings.getOfflineFallbackConfig().brand,
         settings.getOfflineFallbackConfig().category,
     );
