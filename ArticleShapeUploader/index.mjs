@@ -153,7 +153,7 @@ function validateArticleShapeJson(jsonFilePath) {
     try {
         jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf-8'));
     } catch(error) {
-        throw new Error(`The file "${basename}" is not valid JSON - ${error}`);
+        throw new Error(`The file "${basename}" is not valid JSON - ${error.message}`);
     }
     const ajv = new Ajv();
     const validate = ajv.compile(articleShapeSchema);

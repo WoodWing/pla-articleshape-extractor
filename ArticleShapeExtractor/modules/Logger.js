@@ -118,7 +118,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 			}
         	fs.writeFileSync(logPath, logLine, {encoding: "utf-8", flag: mode});		
 		} catch(error) {
-			alert(`Failed to write into log file '${logPath}' - ${error}`);
+			alert(`Failed to write into log file '${logPath}' - ${error.message}`);
 		}
 	};
 

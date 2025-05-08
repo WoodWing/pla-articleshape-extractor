@@ -43,7 +43,7 @@ export class PlaService {
             }
             throw new Error(`HTTP ${response.status} ${response.statusText}`);
         } catch (error) {
-            throw new Error(`Could not retrieve page layout settings - ${error}`);
+            throw new Error(`Could not retrieve page layout settings - ${error.message}`);
         }
     }
 
