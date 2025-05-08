@@ -279,7 +279,7 @@ function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHa
         quote_count: 0,
         image_count: articleShapeJson.imageComponents?.length || 0,
         fold_line: determineFoldLineApproximately(articleShapeJson.foldLine, settings.getColumnWidth()),
-        // composition_hash: compositionHash, // TODO
+        composition_hash: compositionHash,
     }; // TODO: take columnWidth and rowHeight from the layout settings instead
 
     // Count text components in the JSON.
