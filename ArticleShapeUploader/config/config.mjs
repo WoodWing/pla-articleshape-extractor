@@ -7,11 +7,11 @@ export const uploaderDefaultConfig = {
     // The brand to work in.
     brandId: "1",
 
-    // For PLA a layout page has a simple grid of rows and columns.
-    // The space between the page borders in points divided by the column count
-    // gives a rough column width in points to be configured here. Same for rows.
-    columnWidth: 112,
-    rowHeight: 90,
+    // For PLA a layout page has a simple grid of rows and columns. Use whole numbers only.
+    grid: {
+        columnCount: 5,
+        rowCount: 8
+    },
 
     // An element label tells the type of a text component. Custom labels may be freely picked 
     // by the customer. Standard labels are the factory defaults provided by the Studio product.

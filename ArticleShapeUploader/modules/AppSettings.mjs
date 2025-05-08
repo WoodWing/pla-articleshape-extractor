@@ -34,8 +34,7 @@ export class AppSettings {
 
     getPlaServiceUrl() { return this._configData.plaServiceUrl; }
     getBrandId() { return this._configData.brandId; }
-    getColumnWidth() { return this._configData.columnWidth; }
-    getRowHeight() { return this._configData.rowHeight; }
+    getGrid() { return this._configData.grid; }
     getElementLabels() { return this._configData.elementLabels; }
     getLogNetworkTraffic() { return this._configData.logNetworkTraffic; }
 }

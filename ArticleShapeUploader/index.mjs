@@ -12,6 +12,7 @@ import Ajv from 'ajv';
 
 import { AppSettings } from "./modules/AppSettings.mjs";
 import { ColoredLogger } from "./modules/ColoredLogger.mjs";
+import { DocumentSettingsReader } from "./modules/DocumentSettingsReader.mjs";
 import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
 import { ArticleShapeHasher } from "./modules/ArticleShapeHasher.mjs";
 import { PlaService } from "./modules/PlaService.mjs";
@@ -25,6 +26,7 @@ try {
 }
 const appSettings = new AppSettings(uploaderDefaultConfig, uploaderLocalConfig);
 const logger = new ColoredLogger();
+const documentSettingsReader = new DocumentSettingsReader(logger, appSettings.getGrid());
 const articleShapeSchema = JSON.parse(fs.readFileSync('./article-shape.schema.json', 'utf-8'));
 const elementLabelMapper = new ElementLabelMapper(appSettings.getElementLabels());
 const hasher = new ArticleShapeHasher(elementLabelMapper);
@@ -36,6 +38,8 @@ const plaService = new PlaService(appSettings.getPlaServiceUrl(), appSettings.ge
 async function main() {
     try {
         dotenv.config();
+        const inputPath = resolveInputPath();
+        documentSettingsReader.readSettings(inputPath);
         const accessToken = resolveAccessToken();
         const brandId = appSettings.getBrandId(); // TODO: resolve from JSON
         const layoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId); // TODO: validate against JSON
@@ -48,7 +52,7 @@ async function main() {
             return;
         }
         await plaService.deleteArticleShapes(accessToken, brandId);
-        await scanDirAndUploadFiles(resolveInputPath(), accessToken, brandId);
+        await scanDirAndUploadFiles(inputPath, accessToken, brandId);
     } catch(error) {
         logger.error(error.message);
     }
@@ -118,7 +122,7 @@ function askConfirmation(question) {
 async function scanDirAndUploadFiles(folderPath, accessToken, brandId) {
     const files = fs.readdirSync(folderPath);
     for (const file of files) {
-        if (file.toLowerCase().endsWith('.json')) {
+        if (file.toLowerCase().endsWith('.json') && file !== documentSettingsReader.getFilename()) {
             const baseName = path.basename(file, '.json');
             try {
                 const articleShapeJson = validateArticleShapeJson(path.join(folderPath,file));
@@ -268,19 +272,21 @@ async function uploadArticleShapeWithFiles(
  * @returns {Object} DTO
  */
 function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash) {
+    const columnWidth = documentSettingsReader.getColumnWidth();
+    const rowHeight = documentSettingsReader.getRowHeight();
     let articleShapeDto = {
         name: articleShapeName,
         section_id: articleShapeJson.sectionId,
         genre_id: articleShapeJson.genreId,
         shape_type: articleShapeJson.shapeTypeId,
-        width: Math.round(articleShapeJson.geometricBounds.width / appSettings.getColumnWidth()),
-        height: Math.round(articleShapeJson.geometricBounds.height / appSettings.getRowHeight()),
+        width: Math.round(articleShapeJson.geometricBounds.width / columnWidth),
+        height: Math.round(articleShapeJson.geometricBounds.height / rowHeight),
         body_length: 0,
         quote_count: 0,
         image_count: articleShapeJson.imageComponents?.length || 0,
-        fold_line: determineFoldLineApproximately(articleShapeJson.foldLine, appSettings.getColumnWidth()),
+        fold_line: determineFoldLineApproximately(articleShapeJson.foldLine, columnWidth), // TODO: make accurate by taking page borders into account
         composition_hash: compositionHash,
-    }; // TODO: take columnWidth and rowHeight from the layout settings instead
+    };
 
     // Count text components in the JSON.
     if (articleShapeJson.textComponents) {
