@@ -53,10 +53,10 @@ Container.registerFactory("InDesignArticleService", function() {
     return new InDesignArticleService();
 });
 
-Container.registerFactory("ExportInDesignArticlesToPlaService", function() {
-    const ExportInDesignArticlesToPlaService = require("./modules/ExportInDesignArticlesToPlaService.js");
+Container.registerFactory("ExportInDesignArticlesToFolder", function() {
+    const ExportInDesignArticlesToFolder = require("./modules/ExportInDesignArticlesToFolder.js");
     const settings = Container.resolve("Settings");
-    return new ExportInDesignArticlesToPlaService(
+    return new ExportInDesignArticlesToFolder(
         Container.resolve("Logger"), 
         Container.resolve("InDesignArticleService"), 
         settings.getOfflineFallbackConfig().brand,
@@ -68,7 +68,7 @@ Container.registerFactory("RegenerateArticleShapesService", function() {
     const RegenerateArticleShapesService = require("./modules/RegenerateArticleShapesService.js");
     return new RegenerateArticleShapesService(
         Container.resolve("Settings").getRegenerateArticleShapesQueryName(),
-        Container.resolve("ExportInDesignArticlesToPlaService"),
+        Container.resolve("ExportInDesignArticlesToFolder"),
     );
 });
 

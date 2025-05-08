@@ -8,7 +8,7 @@ const idd = require("indesign");
  * @param {Object} fallbackBrand
  * @param {Object} fallbackCategory
  */
-function ExportInDesignArticlesToPlaService(
+function ExportInDesignArticlesToFolder(
     logger,
     inDesignArticleService, 
     fallbackBrand, 
@@ -561,4 +561,4 @@ function ExportInDesignArticlesToPlaService(
     }
 }
 
-module.exports = ExportInDesignArticlesToPlaService;
+module.exports = ExportInDesignArticlesToFolder;
