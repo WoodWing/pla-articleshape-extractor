@@ -2,7 +2,7 @@
  * Understands how to merge the local settings into the default settings.
  * Provides a getter function for each individual setting.
  */
-export class Settings {
+export class AppSettings {
 
     /**
      * @constructor

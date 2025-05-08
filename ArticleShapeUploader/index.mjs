@@ -10,7 +10,7 @@ import minimist from 'minimist';
 import dotenv from 'dotenv';
 import Ajv from 'ajv';
 
-import { Settings } from "./modules/Settings.mjs";
+import { AppSettings } from "./modules/AppSettings.mjs";
 import { ColoredLogger } from "./modules/ColoredLogger.mjs";
 import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
 import { ArticleShapeHasher } from "./modules/ArticleShapeHasher.mjs";
@@ -23,12 +23,12 @@ try {
     uploaderLocalConfig = localModule.uploaderLocalConfig;
 } catch (error) {
 }
-const settings = new Settings(uploaderDefaultConfig, uploaderLocalConfig);
+const appSettings = new AppSettings(uploaderDefaultConfig, uploaderLocalConfig);
 const logger = new ColoredLogger();
 const articleShapeSchema = JSON.parse(fs.readFileSync('./article-shape.schema.json', 'utf-8'));
-const elementLabelMapper = new ElementLabelMapper(settings.getElementLabels());
+const elementLabelMapper = new ElementLabelMapper(appSettings.getElementLabels());
 const hasher = new ArticleShapeHasher(elementLabelMapper);
-const plaService = new PlaService(settings.getPlaServiceUrl(), settings.getLogNetworkTraffic(), logger);
+const plaService = new PlaService(appSettings.getPlaServiceUrl(), appSettings.getLogNetworkTraffic(), logger);
 
 /**
  * Top level execution path of this script.
@@ -37,7 +37,7 @@ async function main() {
     try {
         dotenv.config();
         const accessToken = resolveAccessToken();
-        const brandId = settings.getBrandId(); // TODO: resolve from JSON
+        const brandId = appSettings.getBrandId(); // TODO: resolve from JSON
         const layoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId); // TODO: validate against JSON
         if (layoutSettings === null) {
             // TODO: save settings, taken from JSON
@@ -69,7 +69,7 @@ function resolveAccessToken() {
 }
 
 /**
- * Take the directory path from the CPI arguments.
+ * Take the directory path from the CLI arguments.
  * This directory should contain the article shapes to upload.
  * @returns {string}
  */
@@ -273,12 +273,12 @@ function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHa
         section_id: articleShapeJson.sectionId,
         genre_id: articleShapeJson.genreId,
         shape_type: articleShapeJson.shapeTypeId,
-        width: Math.round(articleShapeJson.geometricBounds.width / settings.getColumnWidth()),
-        height: Math.round(articleShapeJson.geometricBounds.height / settings.getRowHeight()),
+        width: Math.round(articleShapeJson.geometricBounds.width / appSettings.getColumnWidth()),
+        height: Math.round(articleShapeJson.geometricBounds.height / appSettings.getRowHeight()),
         body_length: 0,
         quote_count: 0,
         image_count: articleShapeJson.imageComponents?.length || 0,
-        fold_line: determineFoldLineApproximately(articleShapeJson.foldLine, settings.getColumnWidth()),
+        fold_line: determineFoldLineApproximately(articleShapeJson.foldLine, appSettings.getColumnWidth()),
         composition_hash: compositionHash,
     }; // TODO: take columnWidth and rowHeight from the layout settings instead
 
