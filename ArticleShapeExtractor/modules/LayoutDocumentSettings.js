@@ -38,7 +38,7 @@ function LayoutDocumentSettings(logger) {
      * @param {Page} page 
      * @param {Number} inside 
      * @param {Number} outside 
-     * @returns {dimensions: {width: Number, height: Number}, margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {count: Number, gutter: Number}
+     * @returns {dimensions: {width: Number, height: Number}, margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}
      */
     this._composeSettings = function(doc, page, inside, outside) {
         return {
@@ -53,7 +53,6 @@ function LayoutDocumentSettings(logger) {
                 outside: this._roundTo3Decimals(outside)
             }, 
             columns: {
-                count: page.marginPreferences.columnCount,
                 gutter: this._roundTo3Decimals(page.marginPreferences.columnGutter)
             }
         };        
