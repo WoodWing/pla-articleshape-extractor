@@ -519,7 +519,7 @@ function ExportInDesignArticlesToFolder(
         const baselineShift = line.characters.item(0).baselineShift;
 
         // If leading is set to Auto (value = -1), estimate it as 120% of font size.
-        if (leading.equals(idd.Leading.AUTO)) {
+        if (typeof leading === "object" && leading.equals(idd.Leading.AUTO)) {
             const fontSize = line.characters.item(0).pointSize;
             leading = fontSize * 1.2;
         }
