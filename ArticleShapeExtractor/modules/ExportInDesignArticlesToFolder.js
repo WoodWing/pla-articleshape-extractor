@@ -208,7 +208,7 @@ function ExportInDesignArticlesToFolder(
         let brand = null;
         let category = null;
         try {
-            brand = app.entSessions.getPublication(
+            brand = app.entSession.getPublication(
                 doc.entMetaData.get("Core_Publication")
             );
             category = app.entSession.getCategory(
