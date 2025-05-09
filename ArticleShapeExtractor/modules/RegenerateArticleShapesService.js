@@ -4,11 +4,11 @@ const idd = require("indesign");
 /**
  * @constructor
  * @param {String} userQueryName
- * @param {ExportInDesignArticlesToPlaService} exportInDesignArticlesToPlaService
+ * @param {ExportInDesignArticlesToFolder} exportInDesignArticlesToFolder
  */
-function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToPlaService) {
+function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToFolder) {
     this._userQueryName = userQueryName;
-    this._exportInDesignArticlesToPlaService = exportInDesignArticlesToPlaService;
+    this._exportInDesignArticlesToFolder = exportInDesignArticlesToFolder;
 
     /**
      * @param {Folder} folder 
@@ -116,7 +116,7 @@ function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToP
                         //=======================================
                         const objectId = newArrayOfRecords[x][0];
                         const theOpenDoc = app.openObject(objectId);
-                        await this._exportInDesignArticlesToPlaService.run(theOpenDoc, folder);
+                        await this._exportInDesignArticlesToFolder.run(theOpenDoc, folder);
                         theOpenDoc.close(idd.SaveOptions.no);
                         app.sendObjectToNext(objectId);
                     }

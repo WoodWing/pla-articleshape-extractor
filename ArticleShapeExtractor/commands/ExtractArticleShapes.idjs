@@ -26,7 +26,7 @@ await (async function main() {
             throw new NoFolderSelectedError();
         }
 
-        let exportCounter = await Container.resolve("ExportInDesignArticlesToPlaService").run(doc, folder);
+        let exportCounter = await Container.resolve("ExportInDesignArticlesToFolder").run(doc, folder);
         if (exportCounter === 0) {
             const { PrintLayoutAutomationError } = require('../modules/Errors.js');
             throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.");

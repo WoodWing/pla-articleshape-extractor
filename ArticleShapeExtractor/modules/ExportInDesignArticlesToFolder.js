@@ -5,20 +5,20 @@ const idd = require("indesign");
  * @constructor
  * @param {Logger} logger
  * @param {InDesignArticleService} inDesignArticleService
- * @param {ArticleShapeGateway} articleShapeGateway
+ * @param {LayoutDocumentSettings} layoutDocumentSettings
  * @param {Object} fallbackBrand
  * @param {Object} fallbackCategory
  */
-function ExportInDesignArticlesToPlaService(
+function ExportInDesignArticlesToFolder(
     logger,
     inDesignArticleService, 
-    articleShapeGateway, 
+    layoutDocumentSettings,
     fallbackBrand, 
     fallbackCategory,
 ) {
     this._logger = logger;
     this._inDesignArticleService = inDesignArticleService;
-    this._articleShapeGateway = articleShapeGateway;
+    this._layoutDocumentSettings = layoutDocumentSettings;
     this._fallbackBrand = fallbackBrand;
     this._fallbackCategory = fallbackCategory;
 
@@ -28,6 +28,8 @@ function ExportInDesignArticlesToPlaService(
      * @returns {Number} Count of exported article shapes.
      */
     this.run = async function(doc, folder) {
+        await this._layoutDocumentSettings.exportSettings(doc, folder);
+
         const lfs = require('uxp').storage.localFileSystem;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this._logger.info("Extracting InDesign Articles for layout document '{}'.", docName);
@@ -113,7 +115,7 @@ function ExportInDesignArticlesToPlaService(
             exportCounter++;
         }
         app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
-        return exportCounter;    
+        return exportCounter;
     }
 
     /**
@@ -181,7 +183,7 @@ function ExportInDesignArticlesToPlaService(
             "y": this._roundTo3Decimals(pageItem.geometricBounds[0] - topLeftY),
             "width": this._roundTo3Decimals(pageItem.geometricBounds[3] - pageItem.geometricBounds[1]),
             "height": this._roundTo3Decimals(pageItem.geometricBounds[2] - pageItem.geometricBounds[0])
-        }    
+        }
     }
 
     /**
@@ -274,7 +276,7 @@ function ExportInDesignArticlesToPlaService(
             }
         }
         return true;
-    }    
+    }
 
     /**
      * @param {Document} doc 
@@ -285,12 +287,12 @@ function ExportInDesignArticlesToPlaService(
      * @param {Object} articleShapeJson
      */
     this._exportArticlePageItems = async function(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
-        const fs = require('uxp').storage.localFileSystem;
+        const lfs = require('uxp').storage.localFileSystem;
 
         const baseFileName = await this._getFileBaseName(doc, folder, shapeTypeName, articleIndex);
-        const snippetFile = await fs.createEntryWithUrl(baseFileName + ".idms", { overwrite: true });
-        const imgFile = await fs.createEntryWithUrl(baseFileName + ".jpg", { overwrite: true });
-        const jsonFile = await fs.createEntryWithUrl(baseFileName + ".json", { overwrite: true });
+        const snippetFile = await lfs.createEntryWithUrl(baseFileName + ".idms", { overwrite: true });
+        const imgFile = await lfs.createEntryWithUrl(baseFileName + ".jpg", { overwrite: true });
+        const jsonFile = await lfs.createEntryWithUrl(baseFileName + ".json", { overwrite: true });
 
         // Export IDMS snippet.
         let pageItemsIds = [];
@@ -298,7 +300,7 @@ function ExportInDesignArticlesToPlaService(
             const pageItem = pageItems[index];
             this._logger.info(`Exporting '${pageItem.constructor.name}' page item with id '${pageItem.id}'.`);
             pageItemsIds.push(pageItem.id);
-        }    
+        }
         doc.exportPageItemsToSnippet(snippetFile, pageItemsIds);
 
         // Export JPEG image.
@@ -336,14 +338,14 @@ function ExportInDesignArticlesToPlaService(
         }
 
         // Export JSON.
-        this._saveJsonToDisk(articleShapeJson, jsonFile);    
+        this._saveJsonToDisk(articleShapeJson, jsonFile);
     }
 
     /**
-    * Save JSON data to a file on disk.
-    * @param {Object} jsonData - The JSON object to save.
-    * @param {File} file
-    */
+     * Save JSON data to a file on disk.
+     * @param {Object} jsonData - The JSON object to save.
+     * @param {File} file
+     */
     this._saveJsonToDisk = function(jsonData, file) {
         try {
             // Convert JSON object to a string
@@ -352,8 +354,9 @@ function ExportInDesignArticlesToPlaService(
             // Write the JSON string to the file
             const formats = require('uxp').storage.formats;
             file.write(jsonString, {format: formats.utf8}); 
-        } catch (e) {
-            alert("An error occurred: " + e.message);
+        } catch (error) {
+            this._logger.logError(error);
+            alert("An error occurred: " + error.message);
         }
     }
 
@@ -531,11 +534,11 @@ function ExportInDesignArticlesToPlaService(
      */
     this._getManagedArticleFromPageItems = function(pageItems) {
         for (let i = 0; i < pageItems.length; i++) {
-            const pageItem = pageItems[i];        
+            const pageItem = pageItems[i];
             try {
                 if (pageItem.managedArticle.constructorName === "ManagedArticle") {
                     return pageItem.managedArticle;
-                }                
+                }
             } catch (error) {}
         }
         return null;
@@ -564,4 +567,4 @@ function ExportInDesignArticlesToPlaService(
     }
 }
 
-module.exports = ExportInDesignArticlesToPlaService;
+module.exports = ExportInDesignArticlesToFolder;

@@ -18,7 +18,7 @@ Container.registerSingleton("Logger", function() {
     const Logger = require("./modules/Logger.js");
     const config = Container.resolve("Settings").getLoggerConfig();
     try {
-        return new Logger(config.folder, config.filename, config.level, config.wipe);    
+        return new Logger(config.folder, config.filename, config.level, config.wipe);
     } catch(error) {
         throw new Error(error + " Please check your settings in config/config.js and config/config-local.js files.");
     }
@@ -44,29 +44,27 @@ function validateHost() {
                 +`Minimum required version is ${minRequiredVersion}.`);
         }
     } catch(error) { // This may happen when debugging with the Adobe UXP Developer Tool.
-        logger.error(error.toString());        
+        logger.error(error.toString());
     }
 };
-
-Container.registerSingleton("ArticleShapeGateway", function() {
-    const ArticleShapeGateway = require("./modules/ArticleShapeGateway.js");
-    return new ArticleShapeGateway(
-        Container.resolve("Settings").getPlaServiceUrl(),
-    );
-});
 
 Container.registerFactory("InDesignArticleService", function() {
     const InDesignArticleService = require("./modules/InDesignArticleService.js");
     return new InDesignArticleService();
 });
 
-Container.registerFactory("ExportInDesignArticlesToPlaService", function() {
-    const ExportInDesignArticlesToPlaService = require("./modules/ExportInDesignArticlesToPlaService.js");
+Container.registerFactory("LayoutDocumentSettings", function() {
+    const LayoutDocumentSettings = require("./modules/LayoutDocumentSettings.js");
+    return new LayoutDocumentSettings(Container.resolve("Logger"));
+});
+
+Container.registerFactory("ExportInDesignArticlesToFolder", function() {
+    const ExportInDesignArticlesToFolder = require("./modules/ExportInDesignArticlesToFolder.js");
     const settings = Container.resolve("Settings");
-    return new ExportInDesignArticlesToPlaService(
+    return new ExportInDesignArticlesToFolder(
         Container.resolve("Logger"), 
         Container.resolve("InDesignArticleService"), 
-        Container.resolve("ArticleShapeGateway"), 
+        Container.resolve("LayoutDocumentSettings"), 
         settings.getOfflineFallbackConfig().brand,
         settings.getOfflineFallbackConfig().category,
     );
@@ -76,7 +74,7 @@ Container.registerFactory("RegenerateArticleShapesService", function() {
     const RegenerateArticleShapesService = require("./modules/RegenerateArticleShapesService.js");
     return new RegenerateArticleShapesService(
         Container.resolve("Settings").getRegenerateArticleShapesQueryName(),
-        Container.resolve("ExportInDesignArticlesToPlaService"),
+        Container.resolve("ExportInDesignArticlesToFolder"),
     );
 });
 

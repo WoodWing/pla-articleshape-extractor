@@ -3,6 +3,7 @@
   "brandId": "",
   "sectionName": "",
   "sectionId": "",
+  "genreId": "",
   "shapeTypeName": "lead|secondary|third|filler",
   "shapeTypeId": "",
   "geometricBounds": {
@@ -11,7 +12,7 @@
     "width": 0.0,
     "height": 0.0
   },
-  "foldLine": null,
+  "foldLine": 0.0,
   "textComponents": [
     {
       "type": "head|intro|body|quote|caption", 
@@ -29,9 +30,10 @@
           "columns": 0,
           "words": 0,
           "characters": 0,        
+          "textWrapMode": "none|bounding_box|contour|jump_object|jump_to_next_column",
           "totalLineHeight": 0.0,
-          "textWrapMode": "none|bounding_box|contour|jump_object|jump_to_next_column"
-        }        
+          "text": ""
+        }
       ]
     }
   ],

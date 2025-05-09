@@ -2,9 +2,6 @@
 
 const plaDefaultConfig = {
     
-    // URL of the PLA service.
-    plaServiceUrl: "https://service.pla-poc.woodwing.cloud",
-
     // User Query in Studio Server that returns layouts to automatically extract article shapes from.
     regenerateArticleShapesQueryName: "RegenerateArticleShapes",
 
