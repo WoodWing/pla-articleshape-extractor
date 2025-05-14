@@ -108,33 +108,50 @@ async function askDeleteArticleShapesDecision() {
 }
 
 /**
- * Scans for article shape files and calls the callback with corresponding basename and file paths.
+ * Scans through a given for for article shape JSON files. For each file it creates 
+ * an article shape configuration in the PLA service and uploads 3 files to S3.
  * The basename of each set of 3 files should be the same and represents the article shape name.
  * The JSON file holds the definition, the JPEG holds the preview and IDMS holds the snippet.
- * @param {string} folderPath - Folder to scan.
- * @param {string} accessToken
- * @param {string} brandId
+ * @param {string} folderPath 
+ * @param {string} accessToken 
+ * @param {string} brandId 
  */
 async function scanDirAndUploadFiles(folderPath, accessToken, brandId) {
+    await scanDirForArticleShapeJson(folderPath, async (baseName) => {
+        const jsonFilePath = composePathAndAssertExists(folderPath, baseName, 'json');
+        const articleShapeJson = validateArticleShapeJson(jsonFilePath);
+        const compositionHash = hasher.hash(articleShapeJson);
+        const localFiles = {
+            json: jsonFilePath,
+            jpeg: composePathAndAssertExists(folderPath, baseName, 'jpg'),
+            idms: composePathAndAssertExists(folderPath, baseName, 'idms'),
+        };
+        const fileRenditions = [
+            composeFileRenditionDto('composition', 'application/json; charset=utf-8', 'json'),
+            composeFileRenditionDto('snapshot', 'image/jpeg', 'jpg'),
+            composeFileRenditionDto('definition', 'application/xml', 'idms'),
+        ]
+        await uploadArticleShapeWithFiles(
+            accessToken, brandId, baseName, localFiles, fileRenditions, compositionHash);        
+        return true;
+    });
+}
+
+/**
+ * Scans for article shape files and calls the callback with the basename, which represents the shape name.
+ * @param {string} folderPath - Folder to scan.
+ * @param {CallableFunction} callback
+ */
+async function scanDirForArticleShapeJson(folderPath, callback) {
     const files = fs.readdirSync(folderPath);
     for (const file of files) {
         if (file.toLowerCase().endsWith('.json') && file !== documentSettingsReader.getFilename()) {
             const baseName = path.basename(file, '.json');
             try {
-                const articleShapeJson = validateArticleShapeJson(path.join(folderPath,file));
-                const compositionHash = hasher.hash(articleShapeJson);
-                const localFiles = {
-                    json: composePathAndAssertExists(folderPath, baseName, 'json'),
-                    jpeg: composePathAndAssertExists(folderPath, baseName, 'jpg'),
-                    idms: composePathAndAssertExists(folderPath, baseName, 'idms'),
-                };
-                const fileRenditions = [
-                    composeFileRenditionDto('composition', 'application/json; charset=utf-8', 'json'),
-                    composeFileRenditionDto('snapshot', 'image/jpeg', 'jpg'),
-                    composeFileRenditionDto('definition', 'application/xml', 'idms'),
-                ]
-                await uploadArticleShapeWithFiles(
-                    accessToken, brandId, baseName, localFiles, fileRenditions, compositionHash);
+                const shouldContinue = await callback(baseName);
+                if (!shouldContinue) {
+                    break;
+                }
             } catch (error) {
                 logger.error(`Failed to process article shape "${baseName}" - ` + error.message);
             }
