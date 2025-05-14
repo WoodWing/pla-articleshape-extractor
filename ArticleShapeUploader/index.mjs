@@ -5,13 +5,13 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import readline from "readline";
 import minimist from 'minimist';
 import dotenv from 'dotenv';
 import Ajv from 'ajv';
 
 import { AppSettings } from "./modules/AppSettings.mjs";
 import { ColoredLogger } from "./modules/ColoredLogger.mjs";
+import { CliOptionAsker, DeleteOldArticleShapesQuestion, DeleteOldArticleShapesEnum } from "./modules/CliOptionAsker.mjs";
 import { DocumentSettingsReader } from "./modules/DocumentSettingsReader.mjs";
 import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
 import { ArticleShapeHasher } from "./modules/ArticleShapeHasher.mjs";
@@ -46,12 +46,17 @@ async function main() {
         if (layoutSettings === null) {
             // TODO: save settings, taken from JSON
         }
-        const confirmed = await askConfirmation("Do you want to permanently delete all previously configured article shapes at PLA service?");
-        if (!confirmed) {
-            logger.warning("Script aborted!");
-            return;
+        switch (await askDeleteArticleShapesDecision()) {
+            case DeleteOldArticleShapesEnum.QUIT:
+                logger.warning("Script aborted!");
+                return;
+            case DeleteOldArticleShapesEnum.KEEP:
+                // nothing to do; skip deletion of article shapes
+                break;
+            case DeleteOldArticleShapesEnum.DELETE:
+                await plaService.deleteArticleShapes(accessToken, brandId);
+                break;
         }
-        await plaService.deleteArticleShapes(accessToken, brandId);
         await scanDirAndUploadFiles(inputPath, accessToken, brandId);
     } catch(error) {
         logger.error(error.message);
@@ -94,21 +99,12 @@ function resolveInputPath() {
 }
 
 /**
- * Ask user for confirmation (y/n) on CLI.
- * @param {string} question 
- * @returns 
+ * @returns DeleteOldArticleShapesEnum
  */
-function askConfirmation(question) {
-    const userPrompt = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
-    return new Promise(resolve => {
-        userPrompt.question(`${question} (y/n): `, answer => {
-            userPrompt.close();
-            resolve(answer.trim().toLowerCase() === 'y');
-        });
-    });
+async function askDeleteArticleShapesDecision() {
+    const question = new DeleteOldArticleShapesQuestion();
+    const asker = new CliOptionAsker(question);
+    return await asker.ask();
 }
 
 /**
