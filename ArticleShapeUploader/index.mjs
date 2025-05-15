@@ -4,14 +4,13 @@
 
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
-import minimist from 'minimist';
 import dotenv from 'dotenv';
 import Ajv from 'ajv';
 
 import { AppSettings } from "./modules/AppSettings.mjs";
 import { ColoredLogger } from "./modules/ColoredLogger.mjs";
 import { CliOptionAsker, DeleteOldArticleShapesQuestion, DeleteOldArticleShapesEnum } from "./modules/CliOptionAsker.mjs";
+import { CliParams } from "./modules/CliParams.mjs";
 import { DocumentSettingsReader } from "./modules/DocumentSettingsReader.mjs";
 import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
 import { ArticleShapeHasher } from "./modules/ArticleShapeHasher.mjs";
@@ -26,6 +25,7 @@ try {
 }
 const appSettings = new AppSettings(uploaderDefaultConfig, uploaderLocalConfig);
 const logger = new ColoredLogger();
+const cliParams = new CliParams(logger);
 const documentSettingsReader = new DocumentSettingsReader(logger, appSettings.getGrid());
 const articleShapeSchema = JSON.parse(fs.readFileSync('./article-shape.schema.json', 'utf-8'));
 const elementLabelMapper = new ElementLabelMapper(appSettings.getElementLabels());
@@ -38,7 +38,7 @@ const plaService = new PlaService(appSettings.getPlaServiceUrl(), appSettings.ge
 async function main() {
     try {
         dotenv.config();
-        const inputPath = resolveInputPath();
+        const inputPath = cliParams.resolveInputPath();
         documentSettingsReader.readSettings(inputPath);
         const accessToken = resolveAccessToken();
         const brandId = appSettings.getBrandId(); // TODO: resolve from JSON
@@ -75,27 +75,6 @@ function resolveAccessToken() {
     }
     logger.debug(`PLA access token: ${accessToken}`);
     return accessToken;
-}
-
-/**
- * Take the directory path from the CLI arguments.
- * This directory should contain the article shapes to upload.
- * @returns {string}
- */
-function resolveInputPath() {
-    const args = minimist(process.argv.slice(2)); // 2: exclude node and script
-    if (typeof args['input-path'] === "undefined") {
-        throw new Error("Argument missing: --input-path=[your_input_path]");
-    }
-    let inputPath = args['input-path'];
-    if (inputPath.startsWith('~')) {
-        inputPath = path.join(os.homedir(), inputPath.slice(1));
-    }
-    if (!fs.existsSync(inputPath) || !fs.lstatSync(inputPath).isDirectory()) {
-        throw new Error(`Directory "${inputPath}" does not exist.`);
-    }
-    logger.debug("Input directory: {}", inputPath);
-    return inputPath;
 }
 
 /**
