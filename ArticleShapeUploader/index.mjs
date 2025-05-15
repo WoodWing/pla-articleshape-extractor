@@ -23,7 +23,7 @@ try {
 } catch (error) {
 }
 const appSettings = new AppSettings(uploaderDefaultConfig, uploaderLocalConfig);
-const logger = new ColoredLogger();
+const logger = new ColoredLogger(appSettings.getLogLevel());
 const cliParams = new CliParams(logger);
 const documentSettingsReader = new DocumentSettingsReader(logger, appSettings.getGrid());
 const articleShapeSchema = JSON.parse(fs.readFileSync('./article-shape.schema.json', 'utf-8'));

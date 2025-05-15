@@ -37,4 +37,5 @@ export class AppSettings {
     getGrid() { return this._configData.grid; }
     getElementLabels() { return this._configData.elementLabels; }
     getLogNetworkTraffic() { return this._configData.logNetworkTraffic; }
+    getLogLevel() { return this._configData.logLevel; }
 }
