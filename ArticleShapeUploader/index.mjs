@@ -9,7 +9,6 @@ import Ajv from 'ajv';
 
 import { AppSettings } from "./modules/AppSettings.mjs";
 import { ColoredLogger } from "./modules/ColoredLogger.mjs";
-import { CliOptionAsker, DeleteOldArticleShapesQuestion, DeleteOldArticleShapesEnum } from "./modules/CliOptionAsker.mjs";
 import { CliParams } from "./modules/CliParams.mjs";
 import { DocumentSettingsReader } from "./modules/DocumentSettingsReader.mjs";
 import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
@@ -41,23 +40,16 @@ async function main() {
         const inputPath = cliParams.resolveInputPath();
         documentSettingsReader.readSettings(inputPath);
         const accessToken = resolveAccessToken();
-        const brandId = appSettings.getBrandId(); // TODO: resolve from JSON
+        const articleShapeJson = await takeFirstArticleShapeJson(inputPath);
+        const { brandId, sectionId } = cliParams.resolveBrandAndSectionToUse(articleShapeJson.brandId, articleShapeJson.sectionId);
         const layoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId); // TODO: validate against JSON
         if (layoutSettings === null) {
             // TODO: save settings, taken from JSON
         }
-        switch (await askDeleteArticleShapesDecision()) {
-            case DeleteOldArticleShapesEnum.QUIT:
-                logger.warning("Script aborted!");
-                return;
-            case DeleteOldArticleShapesEnum.KEEP:
-                // nothing to do; skip deletion of article shapes
-                break;
-            case DeleteOldArticleShapesEnum.DELETE:
-                await plaService.deleteArticleShapes(accessToken, brandId);
-                break;
+        if (await cliParams.shouldDeletePreviouslyConfiguredArticleShapes()) {
+             await plaService.deleteArticleShapes(accessToken, brandId);
         }
-        await scanDirAndUploadFiles(inputPath, accessToken, brandId);
+        await scanDirAndUploadFiles(inputPath, accessToken, brandId, sectionId);
     } catch(error) {
         logger.error(error.message);
     }
@@ -78,12 +70,21 @@ function resolveAccessToken() {
 }
 
 /**
- * @returns DeleteOldArticleShapesEnum
+ * 
+ * @param {string} folderPath 
+ * @returns {Object} Article shape JSON.
  */
-async function askDeleteArticleShapesDecision() {
-    const question = new DeleteOldArticleShapesQuestion();
-    const asker = new CliOptionAsker(question);
-    return await asker.ask();
+async function takeFirstArticleShapeJson(folderPath) {
+    let articleShapeJson = null;
+    await scanDirForArticleShapeJson(folderPath, async (baseName) => {
+        const jsonFilePath = composePathAndAssertExists(folderPath, baseName, 'json');
+        articleShapeJson = validateArticleShapeJson(jsonFilePath);
+        return false;
+    });
+    if (articleShapeJson === null) {
+        new Error(`The "${folderPath}" folder does not contain JSON files.`);
+    }
+    return articleShapeJson;
 }
 
 /**
@@ -94,8 +95,9 @@ async function askDeleteArticleShapesDecision() {
  * @param {string} folderPath 
  * @param {string} accessToken 
  * @param {string} brandId 
+ * @param {string} sectionId 
  */
-async function scanDirAndUploadFiles(folderPath, accessToken, brandId) {
+async function scanDirAndUploadFiles(folderPath, accessToken, brandId, sectionId) {
     await scanDirForArticleShapeJson(folderPath, async (baseName) => {
         const jsonFilePath = composePathAndAssertExists(folderPath, baseName, 'json');
         const articleShapeJson = validateArticleShapeJson(jsonFilePath);
@@ -111,7 +113,7 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId) {
             composeFileRenditionDto('definition', 'application/xml', 'idms'),
         ]
         await uploadArticleShapeWithFiles(
-            accessToken, brandId, baseName, localFiles, fileRenditions, compositionHash);        
+            accessToken, brandId, sectionId, baseName, localFiles, fileRenditions, compositionHash);        
         return true;
     });
 }
@@ -224,18 +226,20 @@ function composeFileRenditionDto(renditionName, contentType, fileExtension) {
  * Create a new article shape configuration in the PLA service and upload files to S3.
  * @param {string} accessToken 
  * @param {string} brandId 
+ * @param {string} sectionId 
  * @param {string} articleShapeName 
  * @param {Array<Object>} localFiles
  * @param {Array<string>} fileRenditions 
  * @param {string} compositionHash
  */
 async function uploadArticleShapeWithFiles(
-    accessToken, brandId, articleShapeName, localFiles, fileRenditions, compositionHash
+    accessToken, brandId, sectionId, articleShapeName, localFiles, fileRenditions, compositionHash
 ) {
     logger.info(`Processing article shape "${articleShapeName}".`);
     const raw = fs.readFileSync(localFiles.json, 'utf8');
     const articleShapeJson = JSON.parse(raw);
     const articleShapeDto = articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash);
+    articleShapeDto.section_id = sectionId;
     const articleShapeWithRenditionsDto = {
         article_shape: articleShapeDto,
         renditions: fileRenditions,

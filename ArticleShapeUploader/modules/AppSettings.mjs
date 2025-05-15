@@ -33,7 +33,7 @@ export class AppSettings {
     }
 
     getPlaServiceUrl() { return this._configData.plaServiceUrl; }
-    getBrandId() { return this._configData.brandId; }
+    getDestination() { return this._configData.destination; }
     getGrid() { return this._configData.grid; }
     getElementLabels() { return this._configData.elementLabels; }
     getLogNetworkTraffic() { return this._configData.logNetworkTraffic; }

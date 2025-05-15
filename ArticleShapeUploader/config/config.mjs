@@ -4,9 +4,6 @@ export const uploaderDefaultConfig = {
     // Connection URL to the PLA service.
     plaServiceUrl: "https://service.pla-poc.woodwing.cloud",
 
-    // The brand to work in.
-    brandId: "1",
-
     // For PLA a layout page has a simple grid of rows and columns. Use whole numbers only.
     grid: {
         columnCount: 5,
