@@ -35,14 +35,29 @@ export class DocumentSettingsReader {
 
     /**
      * The width of one column in points. The column refers to the simple page grid configured for PLA.
-     * @returns {number}
+     * @returns {number} Positive number.
      */
     getColumnWidth() {
         const columnCount = this._grid.columnCount;
+        if (columnCount <= 0) {
+            throw new Error(`The column count ${columnWidth} is invalid.`);
+        }
         const gutterCount = columnCount - 1;
         const gutterWidth = this._settings.columns.gutter;
         const sumOfGuttersWidth = gutterWidth * gutterCount;
-        return (this._getUsablePageWidth() - sumOfGuttersWidth) / columnCount;
+        const columnWidth = (this._getUsablePageWidth() - sumOfGuttersWidth) / columnCount;
+        if (columnWidth <= 0) {
+            throw new Error(`The column width ${columnWidth} is invalid.`);
+        }
+        return columnWidth;
+    }
+
+    /**
+     * The gutter space (in points) between the columns.
+     * @returns {number}
+     */
+    getColumnGutter() {
+        return this._settings.columns.gutter;
     }
 
     /**
@@ -56,12 +71,27 @@ export class DocumentSettingsReader {
     }
 
     /**
+     * The border width in point of the inner margin of a page.
+     * @returns {number} Right margin of a LHS page or left margin of a RHS page.
+     */
+    getPageMarginInside() {
+        return this._settings.margins.inside;
+    }
+
+    /**
      * The height of one row in points. The row refers to the simple page grid configured for PLA.
-     * @returns {number}
+     * @returns {number} Positive number.
      */
     getRowHeight() {
         const rowCount = this._grid.rowCount;
-        return this._getUsablePageHeight() / rowCount;
+        if (rowCount <= 0) {
+            throw new Error(`The row count ${rowCount} is invalid.`);
+        }
+        const rowHeight = this._getUsablePageHeight() / rowCount;
+        if (rowHeight <= 0) {
+            throw new Error(`The row height ${rowHeight} is invalid.`);
+        }
+        return rowHeight;
     }
 
     /**

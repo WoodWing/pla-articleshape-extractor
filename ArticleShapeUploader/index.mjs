@@ -268,19 +268,22 @@ async function uploadArticleShapeWithFiles(
  * @returns {Object} DTO
  */
 function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash) {
-    const columnWidth = documentSettingsReader.getColumnWidth();
-    const rowHeight = documentSettingsReader.getRowHeight();
+    const actualFoldLineInPoints = sanitizeFoldLineInPoints(articleShapeJson.foldLine);
+    const articleWidthInColumns = calculateArticleWidthInColumns(articleShapeJson.geometricBounds.width, actualFoldLineInPoints);
+    const rowHeightInPoints = documentSettingsReader.getRowHeight();
+    const articleHeightInRows = Math.max(1, Math.round(articleShapeJson.geometricBounds.height / rowHeightInPoints));
+
     let articleShapeDto = {
         name: articleShapeName,
         section_id: articleShapeJson.sectionId,
         genre_id: articleShapeJson.genreId,
         shape_type: articleShapeJson.shapeTypeId,
-        width: Math.max(1, Math.round(articleShapeJson.geometricBounds.width / columnWidth)),
-        height: Math.max(1, Math.round(articleShapeJson.geometricBounds.height / rowHeight)),
+        width: articleWidthInColumns,
+        height: articleHeightInRows,
         body_length: 0,
         quote_count: 0,
         image_count: articleShapeJson.imageComponents?.length || 0,
-        fold_line: determineFoldLineApproximately(articleShapeJson.foldLine, columnWidth), // TODO: make accurate by taking page borders into account
+        fold_line: determineFoldLineInColumns(actualFoldLineInPoints, articleWidthInColumns),
         composition_hash: compositionHash,
     };
 
@@ -302,31 +305,83 @@ function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHa
 }
 
 /**
- * Calculate the fold line of the article.
- * This is approximately, because it does NOT respect the Column Gutter and Inside Page Margin.
- * In practice this won't lead into troubles as the gutters/margins are much smaller than the columns.
- * @param {number|null} foldLineInPoints Position of the fold line in the article (from its left side) in points. Null when no fold line.
- * @param {number} columnWidthInPoints Width of a page column in points. Preferably including the column gutter.
+ * If the article is placed to near to the fold line, assume the article is placed at the fold line.
+ * In that case, assume there is no fold line, so return null. Otherwise, just use the fold line as provided. 
+ * @param {number|null} foldLineInPoints 
+ * @returns {number|null} Fold line, or null if no fold line.
+ */
+function sanitizeFoldLineInPoints(foldLineInPoints) {
+    const columnWidthInPoints = documentSettingsReader.getColumnWidth();
+    // If article is technically placed on the LHS page but too near to the fold line,
+    // assume it supposed to be placed at the very left of the RHS page, so no fold line.
+    if (foldLineInPoints < (documentSettingsReader.getPageMarginInside() + (columnWidthInPoints/2))) {
+        foldLineInPoints = null;
+    }
+    return foldLineInPoints;
+}
+
+/**
+ * Convert the article width from InDesign points into PLA page grid columns.
+ * @param {number} actualWidthInPoints 
+ * @param {number} foldLineInPoints 
+ * @returns {number}
+ */
+function calculateArticleWidthInColumns(actualWidthInPoints, foldLineInPoints) {
+    const columnGutterInPoints = documentSettingsReader.getColumnGutter();
+    let uniformWidthInPoints = actualWidthInPoints;
+    // When there is a fold line, exclude right margin of LHS page and left margin of RHS page.
+    // Instead, add the size of a column gutter. So in fact, 'replace' page margins with a gutter.
+    // As a result, further calculations will then work the same as without a fold line.
+    if (foldLineInPoints !== null) {
+        uniformWidthInPoints -= (2 * documentSettingsReader.getPageMarginInside());
+        uniformWidthInPoints += columnGutterInPoints;
+    }
+    const columnWidthInPoints = documentSettingsReader.getColumnWidth();
+    const preciseWidthInColumns = (uniformWidthInPoints + columnGutterInPoints) / (columnWidthInPoints + columnGutterInPoints);
+    const roundedWidthInColumns = Math.max(1, Math.round(preciseWidthInColumns));
+    logger.debug(`Column count calculation:\n`
+        + ` - actualWidthInPoints = ${actualWidthInPoints}\n`
+        + ` - uniformWidthInPoints = ${uniformWidthInPoints}\n`
+        + ` - columnWidthInPoints = ${columnWidthInPoints}\n`
+        + ` - preciseWidthInColumns = ${preciseWidthInColumns}\n`
+        + ` - roundedWidthInColumns = ${roundedWidthInColumns}`
+    );
+    return roundedWidthInColumns;
+}
+
+/**
+ * Calculate the fold line of the article in terms of whole columns (of page grid).
+ * E.g. the value 1 means, the fold line appears between the 1st and 2nd column of the article.
+ * @param {number|null} actualFoldLineInPoints Position of the fold line in the article (from its left side) in points. Null when no fold line.
  * @param {number} articleWidthInColumns Article width in number of columns.
  * @returns {number|null} The Nth column whereafter the fold line occurs, or null when no fold line.
  */ 
-function determineFoldLineApproximately(foldLineInPoints, columnWidthInPoints, articleWidthInColumns) {
-    if (foldLineInPoints === null) {
+function determineFoldLineInColumns(actualFoldLineInPoints, articleWidthInColumns) {
+    if (actualFoldLineInPoints === null) {
         return null; // No fold line provided, no fold line determined.
     }
     if (articleWidthInColumns <= 1) {
         return null; // For a single column article there can never be a fold line.
     }
-    if (columnWidthInPoints === 0) {
-        return null; // Bad configuration. Bail out to prevent division by zero.
-    }
-    let foldLine = Math.round(foldLineInPoints / columnWidthInPoints);
-    if (foldLine <= 0 || foldLine >= articleWidthInColumns) {
+    const columnGutterInPoints = documentSettingsReader.getColumnGutter();
+    const columnWidthInPoints = documentSettingsReader.getColumnWidth();
+    const insidePageMarginInPoints = documentSettingsReader.getPageMarginInside();
+    const uniformFoldLineInPoints = actualFoldLineInPoints - insidePageMarginInPoints;
+    const preciseFoldLineInColumns = (uniformFoldLineInPoints + columnGutterInPoints) / (columnWidthInPoints + columnGutterInPoints);
+    const roundedFoldLineInColumns = Math.round(preciseFoldLineInColumns);
+    logger.debug(`Fold line calculation:\n`
+        + ` - articleWidthInColumns = ${articleWidthInColumns}\n`
+        + ` - actualFoldLineInPoints = ${actualFoldLineInPoints}\n`
+        + ` - insidePageMarginInPoints = ${insidePageMarginInPoints}\n`
+        + ` - preciseFoldLineInColumns = ${preciseFoldLineInColumns}\n`
+        + ` - roundedFoldLineInColumns = ${roundedFoldLineInColumns}`
+    );
+    if (roundedFoldLineInColumns <= 0 || roundedFoldLineInColumns >= articleWidthInColumns) {
         // The fold line may occur near to the left or right flank of the article frame due to malpositioned frames.
         // After rounding the fold line will then occur exactly on a flank. Then conclude there is no fold line.
         return null;
     }
-    return foldLine;
+    return roundedFoldLineInColumns;
 }
 
 /**
