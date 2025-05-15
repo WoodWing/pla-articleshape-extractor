@@ -84,10 +84,10 @@ function resolveAccessToken() {
  */
 function resolveInputPath() {
     const args = minimist(process.argv.slice(2)); // 2: exclude node and script
-    if (typeof args.input_path === "undefined") {
-        throw new Error("Argument missing: --input_path=[your_input_path]");
+    if (typeof args['input-path'] === "undefined") {
+        throw new Error("Argument missing: --input-path=[your_input_path]");
     }
-    let inputPath = args.input_path;
+    let inputPath = args['input-path'];
     if (inputPath.startsWith('~')) {
         inputPath = path.join(os.homedir(), inputPath.slice(1));
     }
