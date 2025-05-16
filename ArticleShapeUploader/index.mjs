@@ -101,19 +101,19 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId, sectionId
     await scanDirForArticleShapeJson(folderPath, async (baseName) => {
         const jsonFilePath = composePathAndAssertExists(folderPath, baseName, 'json');
         const articleShapeJson = validateArticleShapeJson(jsonFilePath);
-        const compositionHash = hasher.hash(articleShapeJson);
-        const localFiles = {
+        const shouldUploadFiles = cliParams.shouldUploadFiles();
+        const localFiles = shouldUploadFiles ? {
             json: jsonFilePath,
             jpeg: composePathAndAssertExists(folderPath, baseName, 'jpg'),
             idms: composePathAndAssertExists(folderPath, baseName, 'idms'),
-        };
-        const fileRenditions = [
+        } : {};
+        const fileRenditions = shouldUploadFiles ? [
             composeFileRenditionDto('composition', 'application/json; charset=utf-8', 'json'),
             composeFileRenditionDto('snapshot', 'image/jpeg', 'jpg'),
             composeFileRenditionDto('definition', 'application/xml', 'idms'),
-        ]
+        ] : [];
         await uploadArticleShapeWithFiles(
-            accessToken, brandId, sectionId, baseName, localFiles, fileRenditions, compositionHash);        
+            accessToken, brandId, sectionId, baseName, articleShapeJson, localFiles, fileRenditions);        
         return true;
     });
 }
@@ -228,16 +228,15 @@ function composeFileRenditionDto(renditionName, contentType, fileExtension) {
  * @param {string} brandId 
  * @param {string} sectionId 
  * @param {string} articleShapeName 
+ * @param {Object} articleShapeJson
  * @param {Array<Object>} localFiles
  * @param {Array<string>} fileRenditions 
- * @param {string} compositionHash
  */
 async function uploadArticleShapeWithFiles(
-    accessToken, brandId, sectionId, articleShapeName, localFiles, fileRenditions, compositionHash
+    accessToken, brandId, sectionId, articleShapeName, articleShapeJson, localFiles, fileRenditions
 ) {
     logger.info(`Processing article shape "${articleShapeName}".`);
-    const raw = fs.readFileSync(localFiles.json, 'utf8');
-    const articleShapeJson = JSON.parse(raw);
+    const compositionHash = hasher.hash(articleShapeJson);
     const articleShapeDto = articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash);
     articleShapeDto.section_id = sectionId;
     const articleShapeWithRenditionsDto = {

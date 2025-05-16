@@ -38,7 +38,14 @@ export class CliParams {
      * @returns {string[]}
      */
     _getArguments() {
-        return minimist(process.argv.slice(2)); // 2: exclude node and script
+        // Define a CLI flag that can be pass in as --uploads or --no-uploads.
+        const options = {
+            boolean: ['uploads'],
+            default: {
+                uploads: true
+            }
+        };
+        return minimist(process.argv.slice(2), options); // 2: exclude node and script
     }
 
     _showUsage() {
@@ -48,6 +55,7 @@ export class CliParams {
             + "  --old-shapes=...          How to handle the previously configured shapes. Options: 'keep' or 'delete'.\n"
             + "  --brand-id=...            Optional. Override the brand. Overrides the brand provided by the shapes.\n"
             + "  --section-id=...          Optional. Override the section. Overrides the section provided by the shapes.\n"
+            + "  --no-uploads              Optional. Skip uploading files for the article shapes. Don't use for production."
         ;
         console.log(usage);
     }
@@ -89,5 +97,14 @@ export class CliParams {
         const useSectionId = paramSectionId || defaultSectionId;
         this._logger.info(`Targeting for brandId "${useBrandId}" and sectionId "${useSectionId}"`);
         return { brandId: useBrandId, sectionId: useSectionId };
+    }
+
+    /**
+     * Tells whether the user wants to upload files. Suppressing this could be useful e.g. to speedup debugging.
+     * @returns {boolean}
+     */
+    shouldUploadFiles() {
+        const args = this._getArguments();
+        return args.uploads === true;
     }
 }
