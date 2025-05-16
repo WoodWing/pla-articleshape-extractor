@@ -68,6 +68,11 @@ function resolveAccessToken() {
         throw new Error("No PLA_ACCESS_TOKEN environment variable set.");
     }
     logger.debug(`PLA access token: ${accessToken}`);
+
+    const [, payload] = accessToken.split('.');
+    const decoded = Buffer.from(payload, 'base64').toString();
+    logger.info(`Targeting for systemId "${JSON.parse(decoded).systemId}".`);
+
     return accessToken;
 }
 
