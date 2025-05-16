@@ -18,6 +18,60 @@ export class PlaService {
     }
 
     /**
+     * Retrieve the sheet dimensions from PLA service.
+     * Those are set once blueprints are configured.
+     * @param {string} accessToken 
+     * @param {string} brandId 
+     * @returns {Array<Object>} List of sheet dimension DTOs.
+     */
+    async getSheetDimensions(accessToken, brandId) {
+        const url = `${this._plaServiceUrl}/brands/${brandId}/sheet-dimensions`;
+        try {
+            const request = new Request(url, this._requestInitForPlaService(accessToken, 'GET'));
+            const response = await fetch(request);
+            const responseJson = await response.json();
+            this._logHttpTraffic(request, null, response, responseJson);
+            if (response.ok) {
+                this._logger.debug("Retrieved sheet dimensions: ", responseJson);
+                return responseJson;
+            }
+            if (response.status === StatusCodes.NOT_FOUND) {
+                if (responseJson?.message.includes("is not registered")) {
+                    throw new Error(responseJson.message); // client not registered
+                }
+                return [];
+            }
+            throw new Error(`HTTP ${response.status} ${response.statusText}`);
+        } catch (error) {
+            throw new Error(`Could not retrieve sheet dimensions - ${error.message}`);
+        }        
+    }
+
+    /**
+     * Run the brand validation in the PLA service.
+     * It will validate the dimensions of the blueprint boxes vs the article shapes.
+     * @param {string} accessToken 
+     * @param {string} brandId 
+     * @returns {Array<Object>} List of sheet dimension DTOs.
+     */
+    async validateBrandConfiguration(accessToken, brandId) {
+        const url = `${this._plaServiceUrl}/brands/${brandId}/admin/validate`;
+        try {
+            const request = new Request(url, this._requestInitForPlaService(accessToken, 'GET'));
+            const response = await fetch(request);
+            const responseJson = await response.json();
+            this._logHttpTraffic(request, null, response, responseJson);
+            if (response.ok) {
+                this._logger.debug(`Validated brand setup. Found ${responseJson.length} issues.`);
+                return responseJson;
+            }
+            throw new Error(`HTTP ${response.status} ${response.statusText}`);
+        } catch (error) {
+            throw new Error(`Could not validate brand setup - ${error.message}`);
+        }        
+    }    
+
+    /**
      * Retrieve the Document Setup settings from PLA service.
      * These settings are configured per brand.
      * When settings have not been made yet, it returns null.

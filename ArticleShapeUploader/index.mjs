@@ -42,6 +42,7 @@ async function main() {
         const accessToken = resolveAccessToken();
         const articleShapeJson = await takeFirstArticleShapeJson(inputPath);
         const { brandId, sectionId } = cliParams.resolveBrandAndSectionToUse(articleShapeJson.brandId, articleShapeJson.sectionId);
+        await assureBlueprintsConfigured(accessToken, brandId);
         const layoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId); // TODO: validate against JSON
         if (layoutSettings === null) {
             // TODO: save settings, taken from JSON
@@ -50,6 +51,7 @@ async function main() {
              await plaService.deleteArticleShapes(accessToken, brandId);
         }
         await scanDirAndUploadFiles(inputPath, accessToken, brandId, sectionId);
+        await validateBrandConfiguration(accessToken, brandId);
     } catch(error) {
         logger.error(error.message);
     }
@@ -67,6 +69,21 @@ function resolveAccessToken() {
     }
     logger.debug(`PLA access token: ${accessToken}`);
     return accessToken;
+}
+
+/**
+ * Aborts when there are no blueprints configured yet.
+ * Those should be configured already in a normal flow.
+ * Having blueprints, enables us to validate the shapes after.
+ * @param {string} accessToken 
+ * @param {string} brandId 
+ */
+async function assureBlueprintsConfigured(accessToken, brandId) {
+    const sheetDimensions = await plaService.getSheetDimensions(accessToken, brandId);
+    if (sheetDimensions.length === 0) {
+        throw new Error("There are no blueprints configured yet.");
+    }
+    logger.info("Found configured blueprints for this brand.");
 }
 
 /**
@@ -405,6 +422,24 @@ function lookupLocalFileByRendition(fileRenditionName, localFiles) {
             throw new Error(`Unsupported file rendition "${fileRenditionName}".`);
     }
     return localFilePath;
+}
+
+/**
+ * Request for the brand setup validation report composed by the PLA service.
+ * @param {string} accessToken 
+ * @param {string} brandId 
+ */
+async function validateBrandConfiguration(accessToken, brandId) {
+    const validationReport = await plaService.validateBrandConfiguration(accessToken, brandId);
+    let logReport = '';
+    for (const validationItem of validationReport) {
+        logReport += ` - ${validationItem.severity}: ${validationItem.description}\n`;
+    }
+    if (logReport) {
+        logger.error(`Brand setup seems invalid:\n${logReport}`);
+    } else {
+        logger.info("Brand setup is valid.");
+    }
 }
 
 main();
