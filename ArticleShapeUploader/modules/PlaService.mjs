@@ -102,6 +102,36 @@ export class PlaService {
     }
 
     /**
+     * Retrieve the element labels mapping configuration from PLA service.
+     * This mapping is configured per brand.
+     * When a mapping has not been made yet, it returns null.
+     * @param {string} accessToken 
+     * @param {string} brandId 
+     * @returns {Object|null} Mapping, or null when not found.
+     */
+    async getElementLabelMapping(accessToken, brandId) {
+        const url = `${this._plaServiceUrl}/brands/${brandId}/admin/setting/element-labels`;
+        try {
+            const request = new Request(url, this._requestInitForPlaService(accessToken, 'GET'));
+            const response = await fetch(request);
+            const elementMapping = await response.json();
+            this._logHttpTraffic(request, null, response, elementMapping);
+            if (response.ok) {
+                const settingsValue = JSON.parse(elementMapping.value);
+                this._logger.debug("Retrieved element labels mapping:", settingsValue);
+                return settingsValue;
+            }
+            if (response.status === StatusCodes.NOT_FOUND) {
+                this._logger.warning("Element labels mapping not defined yet.");
+                return null;
+            }
+            throw new Error(`HTTP ${response.status} ${response.statusText}`);
+        } catch (error) {
+            throw new Error(`Could not retrieve element labels mapping - ${error.message}`);
+        }
+    }    
+
+    /**
      * Compose request options for the PLA service.
      * @param {string} accessToken 
      * @param {string} method 

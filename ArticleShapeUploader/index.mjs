@@ -4,6 +4,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import Ajv from 'ajv';
 
@@ -13,6 +14,7 @@ import { CliParams } from "./modules/CliParams.mjs";
 import { DocumentSettingsReader } from "./modules/DocumentSettingsReader.mjs";
 import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
 import { ArticleShapeHasher } from "./modules/ArticleShapeHasher.mjs";
+import { JsonValidator } from "./modules/JsonValidator.mjs";
 import { PlaService } from "./modules/PlaService.mjs";
 
 import { uploaderDefaultConfig } from "./config/config.mjs";
@@ -22,12 +24,14 @@ try {
     uploaderLocalConfig = localModule.uploaderLocalConfig;
 } catch (error) {
 }
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const appSettings = new AppSettings(uploaderDefaultConfig, uploaderLocalConfig);
 const logger = new ColoredLogger(appSettings.getLogLevel());
 const cliParams = new CliParams(logger);
 const documentSettingsReader = new DocumentSettingsReader(logger, appSettings.getGrid());
 const articleShapeSchema = JSON.parse(fs.readFileSync('./article-shape.schema.json', 'utf-8'));
-const elementLabelMapper = new ElementLabelMapper(appSettings.getElementLabels());
+const jsonValidator = new JsonValidator(path.join(__dirname, 'schemas'));
+const elementLabelMapper = new ElementLabelMapper(logger, jsonValidator);
 const hasher = new ArticleShapeHasher(elementLabelMapper);
 const plaService = new PlaService(appSettings.getPlaServiceUrl(), appSettings.getLogNetworkTraffic(), logger);
 
@@ -45,8 +49,8 @@ async function main() {
         await assureBlueprintsConfigured(accessToken, brandId);
         const layoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId); // TODO: validate against JSON
         if (layoutSettings === null) {
-            // TODO: save settings, taken from JSON
         }
+        elementLabelMapper.init(await plaService.getElementLabelMapping(accessToken, brandId));
         if (await cliParams.shouldDeletePreviouslyConfiguredArticleShapes()) {
              await plaService.deleteArticleShapes(accessToken, brandId);
         }
