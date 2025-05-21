@@ -6,11 +6,7 @@
     "required": [
         "dimensions",
         "margins",
-        "columns",
-        "brandName",
-        "brandId",
-        "sectionName",
-        "sectionId"
+        "columns"
     ],
     "properties": {
         "dimensions": {
@@ -64,18 +60,6 @@
                 }
             },
             "additionalProperties": false
-        },
-        "brandName": {
-            "type": "string"
-        },
-        "brandId": {
-            "type": "string"
-        },
-        "sectionName": {
-            "type": "string"
-        },
-        "sectionId": {
-            "type": "string"
         }
     },
     "additionalProperties": false
