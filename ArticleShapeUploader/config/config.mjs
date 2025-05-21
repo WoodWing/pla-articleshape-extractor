@@ -15,5 +15,5 @@ export const uploaderDefaultConfig = {
     logNetworkTraffic: false,
 
     // Supported values: "DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"
-    logLevel: 'INFO',
+    logLevel: 'WARNING',
 }
