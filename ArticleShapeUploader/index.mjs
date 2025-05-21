@@ -11,7 +11,7 @@ import diff from 'deep-diff';
 import { AppSettings } from "./modules/AppSettings.mjs";
 import { ColoredLogger } from "./modules/ColoredLogger.mjs";
 import { CliParams } from "./modules/CliParams.mjs";
-import { DocumentSettingsReader } from "./modules/DocumentSettingsReader.mjs";
+import { PageLayoutSettingsReader } from "./modules/PageLayoutSettingsReader.mjs";
 import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
 import { ArticleShapeHasher } from "./modules/ArticleShapeHasher.mjs";
 import { JsonValidator } from "./modules/JsonValidator.mjs";
@@ -29,7 +29,7 @@ const appSettings = new AppSettings(uploaderDefaultConfig, uploaderLocalConfig);
 const logger = new ColoredLogger(appSettings.getLogLevel());
 const cliParams = new CliParams(logger);
 const jsonValidator = new JsonValidator(logger, path.join(__dirname, 'schemas'));
-const documentSettingsReader = new DocumentSettingsReader(logger, jsonValidator, appSettings.getGrid());
+const pageLayoutSettingsReader = new PageLayoutSettingsReader(logger, jsonValidator, appSettings.getGrid());
 const elementLabelMapper = new ElementLabelMapper(logger, jsonValidator);
 const hasher = new ArticleShapeHasher(elementLabelMapper);
 const plaService = new PlaService(appSettings.getPlaServiceUrl(), appSettings.getLogNetworkTraffic(), logger);
@@ -41,7 +41,7 @@ async function main() {
     try {
         dotenv.config();
         const inputPath = cliParams.resolveInputPath();
-        const pageLayoutSettings = documentSettingsReader.readSettings(inputPath);
+        const pageLayoutSettings = pageLayoutSettingsReader.readSettings(inputPath);
         const accessToken = resolveAccessToken();
         const articleShapeJson = await takeFirstArticleShapeJson(inputPath);
         const { brandId, sectionId } = cliParams.resolveBrandAndSectionToUse(articleShapeJson.brandId, articleShapeJson.sectionId);
@@ -169,7 +169,7 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId, sectionId
 async function scanDirForArticleShapeJson(folderPath, callback) {
     const files = fs.readdirSync(folderPath);
     for (const file of files) {
-        if (file.toLowerCase().endsWith('.json') && file !== documentSettingsReader.getFilename()) {
+        if (file.toLowerCase().endsWith('.json') && file !== pageLayoutSettingsReader.getFilename()) {
             const baseName = path.basename(file, '.json');
             try {
                 const shouldContinue = await callback(baseName);
@@ -300,7 +300,7 @@ async function uploadArticleShapeWithFiles(
 function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash) {
     const actualFoldLineInPoints = sanitizeFoldLineInPoints(articleShapeJson.foldLine);
     const articleWidthInColumns = calculateArticleWidthInColumns(articleShapeJson.geometricBounds.width, actualFoldLineInPoints);
-    const rowHeightInPoints = documentSettingsReader.getRowHeight();
+    const rowHeightInPoints = pageLayoutSettingsReader.getRowHeight();
     const articleHeightInRows = Math.max(1, Math.round(articleShapeJson.geometricBounds.height / rowHeightInPoints));
 
     let articleShapeDto = {
@@ -341,10 +341,10 @@ function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHa
  * @returns {number|null} Fold line, or null if no fold line.
  */
 function sanitizeFoldLineInPoints(foldLineInPoints) {
-    const columnWidthInPoints = documentSettingsReader.getColumnWidth();
+    const columnWidthInPoints = pageLayoutSettingsReader.getColumnWidth();
     // If article is technically placed on the LHS page but too near to the fold line,
     // assume it supposed to be placed at the very left of the RHS page, so no fold line.
-    if (foldLineInPoints < (documentSettingsReader.getPageMarginInside() + (columnWidthInPoints/2))) {
+    if (foldLineInPoints < (pageLayoutSettingsReader.getPageMarginInside() + (columnWidthInPoints/2))) {
         foldLineInPoints = null;
     }
     return foldLineInPoints;
@@ -357,16 +357,16 @@ function sanitizeFoldLineInPoints(foldLineInPoints) {
  * @returns {number}
  */
 function calculateArticleWidthInColumns(actualWidthInPoints, foldLineInPoints) {
-    const columnGutterInPoints = documentSettingsReader.getColumnGutter();
+    const columnGutterInPoints = pageLayoutSettingsReader.getColumnGutter();
     let uniformWidthInPoints = actualWidthInPoints;
     // When there is a fold line, exclude right margin of LHS page and left margin of RHS page.
     // Instead, add the size of a column gutter. So in fact, 'replace' page margins with a gutter.
     // As a result, further calculations will then work the same as without a fold line.
     if (foldLineInPoints !== null) {
-        uniformWidthInPoints -= (2 * documentSettingsReader.getPageMarginInside());
+        uniformWidthInPoints -= (2 * pageLayoutSettingsReader.getPageMarginInside());
         uniformWidthInPoints += columnGutterInPoints;
     }
-    const columnWidthInPoints = documentSettingsReader.getColumnWidth();
+    const columnWidthInPoints = pageLayoutSettingsReader.getColumnWidth();
     const preciseWidthInColumns = (uniformWidthInPoints + columnGutterInPoints) / (columnWidthInPoints + columnGutterInPoints);
     const roundedWidthInColumns = Math.max(1, Math.round(preciseWidthInColumns));
     logger.debug(`Column count calculation:\n`
@@ -393,9 +393,9 @@ function determineFoldLineInColumns(actualFoldLineInPoints, articleWidthInColumn
     if (articleWidthInColumns <= 1) {
         return null; // For a single column article there can never be a fold line.
     }
-    const columnGutterInPoints = documentSettingsReader.getColumnGutter();
-    const columnWidthInPoints = documentSettingsReader.getColumnWidth();
-    const insidePageMarginInPoints = documentSettingsReader.getPageMarginInside();
+    const columnGutterInPoints = pageLayoutSettingsReader.getColumnGutter();
+    const columnWidthInPoints = pageLayoutSettingsReader.getColumnWidth();
+    const insidePageMarginInPoints = pageLayoutSettingsReader.getPageMarginInside();
     const uniformFoldLineInPoints = actualFoldLineInPoints - insidePageMarginInPoints;
     const preciseFoldLineInColumns = (uniformFoldLineInPoints + columnGutterInPoints) / (columnWidthInPoints + columnGutterInPoints);
     const roundedFoldLineInColumns = Math.round(preciseFoldLineInColumns);

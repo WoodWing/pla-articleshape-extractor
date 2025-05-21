@@ -7,7 +7,7 @@ const idd = require("indesign");
  * @constructor
  * @param {Logger} logger 
  */
-function LayoutDocumentSettings(logger) {
+function PageLayoutSettings(logger) {
     this._logger = logger;
 
     this.exportSettings = async function(doc, folder) {
@@ -105,13 +105,13 @@ function LayoutDocumentSettings(logger) {
     }
 
     /**
-     * Save a settings object to the "document-settings.json" file in a provided folder.
+     * Save a settings object to the "page-layout-settings.json" file in a provided folder.
      * @param {Object} settings
      * @param {Folder} folder
      */
     this._saveDocumentSettingsToDisk = async function(settings, folder) {
         const lfs = require('uxp').storage.localFileSystem;
-        const settingsPath = window.path.join(folder, "document-settings.json")
+        const settingsPath = window.path.join(folder, "page-layout-settings.json")
         const settingsFile = await lfs.createEntryWithUrl(settingsPath, { overwrite: true });
         const settingsJson = JSON.stringify(settings, null, 4);
         const formats = require('uxp').storage.formats;
@@ -119,4 +119,4 @@ function LayoutDocumentSettings(logger) {
     }
 }
 
-module.exports = LayoutDocumentSettings;
+module.exports = PageLayoutSettings;

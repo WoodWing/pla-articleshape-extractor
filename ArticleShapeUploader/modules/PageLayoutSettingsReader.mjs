@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 
-export class DocumentSettingsReader {
+export class PageLayoutSettingsReader {
     #logger;
     #jsonValidator;
     #grid;
@@ -21,11 +21,11 @@ export class DocumentSettingsReader {
     }
 
     /**
-     * Name of the layout document settings JSON file.
+     * Name of the page layout settings JSON file.
      * @returns {string}
      */
     getFilename() {
-        return "document-settings.json";
+        return "page-layout-settings.json";
     }
 
     /**
