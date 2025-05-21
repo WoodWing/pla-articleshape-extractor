@@ -6,7 +6,6 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import Ajv from 'ajv';
 
 import { AppSettings } from "./modules/AppSettings.mjs";
 import { ColoredLogger } from "./modules/ColoredLogger.mjs";
