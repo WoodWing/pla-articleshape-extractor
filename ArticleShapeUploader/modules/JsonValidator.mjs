@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Ajv from 'ajv';
+import { ColoredLogger } from './ColoredLogger.mjs';
 
 /**
  * Understands how to validate a JSON with help of a JSON schema definition file.
@@ -9,9 +10,16 @@ export class JsonValidator {
 
     #ajv = new Ajv();
     #cache = new Map();
+    #logger;
     #workFolder;
 
-    constructor(workFolder) {
+    /**
+     * @constructor
+     * @param {ColoredLogger} logger 
+     * @param {string} workFolder 
+     */
+    constructor(logger, workFolder) {
+        this.#logger = logger;
         this.#workFolder = workFolder;
     }
 
@@ -24,13 +32,14 @@ export class JsonValidator {
         let errorMessage = `The JSON is not valid according to the ${schemaFilepath} file:\n`;
         for (const validationError of validate.errors) {
             errorMessage +=
-                `- [${validationError.instancePath || '/'}] ${validationError.message}. Details:\n`
+                `- [${validationError.instancePath || '/'}] ${validationError.message}.\nDetails:\n`
                 + `  keyword: ${validationError.keyword}\n`
                 + `  params: ${JSON.stringify(validationError.params, null, 2)}\n`
-                + `  schemaPath: ${validationError.schemaPath}`
+                + `  schemaPath: ${validationError.schemaPath}\n`
         }
-        errorMessage += `JSON:\n${jsonData}\n`;
-        throw new Error(errorMessage);
+        errorMessage += `JSON:\n`;
+        this.#logger.error(errorMessage, jsonData);
+        throw new Error(`Invalid ${schemaName} JSON.`);
     }
 
     _composeJsonSchemaFilepath(schemaName) {

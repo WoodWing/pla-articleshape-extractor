@@ -30,6 +30,7 @@ export class DocumentSettingsReader {
 
     /**
      * @param {string} folderPath 
+     * @return {Object}
      */
     readSettings(folderPath) {
         const settingsPath = path.join(folderPath, this.getFilename());
@@ -40,6 +41,7 @@ export class DocumentSettingsReader {
         }
         this.#jsonValidator.validate('page-layout-settings', this.#settings);
         this.#logger.info(`The ${this.getFilename()} file is valid.`);
+        return this.#settings;
     }
 
     /**

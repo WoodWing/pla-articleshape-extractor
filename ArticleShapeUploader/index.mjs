@@ -6,6 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import diff from 'deep-diff';
 
 import { AppSettings } from "./modules/AppSettings.mjs";
 import { ColoredLogger } from "./modules/ColoredLogger.mjs";
@@ -27,7 +28,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const appSettings = new AppSettings(uploaderDefaultConfig, uploaderLocalConfig);
 const logger = new ColoredLogger(appSettings.getLogLevel());
 const cliParams = new CliParams(logger);
-const jsonValidator = new JsonValidator(path.join(__dirname, 'schemas'));
+const jsonValidator = new JsonValidator(logger, path.join(__dirname, 'schemas'));
 const documentSettingsReader = new DocumentSettingsReader(logger, jsonValidator, appSettings.getGrid());
 const elementLabelMapper = new ElementLabelMapper(logger, jsonValidator);
 const hasher = new ArticleShapeHasher(elementLabelMapper);
@@ -40,14 +41,12 @@ async function main() {
     try {
         dotenv.config();
         const inputPath = cliParams.resolveInputPath();
-        documentSettingsReader.readSettings(inputPath);
+        const pageLayoutSettings = documentSettingsReader.readSettings(inputPath);
         const accessToken = resolveAccessToken();
         const articleShapeJson = await takeFirstArticleShapeJson(inputPath);
         const { brandId, sectionId } = cliParams.resolveBrandAndSectionToUse(articleShapeJson.brandId, articleShapeJson.sectionId);
         await assureBlueprintsConfigured(accessToken, brandId);
-        const layoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId); // TODO: validate against JSON
-        if (layoutSettings === null) {
-        }
+        await assureTallyPageLayoutSettings(accessToken, brandId, pageLayoutSettings)
         elementLabelMapper.init(await plaService.getElementLabelMapping(accessToken, brandId));
         if (await cliParams.shouldDeletePreviouslyConfiguredArticleShapes()) {
              await plaService.deleteArticleShapes(accessToken, brandId);
@@ -91,6 +90,26 @@ async function assureBlueprintsConfigured(accessToken, brandId) {
         throw new Error("There are no blueprints configured yet.");
     }
     logger.info("Found configured blueprints for this brand.");
+}
+
+/**
+ * Retrieve the page layout settings from the PLA service and validate them.
+ * Raise error when they differ with the ones read from input folder.
+ * @param {string} accessToken 
+ * @param {string} brandId 
+ * @param {string} inputPageLayoutSettings Read from input path.
+ */
+async function assureTallyPageLayoutSettings(accessToken, brandId, inputPageLayoutSettings) {
+    const plaPageLayoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId);
+    if (plaPageLayoutSettings === null) {
+        throw new Error("There are no page layout settings configured yet. "
+            + "Please import the PLA Config Excel file and try again.");
+    }
+    jsonValidator.validate('page-layout-settings', plaPageLayoutSettings);
+    if (diff(plaPageLayoutSettings, inputPageLayoutSettings)) {
+        logger.error("The page layout settings retrieved from PLA service differ from the ones "
+            + "read from input folder. ", plaPageLayoutSettings, inputPageLayoutSettings);
+    }
 }
 
 /**
