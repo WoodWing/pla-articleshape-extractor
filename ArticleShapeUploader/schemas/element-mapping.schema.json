@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://www.woodwing.com/pla/article-shape.schema.json",
+    "$id": "https://www.woodwing.com/pla/element-mapping.schema.json",
     "title": "Custom (LHS) to standard (RHS) element label mapping table",
     "type": "object",
     "propertyNames": {

@@ -29,7 +29,6 @@ const appSettings = new AppSettings(uploaderDefaultConfig, uploaderLocalConfig);
 const logger = new ColoredLogger(appSettings.getLogLevel());
 const cliParams = new CliParams(logger);
 const documentSettingsReader = new DocumentSettingsReader(logger, appSettings.getGrid());
-const articleShapeSchema = JSON.parse(fs.readFileSync('./article-shape.schema.json', 'utf-8'));
 const jsonValidator = new JsonValidator(path.join(__dirname, 'schemas'));
 const elementLabelMapper = new ElementLabelMapper(logger, jsonValidator);
 const hasher = new ArticleShapeHasher(elementLabelMapper);
@@ -179,19 +178,7 @@ function validateArticleShapeJson(jsonFilePath) {
     } catch(error) {
         throw new Error(`The file "${basename}" is not valid JSON - ${error.message}`);
     }
-    const ajv = new Ajv();
-    const validate = ajv.compile(articleShapeSchema);
-    if (!validate(jsonData)) {
-        let errorMessage = `The file "${basename}" is not valid according to the article-shape.schema.json file:\n`;
-        for (const validationError of validate.errors) {
-            errorMessage +=
-                `- [${validationError.instancePath || '/'}] ${validationError.message}. Details:\n`
-                + `  keyword: ${validationError.keyword}\n`
-                + `  params: ${JSON.stringify(validationError.params, null, 2)}\n`
-                + `  schemaPath: ${validationError.schemaPath}`
-        }
-        throw new Error(errorMessage);
-    }
+    jsonValidator.validate('article-shape',jsonData);
     return jsonData;
 }
 
