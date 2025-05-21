@@ -24,7 +24,7 @@ function PageLayoutSettings(logger) {
             const { inside, outside } = this._getInsideOutsideMargins(doc, page);
             const settings = this._composeSettings(doc, page, inside, outside);
             // TODO: Error when the settings file already exists with different settings.
-            await this._saveDocumentSettingsToDisk(settings, folder);
+            await this._savePageLayoutSettingsToDisk(settings, folder);
         } catch(error) {
             this._logger.logError(error);
             alert("An error occurred: " + error.message);
@@ -109,7 +109,7 @@ function PageLayoutSettings(logger) {
      * @param {Object} settings
      * @param {Folder} folder
      */
-    this._saveDocumentSettingsToDisk = async function(settings, folder) {
+    this._savePageLayoutSettingsToDisk = async function(settings, folder) {
         const lfs = require('uxp').storage.localFileSystem;
         const settingsPath = window.path.join(folder, "page-layout-settings.json")
         const settingsFile = await lfs.createEntryWithUrl(settingsPath, { overwrite: true });
