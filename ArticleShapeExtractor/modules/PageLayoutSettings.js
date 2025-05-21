@@ -17,7 +17,7 @@ function PageLayoutSettings(logger) {
         app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
         try {
             if (doc.pages.length === 0) {
-                const { NoDocumentPagesError } = require('../modules/Errors.js');
+                const { NoDocumentPagesError } = require('./Errors.js');
                 throw new NoDocumentPagesError();
             }
             const page = doc.pages.item(0);
@@ -84,7 +84,7 @@ function PageLayoutSettings(logger) {
                 inside = page.marginPreferences.left;
                 outside = page.marginPreferences.right;
             } else {
-                const { UnexpectedPageSetupError } = require('../modules/Errors.js');
+                const { UnexpectedPageSetupError } = require('./Errors.js');
                 const message = `Facing pages is enabled but page side ${page.side} is neither left or right.`;
                 throw new UnexpectedPageSetupError(message);
             }
@@ -93,7 +93,7 @@ function PageLayoutSettings(logger) {
                 inside = page.marginPreferences.left;
                 outside = page.marginPreferences.right;
             } else {
-                const { UnexpectedPageSetupError } = require('../modules/Errors.js');
+                const { UnexpectedPageSetupError } = require('./Errors.js');
                 const message = `Facing pages is disabled but page side ${page.side} is not single.`;
                 throw new UnexpectedPageSetupError(message);
             }
