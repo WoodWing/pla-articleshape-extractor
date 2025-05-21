@@ -3,14 +3,21 @@ import path from 'path';
 
 
 export class DocumentSettingsReader {
+    #logger;
+    #jsonValidator;
+    #grid;
+    #settings;
+    
     /**
      * @param {Logger} logger 
+     * @param {JsonValidator} jsonValidator
      * @param {columnCount: number, rowCount: number} grid 
      */
-    constructor(logger, grid) {
-        this._logger = logger;
-        this._grid = grid;
-        this._settings = null;
+    constructor(logger, jsonValidator, grid) {
+        this.#logger = logger;
+        this.#jsonValidator = jsonValidator;
+        this.#grid = grid;
+        this.#settings = null;
     }
 
     /**
@@ -27,10 +34,12 @@ export class DocumentSettingsReader {
     readSettings(folderPath) {
         const settingsPath = path.join(folderPath, this.getFilename());
         try {
-            this._settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+            this.#settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
         } catch(error) {
             throw new Error(`The file "${settingsPath}" is not valid JSON - ${error.message}`);
-        }    
+        }
+        this.#jsonValidator.validate('page-layout-settings', this.#settings);
+        this.#logger.info(`The ${this.getFilename()} file is valid.`);
     }
 
     /**
@@ -38,12 +47,12 @@ export class DocumentSettingsReader {
      * @returns {number} Positive number.
      */
     getColumnWidth() {
-        const columnCount = this._grid.columnCount;
+        const columnCount = this.#grid.columnCount;
         if (columnCount <= 0) {
             throw new Error(`The column count ${columnWidth} is invalid.`);
         }
         const gutterCount = columnCount - 1;
-        const gutterWidth = this._settings.columns.gutter;
+        const gutterWidth = this.#settings.columns.gutter;
         const sumOfGuttersWidth = gutterWidth * gutterCount;
         const columnWidth = (this._getUsablePageWidth() - sumOfGuttersWidth) / columnCount;
         if (columnWidth <= 0) {
@@ -57,7 +66,7 @@ export class DocumentSettingsReader {
      * @returns {number}
      */
     getColumnGutter() {
-        return this._settings.columns.gutter;
+        return this.#settings.columns.gutter;
     }
 
     /**
@@ -65,8 +74,8 @@ export class DocumentSettingsReader {
      * @returns {number}
      */
     _getUsablePageWidth() {
-        const pageWidth = this._settings.dimensions.width;
-        const margins = this._settings.margins;
+        const pageWidth = this.#settings.dimensions.width;
+        const margins = this.#settings.margins;
         return pageWidth - margins.inside - margins.outside;
     }
 
@@ -75,7 +84,7 @@ export class DocumentSettingsReader {
      * @returns {number} Right margin of a LHS page or left margin of a RHS page.
      */
     getPageMarginInside() {
-        return this._settings.margins.inside;
+        return this.#settings.margins.inside;
     }
 
     /**
@@ -83,7 +92,7 @@ export class DocumentSettingsReader {
      * @returns {number} Positive number.
      */
     getRowHeight() {
-        const rowCount = this._grid.rowCount;
+        const rowCount = this.#grid.rowCount;
         if (rowCount <= 0) {
             throw new Error(`The row count ${rowCount} is invalid.`);
         }
@@ -99,8 +108,8 @@ export class DocumentSettingsReader {
      * @returns {number}
      */
     _getUsablePageHeight() {
-        const pageHeight = this._settings.dimensions.height;
-        const margins = this._settings.margins;
+        const pageHeight = this.#settings.dimensions.height;
+        const margins = this.#settings.margins;
         return pageHeight - margins.top - margins.bottom;
     }  
 }
