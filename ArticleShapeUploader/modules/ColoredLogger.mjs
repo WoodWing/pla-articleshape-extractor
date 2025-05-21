@@ -25,20 +25,10 @@ export class ColoredLogger {
      * 
      * @param {string} level 
      * @param {ChalkFunction} colorFn 
-     * @param {string} args 
+     * @param {Array} args 
      */
     _format(level, colorFn, args) {
-		const template = args.shift();
-		// Replace undefined arguments with '*undefined*' to distinguish from ''
-		args.forEach(function(replacement, i) {
-			if (typeof replacement === 'undefined') {
-			  args[i] = '*undefined*';
-			}
-		  });		
-		const message = template.includes('{') && template.includes('}')
-			? template.replace(/{}/g, () => args.shift())
-			: template;		
-        console.log(`${chalk.gray(`[${this._timestamp()}]`)} [${colorFn(level.padEnd(8))}] ${message}`);
+        console.log(`${chalk.gray(`[${this._timestamp()}]`)} [${colorFn(level.padEnd(8))}]`, ...args);
     }
 
 	/**

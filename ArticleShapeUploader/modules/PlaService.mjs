@@ -32,7 +32,7 @@ export class PlaService {
             const responseJson = await response.json();
             this._logHttpTraffic(request, null, response, responseJson);
             if (response.ok) {
-                this._logger.debug("Retrieved sheet dimensions: ", responseJson);
+                this._logger.debug("Retrieved sheet dimensions:", responseJson);
                 return responseJson;
             }
             if (response.status === StatusCodes.NOT_FOUND) {
@@ -88,7 +88,7 @@ export class PlaService {
             this._logHttpTraffic(request, null, response, pageSettings);
             if (response.ok) {
                 const settingsValue = JSON.parse(pageSettings.value);
-                this._logger.debug("Retrieved page layout settings: ", settingsValue);
+                this._logger.debug("Retrieved page layout settings:", settingsValue);
                 return settingsValue;
             }
             if (response.status === StatusCodes.NOT_FOUND) {
