@@ -29,7 +29,7 @@ const appSettings = new AppSettings(uploaderDefaultConfig, uploaderLocalConfig);
 const logger = new ColoredLogger(appSettings.getLogLevel());
 const cliParams = new CliParams(logger);
 const jsonValidator = new JsonValidator(logger, path.join(__dirname, 'schemas'));
-const pageLayoutSettingsReader = new PageLayoutSettingsReader(logger, jsonValidator, appSettings.getGrid());
+const pageLayoutSettingsReader = new PageLayoutSettingsReader(logger, jsonValidator);
 const elementLabelMapper = new ElementLabelMapper(logger, jsonValidator);
 const hasher = new ArticleShapeHasher(elementLabelMapper);
 const plaService = new PlaService(appSettings.getPlaServiceUrl(), appSettings.getLogNetworkTraffic(), logger);
@@ -45,7 +45,8 @@ async function main() {
         const accessToken = resolveAccessToken();
         const articleShapeJson = await takeFirstArticleShapeJson(inputPath);
         const { brandId, sectionId } = cliParams.resolveBrandAndSectionToUse(articleShapeJson.brandId, articleShapeJson.sectionId);
-        await assureBlueprintsConfigured(accessToken, brandId);
+        const pageGrid = await assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId);
+        pageLayoutSettingsReader.setPageGrid(pageGrid);
         await assureTallyPageLayoutSettings(accessToken, brandId, pageLayoutSettings)
         elementLabelMapper.init(await plaService.getElementLabelMapping(accessToken, brandId));
         if (await cliParams.shouldDeletePreviouslyConfiguredArticleShapes()) {
@@ -79,17 +80,35 @@ function resolveAccessToken() {
 
 /**
  * Aborts when there are no blueprints configured yet.
- * Those should be configured already in a normal flow.
+ * Derive the page grid from the blueprint sheets and return it.
+ * Blueprints should be configured already in a normal flow.
  * Having blueprints, enables us to validate the shapes after.
  * @param {string} accessToken 
  * @param {string} brandId 
+ * @returns {{columnCount: number, rowCount: number}} Page grid.
  */
-async function assureBlueprintsConfigured(accessToken, brandId) {
+async function assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId) {
     const sheetDimensions = await plaService.getSheetDimensions(accessToken, brandId);
     if (sheetDimensions.length === 0) {
         throw new Error("There are no blueprints configured yet.");
     }
     logger.info("Found configured blueprints for this brand.");
+
+    let pageGrid = null;
+    for (const sheetDimension of sheetDimensions) {
+        if (sheetDimension.sheet_type === "page") {
+            pageGrid = { columnCount: sheetDimension.width, rowCount: sheetDimension.height };
+            break;
+        } else if (sheetDimension["sheet_type"] === "spread") {
+            pageGrid = { columnCount: sheetDimension.width / 2, rowCount: sheetDimension.height };
+            continue; // prefer picking from sheet type "page"
+        }
+    }
+    if (pageGrid === null) { // should never happen; blueprints always have pages/spreads
+        throw new Error("Could not resolve page dimensions from blueprint sheets.");
+    }
+    logger.info(`Derived page grid ${pageGrid.columnCount}x${pageGrid.rowCount} from blueprint sheet dimensions.`);
+    return pageGrid;
 }
 
 /**

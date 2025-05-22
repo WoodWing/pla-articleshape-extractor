@@ -5,18 +5,17 @@ import path from 'path';
 export class PageLayoutSettingsReader {
     #logger;
     #jsonValidator;
-    #grid;
+    #pageGrid;
     #settings;
     
     /**
      * @param {Logger} logger 
      * @param {JsonValidator} jsonValidator
-     * @param {columnCount: number, rowCount: number} grid 
      */
-    constructor(logger, jsonValidator, grid) {
+    constructor(logger, jsonValidator) {
         this.#logger = logger;
         this.#jsonValidator = jsonValidator;
-        this.#grid = grid;
+        this.#pageGrid = null;
         this.#settings = null;
     }
 
@@ -45,16 +44,45 @@ export class PageLayoutSettingsReader {
     }
 
     /**
+     * Provides the page layout settings. Raises error when not initialized yet.
+     * @returns {Object}
+     */
+    _getSettings() {
+        if (this.#settings === null) {
+            throw new Error("Need for page layout settings before initialized.");
+        }
+        return this.#settings;
+    }
+
+    /**
+     * @param {{columnCount: number, rowCount: number}} pageGrid 
+     */
+    setPageGrid(pageGrid) {
+        this.#pageGrid = pageGrid;
+    }
+
+    /**
+     * Provides the page grid. Raises error when not initialized yet.
+     * @returns {{columnCount: number, rowCount: number}}
+     */
+    _getPageGrid() {
+        if (this.#pageGrid === null) {
+            throw new Error("Need for page grid before initialized.");
+        }
+        return this.#pageGrid;
+    }
+
+    /**
      * The width of one column in points. The column refers to the simple page grid configured for PLA.
      * @returns {number} Positive number.
      */
     getColumnWidth() {
-        const columnCount = this.#grid.columnCount;
+        const columnCount = this._getPageGrid().columnCount;
         if (columnCount <= 0) {
             throw new Error(`The column count ${columnWidth} is invalid.`);
         }
         const gutterCount = columnCount - 1;
-        const gutterWidth = this.#settings.columns.gutter;
+        const gutterWidth = this._getSettings().columns.gutter;
         const sumOfGuttersWidth = gutterWidth * gutterCount;
         const columnWidth = (this._getUsablePageWidth() - sumOfGuttersWidth) / columnCount;
         if (columnWidth <= 0) {
@@ -68,7 +96,7 @@ export class PageLayoutSettingsReader {
      * @returns {number}
      */
     getColumnGutter() {
-        return this.#settings.columns.gutter;
+        return this._getSettings().columns.gutter;
     }
 
     /**
@@ -76,8 +104,8 @@ export class PageLayoutSettingsReader {
      * @returns {number}
      */
     _getUsablePageWidth() {
-        const pageWidth = this.#settings.dimensions.width;
-        const margins = this.#settings.margins;
+        const pageWidth = this._getSettings().dimensions.width;
+        const margins = this._getSettings().margins;
         return pageWidth - margins.inside - margins.outside;
     }
 
@@ -86,7 +114,7 @@ export class PageLayoutSettingsReader {
      * @returns {number} Right margin of a LHS page or left margin of a RHS page.
      */
     getPageMarginInside() {
-        return this.#settings.margins.inside;
+        return this._getSettings().margins.inside;
     }
 
     /**
@@ -94,7 +122,7 @@ export class PageLayoutSettingsReader {
      * @returns {number} Positive number.
      */
     getRowHeight() {
-        const rowCount = this.#grid.rowCount;
+        const rowCount = this._getPageGrid().rowCount;
         if (rowCount <= 0) {
             throw new Error(`The row count ${rowCount} is invalid.`);
         }
@@ -110,8 +138,8 @@ export class PageLayoutSettingsReader {
      * @returns {number}
      */
     _getUsablePageHeight() {
-        const pageHeight = this.#settings.dimensions.height;
-        const margins = this.#settings.margins;
+        const pageHeight = this._getSettings().dimensions.height;
+        const margins = this._getSettings().margins;
         return pageHeight - margins.top - margins.bottom;
     }  
 }

@@ -34,7 +34,6 @@ export class AppSettings {
 
     getPlaServiceUrl() { return this._configData.plaServiceUrl; }
     getDestination() { return this._configData.destination; }
-    getGrid() { return this._configData.grid; }
     getLogNetworkTraffic() { return this._configData.logNetworkTraffic; }
     getLogLevel() { return this._configData.logLevel; }
 }
