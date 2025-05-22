@@ -4,16 +4,18 @@
  */
 export class AppSettings {
 
+    #configData;
+    
     /**
      * @constructor
      * @param {Object} defaultConfig Factory default settings.
      * @param {Object} localConfig Local override settings.
      */
     constructor(defaultConfig, localConfig) {
-        this._configData = this._deepMerge(defaultConfig, localConfig);
+        this.#configData = this.#deepMerge(defaultConfig, localConfig);
     }
 
-    _deepMerge(defaultData, localData) {
+    #deepMerge(defaultData, localData) {
         let merged = {};
         for (let key in defaultData) {
             if (defaultData.hasOwnProperty(key)) {
@@ -23,7 +25,7 @@ export class AppSettings {
         for (let key in localData) {
             if (localData.hasOwnProperty(key)) {
                 if (typeof localData[key] === "object" && typeof defaultData[key] === "object") {
-                    merged[key] = this._deepMerge(defaultData[key], localData[key]);
+                    merged[key] = this.#deepMerge(defaultData[key], localData[key]);
                 } else {
                     merged[key] = localData[key];
                 }
@@ -32,8 +34,8 @@ export class AppSettings {
         return merged;
     }
 
-    getPlaServiceUrl() { return this._configData.plaServiceUrl; }
-    getDestination() { return this._configData.destination; }
-    getLogNetworkTraffic() { return this._configData.logNetworkTraffic; }
-    getLogLevel() { return this._configData.logLevel; }
+    getPlaServiceUrl() { return this.#configData.plaServiceUrl; }
+    getDestination() { return this.#configData.destination; }
+    getLogNetworkTraffic() { return this.#configData.logNetworkTraffic; }
+    getLogLevel() { return this.#configData.logLevel; }
 }

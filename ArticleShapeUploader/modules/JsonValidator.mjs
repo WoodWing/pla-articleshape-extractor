@@ -24,11 +24,11 @@ export class JsonValidator {
     }
 
     validate(schemaName, jsonData) {
-        const validate = this._loadCachedSchema(schemaName);
+        const validate = this.#loadCachedSchema(schemaName);
         if (validate(jsonData)) {
             return;
         }
-        const schemaFilepath = this._composeJsonSchemaFilepath(schemaName);
+        const schemaFilepath = this.#composeJsonSchemaFilepath(schemaName);
         let errorMessage = `The JSON is not valid according to the ${schemaFilepath} file:\n`;
         for (const validationError of validate.errors) {
             errorMessage +=
@@ -42,15 +42,15 @@ export class JsonValidator {
         throw new Error(`Invalid ${schemaName} JSON.`);
     }
 
-    _composeJsonSchemaFilepath(schemaName) {
+    #composeJsonSchemaFilepath(schemaName) {
         return path.join(this.#workFolder, `${schemaName}.schema.json`);
     }
 
-    _loadCachedSchema(schemaName) {
+    #loadCachedSchema(schemaName) {
         if (this.#cache.has(schemaName)) {
             return this.#cache.get(schemaName);
         }
-        const schemaFilepath = this._composeJsonSchemaFilepath(schemaName);
+        const schemaFilepath = this.#composeJsonSchemaFilepath(schemaName);
         const schemaJson = JSON.parse(fs.readFileSync(schemaFilepath, 'utf-8'));
         const validate = this.#ajv.compile(schemaJson);
         this.#cache.set(schemaName, validate);

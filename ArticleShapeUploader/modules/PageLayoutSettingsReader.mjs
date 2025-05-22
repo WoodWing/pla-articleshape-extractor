@@ -47,7 +47,7 @@ export class PageLayoutSettingsReader {
      * Provides the page layout settings. Raises error when not initialized yet.
      * @returns {Object}
      */
-    _getSettings() {
+    #getSettings() {
         if (this.#settings === null) {
             throw new Error("Need for page layout settings before initialized.");
         }
@@ -65,7 +65,7 @@ export class PageLayoutSettingsReader {
      * Provides the page grid. Raises error when not initialized yet.
      * @returns {{columnCount: number, rowCount: number}}
      */
-    _getPageGrid() {
+    #getPageGrid() {
         if (this.#pageGrid === null) {
             throw new Error("Need for page grid before initialized.");
         }
@@ -77,14 +77,14 @@ export class PageLayoutSettingsReader {
      * @returns {number} Positive number.
      */
     getColumnWidth() {
-        const columnCount = this._getPageGrid().columnCount;
+        const columnCount = this.#getPageGrid().columnCount;
         if (columnCount <= 0) {
             throw new Error(`The column count ${columnWidth} is invalid.`);
         }
         const gutterCount = columnCount - 1;
-        const gutterWidth = this._getSettings().columns.gutter;
+        const gutterWidth = this.#getSettings().columns.gutter;
         const sumOfGuttersWidth = gutterWidth * gutterCount;
-        const columnWidth = (this._getUsablePageWidth() - sumOfGuttersWidth) / columnCount;
+        const columnWidth = (this.#getUsablePageWidth() - sumOfGuttersWidth) / columnCount;
         if (columnWidth <= 0) {
             throw new Error(`The column width ${columnWidth} is invalid.`);
         }
@@ -96,16 +96,16 @@ export class PageLayoutSettingsReader {
      * @returns {number}
      */
     getColumnGutter() {
-        return this._getSettings().columns.gutter;
+        return this.#getSettings().columns.gutter;
     }
 
     /**
      * The width of the usable space within the page borders, in points.
      * @returns {number}
      */
-    _getUsablePageWidth() {
-        const pageWidth = this._getSettings().dimensions.width;
-        const margins = this._getSettings().margins;
+    #getUsablePageWidth() {
+        const pageWidth = this.#getSettings().dimensions.width;
+        const margins = this.#getSettings().margins;
         return pageWidth - margins.inside - margins.outside;
     }
 
@@ -114,7 +114,7 @@ export class PageLayoutSettingsReader {
      * @returns {number} Right margin of a LHS page or left margin of a RHS page.
      */
     getPageMarginInside() {
-        return this._getSettings().margins.inside;
+        return this.#getSettings().margins.inside;
     }
 
     /**
@@ -122,11 +122,11 @@ export class PageLayoutSettingsReader {
      * @returns {number} Positive number.
      */
     getRowHeight() {
-        const rowCount = this._getPageGrid().rowCount;
+        const rowCount = this.#getPageGrid().rowCount;
         if (rowCount <= 0) {
             throw new Error(`The row count ${rowCount} is invalid.`);
         }
-        const rowHeight = this._getUsablePageHeight() / rowCount;
+        const rowHeight = this.#getUsablePageHeight() / rowCount;
         if (rowHeight <= 0) {
             throw new Error(`The row height ${rowHeight} is invalid.`);
         }
@@ -137,9 +137,9 @@ export class PageLayoutSettingsReader {
      * The height of the usable space within the page borders, in points.
      * @returns {number}
      */
-    _getUsablePageHeight() {
-        const pageHeight = this._getSettings().dimensions.height;
-        const margins = this._getSettings().margins;
+    #getUsablePageHeight() {
+        const pageHeight = this.#getSettings().dimensions.height;
+        const margins = this.#getSettings().margins;
         return pageHeight - margins.top - margins.bottom;
     }  
 }

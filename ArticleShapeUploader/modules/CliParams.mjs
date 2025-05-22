@@ -4,11 +4,13 @@ import minimist from 'minimist';
 
 export class CliParams {
 
+    #logger;
+
     /**
      * @param {Logger} logger 
      */
     constructor(logger) {
-        this._logger = logger;
+        this.#logger = logger;
     }
 
     /**
@@ -17,9 +19,9 @@ export class CliParams {
      * @returns {string}
      */
     resolveInputPath() {
-        const args = this._getArguments();
+        const args = this.#getArguments();
         if (!'input-path' in args) {
-            this._showUsage();
+            this.#showUsage();
             throw new Error("Argument missing: --input-path");
         }
         let inputPath = args['input-path'];
@@ -29,7 +31,7 @@ export class CliParams {
         if (!fs.existsSync(inputPath) || !fs.lstatSync(inputPath).isDirectory()) {
             throw new Error(`Directory "${inputPath}" does not exist.`);
         }
-        this._logger.info(`Input directory: ${inputPath}`);
+        this.#logger.info(`Input directory: ${inputPath}`);
         return inputPath;
     }
 
@@ -37,7 +39,7 @@ export class CliParams {
      * Returns the script arguments given on the CLI.
      * @returns {string[]}
      */
-    _getArguments() {
+    #getArguments() {
         // Define a CLI flag that can be pass in as --uploads or --no-uploads.
         const options = {
             boolean: ['uploads'],
@@ -48,7 +50,7 @@ export class CliParams {
         return minimist(process.argv.slice(2), options); // 2: exclude node and script
     }
 
-    _showUsage() {
+    #showUsage() {
         const usage = "Usage: node index.mjs [arguments]\n\n"
             + "Options:\n"
             + "  --input-path=...          Path of folder that contains article shapes to upload.\n"
@@ -65,17 +67,17 @@ export class CliParams {
      * @returns {boolean} True to delete, false to keep.
      */
     shouldDeletePreviouslyConfiguredArticleShapes() {
-        const args = this._getArguments();
+        const args = this.#getArguments();
         if (!'old-shapes' in args) {
-            this._showUsage();
+            this.#showUsage();
             throw new Error("Argument missing: --old-shapes");
         }        
         const handleOldShapes = args['old-shapes'];
         if (!handleOldShapes in ['keep', 'delete']) {
-            this._showUsage();
+            this.#showUsage();
             throw new Error(`Unsupported value provided for argument --old-shapes: ${handleOldShapes}.`);
         }
-        this._logger.info(`Handling previously configured article shapes: ${handleOldShapes}`);
+        this.#logger.info(`Handling previously configured article shapes: ${handleOldShapes}`);
         return handleOldShapes === 'delete';
     }
 
@@ -86,16 +88,16 @@ export class CliParams {
      * @returns { brandId: string, sectionId: string }
      */
     resolveBrandAndSectionToUse(defaultBrandId, defaultSectionId) {
-        const args = this._getArguments();
+        const args = this.#getArguments();
         const paramBrandId = 'brand-id' in args ? String(args['brand-id']) : null;
         const paramSectionId = 'section-id' in args ? String(args['section-id']) : null;
         if ((!paramBrandId && paramSectionId) || (paramBrandId && !paramSectionId)) {
-            this._showUsage();
+            this.#showUsage();
             throw new Error("Unsupported combination of arguments. Either --brand-id or --section-id is provided. Expected both or none.");
         }
         const useBrandId = paramBrandId || defaultBrandId;
         const useSectionId = paramSectionId || defaultSectionId;
-        this._logger.info(`Targeting for brandId "${useBrandId}" and sectionId "${useSectionId}"`);
+        this.#logger.info(`Targeting for brandId "${useBrandId}" and sectionId "${useSectionId}"`);
         return { brandId: useBrandId, sectionId: useSectionId };
     }
 
@@ -104,7 +106,7 @@ export class CliParams {
      * @returns {boolean}
      */
     shouldUploadFiles() {
-        const args = this._getArguments();
+        const args = this.#getArguments();
         return args.uploads === true;
     }
 }

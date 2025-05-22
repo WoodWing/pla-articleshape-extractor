@@ -6,15 +6,20 @@ import { StatusCodes } from 'http-status-codes';
  * Understands the REST API of the PLA service.
  */
 export class PlaService {
+
+    #plaServiceUrl;
+    #logNetworkTraffic;
+    #logger;
+
     /**
      * @param {string} plaServiceUrl 
      * @param {boolean} logNetworkTraffic 
      * @param {Logger} logger 
      */
     constructor(plaServiceUrl, logNetworkTraffic, logger) {
-        this._plaServiceUrl = plaServiceUrl;
-        this._logNetworkTraffic = logNetworkTraffic;
-        this._logger = logger;
+        this.#plaServiceUrl = plaServiceUrl;
+        this.#logNetworkTraffic = logNetworkTraffic;
+        this.#logger = logger;
     }
 
     /**
@@ -25,14 +30,14 @@ export class PlaService {
      * @returns {Array<Object>} List of sheet dimension DTOs.
      */
     async getSheetDimensions(accessToken, brandId) {
-        const url = `${this._plaServiceUrl}/brands/${brandId}/sheet-dimensions`;
+        const url = `${this.#plaServiceUrl}/brands/${brandId}/sheet-dimensions`;
         try {
             const request = new Request(url, this._requestInitForPlaService(accessToken, 'GET'));
             const response = await fetch(request);
             const responseJson = await response.json();
-            this._logHttpTraffic(request, null, response, responseJson);
+            this.#logHttpTraffic(request, null, response, responseJson);
             if (response.ok) {
-                this._logger.debug("Retrieved sheet dimensions:", responseJson);
+                this.#logger.debug("Retrieved sheet dimensions:", responseJson);
                 return responseJson;
             }
             if (response.status === StatusCodes.NOT_FOUND) {
@@ -55,14 +60,14 @@ export class PlaService {
      * @returns {Array<Object>} List of sheet dimension DTOs.
      */
     async validateBrandConfiguration(accessToken, brandId) {
-        const url = `${this._plaServiceUrl}/brands/${brandId}/admin/validate`;
+        const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/validate`;
         try {
             const request = new Request(url, this._requestInitForPlaService(accessToken, 'GET'));
             const response = await fetch(request);
             const responseJson = await response.json();
-            this._logHttpTraffic(request, null, response, responseJson);
+            this.#logHttpTraffic(request, null, response, responseJson);
             if (response.ok) {
-                this._logger.debug(`Validated brand setup. Found ${responseJson.length} issues.`);
+                this.#logger.debug(`Validated brand setup. Found ${responseJson.length} issues.`);
                 return responseJson;
             }
             throw new Error(`HTTP ${response.status} ${response.statusText}`);
@@ -80,19 +85,19 @@ export class PlaService {
      * @returns {{margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}}|null} Settings, or null when not found.
      */
     async getPageLayoutSettings(accessToken, brandId) {
-        const url = `${this._plaServiceUrl}/brands/${brandId}/admin/setting/page-layout`;
+        const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/setting/page-layout`;
         try {
             const request = new Request(url, this._requestInitForPlaService(accessToken, 'GET'));
             const response = await fetch(request);
             const pageSettings = await response.json();
-            this._logHttpTraffic(request, null, response, pageSettings);
+            this.#logHttpTraffic(request, null, response, pageSettings);
             if (response.ok) {
                 const settingsValue = JSON.parse(pageSettings.value);
-                this._logger.debug("Retrieved page layout settings:", settingsValue);
+                this.#logger.debug("Retrieved page layout settings:", settingsValue);
                 return settingsValue;
             }
             if (response.status === StatusCodes.NOT_FOUND) {
-                this._logger.warning("Page layout settings not defined yet.");
+                this.#logger.warning("Page layout settings not defined yet.");
                 return null;
             }
             throw new Error(`HTTP ${response.status} ${response.statusText}`);
@@ -110,19 +115,19 @@ export class PlaService {
      * @returns {Object|null} Mapping, or null when not found.
      */
     async getElementLabelMapping(accessToken, brandId) {
-        const url = `${this._plaServiceUrl}/brands/${brandId}/admin/setting/element-labels`;
+        const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/setting/element-labels`;
         try {
             const request = new Request(url, this._requestInitForPlaService(accessToken, 'GET'));
             const response = await fetch(request);
             const elementMapping = await response.json();
-            this._logHttpTraffic(request, null, response, elementMapping);
+            this.#logHttpTraffic(request, null, response, elementMapping);
             if (response.ok) {
                 const settingsValue = JSON.parse(elementMapping.value);
-                this._logger.debug("Retrieved element labels mapping:", settingsValue);
+                this.#logger.debug("Retrieved element labels mapping:", settingsValue);
                 return settingsValue;
             }
             if (response.status === StatusCodes.NOT_FOUND) {
-                this._logger.warning("Element labels mapping not defined yet.");
+                this.#logger.warning("Element labels mapping not defined yet.");
                 return null;
             }
             throw new Error(`HTTP ${response.status} ${response.statusText}`);
@@ -157,15 +162,15 @@ export class PlaService {
      * @param {string} brandId 
      */
     async deleteArticleShapes(accessToken, brandId) {
-        const url = `${this._plaServiceUrl}/brands/${brandId}/admin/article-shapes`;
+        const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/article-shapes`;
         try {
             const request = new Request(url, this._requestInitForPlaService(accessToken, 'DELETE'));
             const response = await fetch(request);
-            this._logHttpTraffic(request, null, response, null);
+            this.#logHttpTraffic(request, null, response, null);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status} ${response.statusText}`);
             }
-            this._logger.info("Deleted previously configured article shapes.");
+            this.#logger.info("Deleted previously configured article shapes.");
         } catch (error) {
             throw new Error(`Could not deleted previously configured article shapes." - ${error.message}`);
         }
@@ -180,20 +185,20 @@ export class PlaService {
      * @returns {Array<Object>|null} File renditions, with pre-signed URLs, otherwise null.
      */
     async createArticleShape(accessToken, brandId, articleShapeName, articleShapeWithRenditionsDto) {
-        const url = `${this._plaServiceUrl}/brands/${brandId}/admin/article-shape/${articleShapeName}`;
+        const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/article-shape/${articleShapeName}`;
         try {
             const requestBody = JSON.stringify(articleShapeWithRenditionsDto);
             const request = new Request(url, this._requestInitForPlaService(accessToken, 'POST', requestBody));
             const response = await fetch(request);
             const responseJson = await response.json();
-            this._logHttpTraffic(request, articleShapeWithRenditionsDto, response, responseJson);
+            this.#logHttpTraffic(request, articleShapeWithRenditionsDto, response, responseJson);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status} ${response.statusText}`);
             }
-            this._logger.info(`Created article shape "${articleShapeName}".`);
+            this.#logger.info(`Created article shape "${articleShapeName}".`);
             return responseJson.renditions;
         } catch (error) {
-            this._logger.error(`Could not create article shape "${articleShapeName}" - ${error.message}`);
+            this.#logger.error(`Could not create article shape "${articleShapeName}" - ${error.message}`);
             return null;
         }
     }
@@ -205,8 +210,8 @@ export class PlaService {
      * @param {Response} response 
      * @param {string|null} responseJson 
      */
-    _logHttpTraffic(request, requestJson, response, responseJson) {
-        if (!this._logNetworkTraffic) {
+    #logHttpTraffic(request, requestJson, response, responseJson) {
+        if (!this.#logNetworkTraffic) {
             return;
         }
         const dottedLine = "- - - - - - - - - - - - - - - - - - - - - - -";
@@ -219,7 +224,7 @@ export class PlaService {
             message += `${JSON.stringify(responseJson, null, 3)}\n`;
         }
         message += dottedLine;
-        this._logger.debug(message);
+        this.#logger.debug(message);
     }
 
     /**
@@ -246,11 +251,11 @@ export class PlaService {
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status} ${response.statusText}`);
             }
-            this._logHttpTraffic(request, null, response, null);
-            this._logger.info(`Uploaded file "${path.basename(localFilePath)}" successfully to S3.`);
+            this.#logHttpTraffic(request, null, response, null);
+            this.#logger.info(`Uploaded file "${path.basename(localFilePath)}" successfully to S3.`);
             return true;
         } catch (error) {
-            this._logger.error(`Error uploading file "${path.basename(localFilePath)}" - ${error.message}`);
+            this.#logger.error(`Error uploading file "${path.basename(localFilePath)}" - ${error.message}`);
             return false;
         }
     }
