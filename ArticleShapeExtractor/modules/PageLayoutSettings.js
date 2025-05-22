@@ -1,5 +1,7 @@
 const { app } = require("indesign");
 const idd = require("indesign");
+const lfs = require('uxp').storage.localFileSystem;
+const formats = require('uxp').storage.formats;
 
 /**
  * Understands how to get the settings from InDesign as shown in the Margins and Columns dialog.
@@ -11,7 +13,6 @@ function PageLayoutSettings(logger) {
     this._logger = logger;
 
     this.exportSettings = async function(doc, folder) {
-        const lfs = require('uxp').storage.localFileSystem;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this._logger.info("Exporting Document Settings for layout '{}'.", docName);
         app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
@@ -23,8 +24,7 @@ function PageLayoutSettings(logger) {
             const page = doc.pages.item(0);
             const { inside, outside } = this._getInsideOutsideMargins(doc, page);
             const settings = this._composeSettings(doc, page, inside, outside);
-            // TODO: Error when the settings file already exists with different settings.
-            await this._savePageLayoutSettingsToDisk(settings, folder);
+            await this._saveOrComparePageLayoutSettings(settings, folder);
         } catch(error) {
             this._logger.logError(error);
             alert("An error occurred: " + error.message);
@@ -34,7 +34,7 @@ function PageLayoutSettings(logger) {
     }
 
     /**
-     * @param {DocumentTimeline} doc 
+     * @param {Document} doc 
      * @param {Page} page 
      * @param {Number} inside 
      * @param {Number} outside 
@@ -105,17 +105,80 @@ function PageLayoutSettings(logger) {
     }
 
     /**
-     * Save a settings object to the "page-layout-settings.json" file in a provided folder.
+     * Save a settings object to the "_manifest/page-layout-settings.json" file in a provided export folder.
      * @param {Object} settings
-     * @param {Folder} folder
+     * @param {Folder} exportFolder
      */
-    this._savePageLayoutSettingsToDisk = async function(settings, folder) {
-        const lfs = require('uxp').storage.localFileSystem;
-        const settingsPath = window.path.join(folder, "page-layout-settings.json")
-        const settingsFile = await lfs.createEntryWithUrl(settingsPath, { overwrite: true });
-        const settingsJson = JSON.stringify(settings, null, 4);
-        const formats = require('uxp').storage.formats;
-        settingsFile.write(settingsJson, {format: formats.utf8}); 
+    this._saveOrComparePageLayoutSettings = async function(settings, exportFolder) {
+        const manifestFoldername = "_manifest";
+        const settingsFilename = "page-layout-settings.json";
+        const { entry: settingsFolder, _ } = await this._getOrCreateSubFolder(exportFolder, manifestFoldername);
+        const { entry: settingsFile, created } = await this._getOrCreateFile(settingsFolder, settingsFilename);
+        if (created) {
+            const settingsJson = JSON.stringify(settings, null, 4);
+            const byteCount = await settingsFile.write(settingsJson, {format: formats.utf8}); 
+            if (!byteCount ) {
+                const { ConfigurationError } = require('./Errors.js');
+                const message = `Could not write into file "${manifestFoldername}/${settingsFilename}".\nPlease check access rights.`;
+                throw new ConfigurationError(message);
+            }
+        } else {
+            const settingsOfPrecedingLayout = JSON.parse(await settingsFile.read({format: formats.utf8}));
+            if (!this._isDeepEqual(settings, settingsOfPrecedingLayout)) {
+                const { ConfigurationError } = require('./Errors.js');
+                const message = "\n" 
+                    + "Page layout settings of current layout differ with preceding layout, processed just before.\n"
+                    + `Note that setting of preceding layout were saved in "${manifestFoldername}/${settingsFilename}".\n`
+                    + "For both layouts, check settings for menu items 'Document Setup' and 'Margins and Columns'.\n"
+                    + "After adjusting the settings for any of the two layouts, remove the file and try both again.";
+                throw new ConfigurationError(message);
+            }
+        }
+    }
+
+    /**
+     * Creates a subfolder under a given parent folder. Returns the subfolder if already exists.
+     * @param {Folder} parentFolder
+     * @param {string} subfolderName
+     * @returns {{entry: Folder, created: boolean}}
+     */
+    this._getOrCreateSubFolder = async function(parentFolder, subfolderName) {
+        try {
+            return {entry: await parentFolder.getEntry(subfolderName), created: false};
+        } catch (e) {
+            return {entry: await parentFolder.createFolder(subfolderName, { overwrite: false }), created: true};
+        }
+    }
+
+    /**
+     * Creates a file in a given folder. Returns the file if already exists.
+     * @param {Folder} folder 
+     * @param {string} filename 
+     * @returns {{entry: File, created: boolean}}
+     */
+    this._getOrCreateFile = async function (folder, filename) {
+        try {
+            return {entry: await folder.getEntry(filename), created: false};
+        } catch (e) {
+            return {entry: await folder.createFile(filename, { overwrite: false }), created: true};
+        }
+    }
+
+    /**
+     * Compares two items, such as two objects and all their properties.
+     * @param {any} lhs 
+     * @param {any} rhs 
+     * @returns {boolean}
+     */
+    this._isDeepEqual = function(lhs, rhs) {
+        const objectKeys = Object.keys;
+        if (lhs && rhs && (typeof lhs) === 'object' && (typeof rhs) === 'object') {
+            return objectKeys(lhs).length === objectKeys(rhs).length &&
+                objectKeys(lhs).every(
+                    key => this._isDeepEqual(lhs[key], rhs[key])
+                )
+        }
+        return lhs === rhs;
     }
 }
 

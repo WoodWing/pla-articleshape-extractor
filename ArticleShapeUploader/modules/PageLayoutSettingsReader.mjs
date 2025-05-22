@@ -20,26 +20,20 @@ export class PageLayoutSettingsReader {
     }
 
     /**
-     * Name of the page layout settings JSON file.
-     * @returns {string}
-     */
-    getFilename() {
-        return "page-layout-settings.json";
-    }
-
-    /**
      * @param {string} folderPath 
      * @return {Object}
      */
     readSettings(folderPath) {
-        const settingsPath = path.join(folderPath, this.getFilename());
+        const manifestFoldername = "_manifest";
+        const settingsFilename = "page-layout-settings.json";
+        const settingsPath = path.join(folderPath, manifestFoldername, settingsFilename);
         try {
             this.#settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
         } catch(error) {
             throw new Error(`The file "${settingsPath}" is not valid JSON - ${error.message}`);
         }
         this.#jsonValidator.validate('page-layout-settings', this.#settings);
-        this.#logger.info(`The ${this.getFilename()} file is valid.`);
+        this.#logger.info(`The "${manifestFoldername}/${settingsFilename}" file is valid.`);
         return this.#settings;
     }
 

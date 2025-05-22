@@ -188,7 +188,7 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId, sectionId
 async function scanDirForArticleShapeJson(folderPath, callback) {
     const files = fs.readdirSync(folderPath);
     for (const file of files) {
-        if (file.toLowerCase().endsWith('.json') && file !== pageLayoutSettingsReader.getFilename()) {
+        if (file.toLowerCase().endsWith('.json')) {
             const baseName = path.basename(file, '.json');
             try {
                 const shouldContinue = await callback(baseName);
