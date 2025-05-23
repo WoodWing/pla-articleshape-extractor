@@ -1,0 +1,66 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://www.woodwing.com/pla/page-layout-settings.schema.json",
+    "title": "Layout document settings, including page margins and column gutter",
+    "type": "object",
+    "required": [
+        "dimensions",
+        "margins",
+        "columns"
+    ],
+    "properties": {
+        "dimensions": {
+            "type": "object",
+            "required": [
+                "width",
+                "height"
+            ],
+            "properties": {
+                "width": {
+                    "type": "number"
+                },
+                "height": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": false
+        },
+        "margins": {
+            "type": "object",
+            "required": [
+                "top",
+                "bottom",
+                "inside",
+                "outside"
+            ],
+            "properties": {
+                "top": {
+                    "type": "number"
+                },
+                "bottom": {
+                    "type": "number"
+                },
+                "inside": {
+                    "type": "number"
+                },
+                "outside": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": false
+        },
+        "columns": {
+            "type": "object",
+            "required": [
+                "gutter"
+            ],
+            "properties": {
+                "gutter": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "additionalProperties": false
+}

@@ -20,20 +20,16 @@ An example - By default, only standard element labels are supported. To allow cu
    export const uploaderLocalConfig = {
    };
    ```
-2. Copy the `elementLabels` structure from the `config.js` file to your `config-local.js` file:
+2. Copy any settings from the `config.js` file to your `config-local.js` file, e.g:
    ```javascript
    export const uploaderLocalConfig = {
-      elementLabels: {
-         body: null,
-      }
+      logLevel: 'WARNING',
    };
    ```
-3. Inside the `elementLabels` structure, copy the `body` setting and adjust values:
+3. Adjust the value of the copied setting in your `config-local.js` file, e.g:
    ```javascript
    export const uploaderLocalConfig = {
-      elementLabels: {
-         body: '^brood \\d$',
-      }
+      logLevel: 'INFO',
    };
    ```
 

@@ -2,14 +2,16 @@ import chalk from "chalk";
 
 export class ColoredLogger {
 
+	#level;
+	
     /**
      * @constructor
 	 * @param {string} logLevel
      */
     constructor(logLevel) {
         this._LOGLEVEL = ["DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"];
-		this._level = this._LOGLEVEL.indexOf(logLevel);
-		if (this._level === -1) {
+		this.#level = this._LOGLEVEL.indexOf(logLevel);
+		if (this.#level === -1) {
 			throw new Error(`Unknown log level '${logLevel}' provided.`);
 		}
 	}		
@@ -17,7 +19,7 @@ export class ColoredLogger {
     /**
      * @returns {string} ISO formatted datetime e.g., "2025-04-28T12:34:56.789Z"
      */
-    _timestamp() {
+    #timestamp() {
         return new Date().toISOString();
     }
 
@@ -25,20 +27,10 @@ export class ColoredLogger {
      * 
      * @param {string} level 
      * @param {ChalkFunction} colorFn 
-     * @param {string} args 
+     * @param {Array} args 
      */
-    _format(level, colorFn, args) {
-		const template = args.shift();
-		// Replace undefined arguments with '*undefined*' to distinguish from ''
-		args.forEach(function(replacement, i) {
-			if (typeof replacement === 'undefined') {
-			  args[i] = '*undefined*';
-			}
-		  });		
-		const message = template.includes('{') && template.includes('}')
-			? template.replace(/{}/g, () => args.shift())
-			: template;		
-        console.log(`${chalk.gray(`[${this._timestamp()}]`)} [${colorFn(level.padEnd(8))}] ${message}`);
+    #format(level, colorFn, args) {
+        console.log(`${chalk.gray(`[${this.#timestamp()}]`)} [${colorFn(level.padEnd(8))}]`, ...args);
     }
 
 	/**
@@ -47,10 +39,10 @@ export class ColoredLogger {
 	 * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
     debug() {
-		if(5 > this._level)
+		if(5 > this.#level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
-        this._format("DEBUG", chalk.gray, args);
+        this.#format("DEBUG", chalk.gray, args);
     }
 
 	/**
@@ -59,10 +51,10 @@ export class ColoredLogger {
 	 * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
     info() {
-		if(4 > this._level)
+		if(4 > this.#level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
-        this._format("INFO", chalk.blue, args);
+        this.#format("INFO", chalk.blue, args);
     }
 
 	/**
@@ -71,10 +63,10 @@ export class ColoredLogger {
 	 * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
     warning() {
-		if(3 > this._level)
+		if(3 > this.#level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
-        this._format("WARN", chalk.yellow, args);
+        this.#format("WARN", chalk.yellow, args);
     }
 
 	/**
@@ -83,10 +75,10 @@ export class ColoredLogger {
 	 * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
     error() {
-		if(2 > this._level)
+		if(2 > this.#level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
-        this._format("ERROR", chalk.red, args);
+        this.#format("ERROR", chalk.red, args);
     }
 
 	/**
@@ -95,10 +87,10 @@ export class ColoredLogger {
 	 * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
     critical() {
-		if(1 > this._level)
+		if(1 > this.#level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
-        this._format("CRITICAL", chalk.red, args);
+        this.#format("CRITICAL", chalk.red, args);
     }
 
 	/**

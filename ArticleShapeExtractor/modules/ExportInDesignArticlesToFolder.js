@@ -5,20 +5,20 @@ const idd = require("indesign");
  * @constructor
  * @param {Logger} logger
  * @param {InDesignArticleService} inDesignArticleService
- * @param {LayoutDocumentSettings} layoutDocumentSettings
+ * @param {PageLayoutSettings} pageLayoutSettings
  * @param {Object} fallbackBrand
  * @param {Object} fallbackCategory
  */
 function ExportInDesignArticlesToFolder(
     logger,
     inDesignArticleService, 
-    layoutDocumentSettings,
+    pageLayoutSettings,
     fallbackBrand, 
     fallbackCategory,
 ) {
     this._logger = logger;
     this._inDesignArticleService = inDesignArticleService;
-    this._layoutDocumentSettings = layoutDocumentSettings;
+    this._pageLayoutSettings = pageLayoutSettings;
     this._fallbackBrand = fallbackBrand;
     this._fallbackCategory = fallbackCategory;
 
@@ -28,7 +28,7 @@ function ExportInDesignArticlesToFolder(
      * @returns {Number} Count of exported article shapes.
      */
     this.run = async function(doc, folder) {
-        await this._layoutDocumentSettings.exportSettings(doc, folder);
+        await this._pageLayoutSettings.exportSettings(doc, folder);
 
         const lfs = require('uxp').storage.localFileSystem;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;

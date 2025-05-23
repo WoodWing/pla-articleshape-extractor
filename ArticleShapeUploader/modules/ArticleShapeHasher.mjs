@@ -27,11 +27,13 @@ import crypto from 'crypto';
  */
 export class ArticleShapeHasher {
 
+    #elementLabelMapper;
+
     /**
      * @param {ElementLabelMapper} elementLabelMapper 
      */
     constructor(elementLabelMapper) {
-        this.elementLabelMapper = elementLabelMapper;
+        this.#elementLabelMapper = elementLabelMapper;
     }
 
     /**
@@ -48,7 +50,7 @@ export class ArticleShapeHasher {
             "brandName", "sectionName", "shapeTypeName", "geometricBounds"
             // Don't simply add properties here. See class header first.
         ];
-        this._validateKeys(articleShape, significantKeys, irrelevantKeys, "<root>");
+        this.#validateKeys(articleShape, significantKeys, irrelevantKeys, "<root>");
 
         const sanitized = {
             brandId: articleShape.brandId,
@@ -56,8 +58,8 @@ export class ArticleShapeHasher {
             genreId: articleShape.genreId,
             shapeTypeId: articleShape.shapeTypeId,
             foldLine: articleShape.foldLine,
-            textComponents: this._sanitizeTextComponents(articleShape.textComponents || []),
-            imageComponents: this._sanitizeImageComponents(articleShape.imageComponents || [])
+            textComponents: this.#sanitizeTextComponents(articleShape.textComponents || []),
+            imageComponents: this.#sanitizeImageComponents(articleShape.imageComponents || [])
         };
         const jsonString = JSON.stringify(sanitized);
         return crypto.createHash("sha256").update(jsonString).digest("hex");
@@ -70,7 +72,7 @@ export class ArticleShapeHasher {
      * @param {Array<string>} irrelevantKeys 
      * @param {string} path 
      */
-    _validateKeys(obj, significantKeys, irrelevantKeys, path) {
+    #validateKeys(obj, significantKeys, irrelevantKeys, path) {
         const objectKeys = Object.keys(obj);
         for (const key1 of objectKeys) {
             if (!significantKeys.includes(key1) && !irrelevantKeys.includes(key1)) {
@@ -89,7 +91,7 @@ export class ArticleShapeHasher {
      * @param {string} path
      * @returns {Object} The sanitized geometricBounds.
      */
-    _sanitizeGeometricBounds(geometricBounds, path) {
+    #sanitizeGeometricBounds(geometricBounds, path) {
         const significantKeys = [
             "x", "y", "width", "height"
             // Don't simply add properties here. See class header first.
@@ -97,7 +99,7 @@ export class ArticleShapeHasher {
         const irrelevantKeys = [
             // Don't simply add properties here. See class header first.
         ];
-        this._validateKeys(geometricBounds, significantKeys, irrelevantKeys, path);
+        this.#validateKeys(geometricBounds, significantKeys, irrelevantKeys, path);
         const significantGeo = {};
         for (const key of significantKeys) {
             significantGeo[key] = geometricBounds[key];
@@ -109,7 +111,7 @@ export class ArticleShapeHasher {
      * @param {Array<Object>} textComponents 
      * @returns {Object} The sanitized textComponents.
      */
-    _sanitizeTextComponents(textComponents) {
+    #sanitizeTextComponents(textComponents) {
         const significantKeys = [
             "type", "firstParagraphStyle", "frames"
             // Don't simply add properties here. See class header first.
@@ -120,7 +122,7 @@ export class ArticleShapeHasher {
         ];
         return textComponents.map((textComponent, componentIndex) => {
             const componentPath = `textComponents[${componentIndex}]`;
-            this._validateKeys(textComponent, significantKeys, irrelevantKeys, componentPath);
+            this.#validateKeys(textComponent, significantKeys, irrelevantKeys, componentPath);
             const sanitizedFrames = textComponent.frames.map((frame, frameIndex) => {
                 const frameSignificantKeys = [
                     "geometricBounds", "columns", "textWrapMode"
@@ -131,9 +133,9 @@ export class ArticleShapeHasher {
                     // Don't simply add properties here. See class header first.
                 ];
                 const framePath = componentPath +`frames[${frameIndex}]`;
-                this._validateKeys(frame, frameSignificantKeys, frameIrrelevantKeys, framePath);
+                this.#validateKeys(frame, frameSignificantKeys, frameIrrelevantKeys, framePath);
                 return {
-                    geometricBounds: this._sanitizeGeometricBounds(frame.geometricBounds, framePath + "geometricBounds"),
+                    geometricBounds: this.#sanitizeGeometricBounds(frame.geometricBounds, framePath + "geometricBounds"),
                     columns: frame.columns,
                     textWrapMode: frame.textWrapMode
                 };
@@ -144,7 +146,7 @@ export class ArticleShapeHasher {
             });
 
             return {
-                type: this.elementLabelMapper.mapCustomToStandardLabel(textComponent.type),
+                type: this.#elementLabelMapper.mapCustomToStandardLabel(textComponent.type),
                 firstParagraphStyle: textComponent.firstParagraphStyle,
                 frames: sanitizedFrames
             };
@@ -156,7 +158,7 @@ export class ArticleShapeHasher {
      * @param {Array<Object>} imageComponents 
      * @returns {Object} The sanitized imageComponents.
      */
-    _sanitizeImageComponents(imageComponents) {
+    #sanitizeImageComponents(imageComponents) {
         const significantKeys = [
             "geometricBounds", "textWrapMode"
             // Don't simply add properties here. See class header first.
@@ -166,9 +168,9 @@ export class ArticleShapeHasher {
         ];
         return imageComponents.map((imageComponent, componentIndex) => {
             const path = `imageComponents[${componentIndex}]`;
-            this._validateKeys(imageComponent, significantKeys, irrelevantKeys, path);
+            this.#validateKeys(imageComponent, significantKeys, irrelevantKeys, path);
             return {
-                geometricBounds: this._sanitizeGeometricBounds(imageComponent.geometricBounds, path + "geometricBounds"),
+                geometricBounds: this.#sanitizeGeometricBounds(imageComponent.geometricBounds, path + "geometricBounds"),
                 textWrapMode: imageComponent.textWrapMode
             };
         }).sort((a, b) => {
