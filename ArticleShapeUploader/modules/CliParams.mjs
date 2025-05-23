@@ -55,8 +55,7 @@ export class CliParams {
             + "Options:\n"
             + "  --input-path=...          Path of folder that contains article shapes to upload.\n"
             + "  --old-shapes=...          How to handle the previously configured shapes. Options: 'keep' or 'delete'.\n"
-            + "  --brand-id=...            Optional. Override the brand. Overrides the brand provided by the shapes.\n"
-            + "  --section-id=...          Optional. Override the section. Overrides the section provided by the shapes.\n"
+            + "  --target-brand=...        Optional. Name of the brand to upload to. Overrides the brand provided by the shapes. Requires a _manifest/brand-section-map.json file.\n"
             + "  --no-uploads              Optional. Skip uploading files for the article shapes. Don't use for production."
         ;
         console.log(usage);
@@ -82,23 +81,12 @@ export class CliParams {
     }
 
     /**
-     * Tells which brand/section id to use. If given on CLI, those will override the default provided ones.
-     * @param {string} defaultBrandId
-     * @param {string} defaultSectionId
-     * @returns { brandId: string, sectionId: string }
+     * Returns a different brand to be used (to upload for) than the brand used to download from.
+     * @returns {string|null} The different brand, or null to use the same brand (as downloaded from).
      */
-    resolveBrandAndSectionToUse(defaultBrandId, defaultSectionId) {
+    getTargetBrandName() {
         const args = this.#getArguments();
-        const paramBrandId = 'brand-id' in args ? String(args['brand-id']) : null;
-        const paramSectionId = 'section-id' in args ? String(args['section-id']) : null;
-        if ((!paramBrandId && paramSectionId) || (paramBrandId && !paramSectionId)) {
-            this.#showUsage();
-            throw new Error("Unsupported combination of arguments. Either --brand-id or --section-id is provided. Expected both or none.");
-        }
-        const useBrandId = paramBrandId || defaultBrandId;
-        const useSectionId = paramSectionId || defaultSectionId;
-        this.#logger.info(`Targeting for brandId "${useBrandId}" and sectionId "${useSectionId}"`);
-        return { brandId: useBrandId, sectionId: useSectionId };
+        return 'target-brand' in args ? String(args['target-brand']) : null;
     }
 
     /**

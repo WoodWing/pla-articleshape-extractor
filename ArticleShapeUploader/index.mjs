@@ -13,6 +13,7 @@ import { ColoredLogger } from "./modules/ColoredLogger.mjs";
 import { CliParams } from "./modules/CliParams.mjs";
 import { PageLayoutSettingsReader } from "./modules/PageLayoutSettingsReader.mjs";
 import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
+import { BrandSectionMapReader } from './modules/BrandSectionMapReader.mjs';
 import { ArticleShapeHasher } from "./modules/ArticleShapeHasher.mjs";
 import { JsonValidator } from "./modules/JsonValidator.mjs";
 import { PlaService } from "./modules/PlaService.mjs";
@@ -31,6 +32,7 @@ const cliParams = new CliParams(logger);
 const jsonValidator = new JsonValidator(logger, path.join(__dirname, 'schemas'));
 const pageLayoutSettingsReader = new PageLayoutSettingsReader(logger, jsonValidator);
 const elementLabelMapper = new ElementLabelMapper(logger, jsonValidator);
+const brandSectionMapReader = new BrandSectionMapReader(logger, jsonValidator);
 const hasher = new ArticleShapeHasher(elementLabelMapper);
 const plaService = new PlaService(appSettings.getPlaServiceUrl(), appSettings.getLogNetworkTraffic(), logger);
 
@@ -43,8 +45,13 @@ async function main() {
         const inputPath = cliParams.resolveInputPath();
         const pageLayoutSettings = pageLayoutSettingsReader.readSettings(inputPath);
         const accessToken = resolveAccessToken();
+
         const articleShapeJson = await takeFirstArticleShapeJson(inputPath);
-        const { brandId, sectionId } = cliParams.resolveBrandAndSectionToUse(articleShapeJson.brandId, articleShapeJson.sectionId);
+        const targetBrandName = cliParams.getTargetBrandName();
+        const { brandId, sectionMap } = targetBrandName 
+            ? brandSectionMapReader.readMapAndResolveBrandId(inputPath, targetBrandName) 
+            : { brandId: articleShapeJson.brandId, sectionMap: null };
+
         const pageGrid = await assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId);
         pageLayoutSettingsReader.setPageGrid(pageGrid);
         await assureTallyPageLayoutSettings(accessToken, brandId, pageLayoutSettings)
@@ -52,7 +59,7 @@ async function main() {
         if (await cliParams.shouldDeletePreviouslyConfiguredArticleShapes()) {
              await plaService.deleteArticleShapes(accessToken, brandId);
         }
-        await scanDirAndUploadFiles(inputPath, accessToken, brandId, sectionId);
+        await scanDirAndUploadFiles(inputPath, accessToken, brandId, sectionMap);
         await validateBrandConfiguration(accessToken, brandId);
     } catch(error) {
         logger.error(error.message);
@@ -157,9 +164,9 @@ async function takeFirstArticleShapeJson(folderPath) {
  * @param {string} folderPath 
  * @param {string} accessToken 
  * @param {string} brandId 
- * @param {string} sectionId 
+ * @param {Array<string, string>} sectionMap 
  */
-async function scanDirAndUploadFiles(folderPath, accessToken, brandId, sectionId) {
+async function scanDirAndUploadFiles(folderPath, accessToken, brandId, sectionMap) {
     await scanDirForArticleShapeJson(folderPath, async (baseName) => {
         const jsonFilePath = composePathAndAssertExists(folderPath, baseName, 'json');
         const articleShapeJson = validateArticleShapeJson(jsonFilePath);
@@ -174,10 +181,27 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId, sectionId
             composeFileRenditionDto('snapshot', 'image/jpeg', 'jpg'),
             composeFileRenditionDto('definition', 'application/xml', 'idms'),
         ] : [];
+        const sectionId = resolveSectionId(articleShapeJson, sectionMap);
         await uploadArticleShapeWithFiles(
             accessToken, brandId, sectionId, baseName, articleShapeJson, localFiles, fileRenditions);        
         return true;
     });
+}
+
+/**
+ * @param {Object} articleShapeJson 
+ * @param {Array<string,string>} sectionMap 
+ * @returns {string}
+ */
+function resolveSectionId(articleShapeJson, sectionMap) {
+    if (!sectionMap) {
+        return articleShapeJson.sectionId;
+    }
+    const sectionId = sectionMap[articleShapeJson.sectionName];
+    if (!sectionId) {
+        throw new Error(`The edition "${articleShapeJson.sectionName}" was not found.`);
+    }
+    return sectionId;
 }
 
 /**
