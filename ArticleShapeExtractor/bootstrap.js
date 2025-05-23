@@ -78,6 +78,11 @@ Container.registerFactory("RegenerateArticleShapesService", function() {
     );
 });
 
+Container.registerFactory("BrandSectionMapResolver", function() {
+    const BrandSectionMapResolver = require("./modules/BrandSectionMapResolver.js");
+    return new BrandSectionMapResolver(Container.resolve("Logger"));
+});
+
 function initBootstrap() {
     validateHost();
 }

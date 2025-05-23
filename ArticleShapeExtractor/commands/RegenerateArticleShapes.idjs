@@ -16,9 +16,14 @@ await (async function main() {
             throw new NoFolderSelectedError();
         }
 
+        // Resolve the brand and sections and save them to disk.
+        await Container.resolve("BrandSectionMapResolver").run(folder);
+        
+        // Export article shapes to disk.
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
         await Container.resolve("RegenerateArticleShapesService").run(folder);
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
+
     } catch(error) {
         // First enable the user interaction again to able to show the alert.
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
