@@ -199,7 +199,7 @@ export class PlaService {
                     for (const pattern in [regEx1, regEx2]) {
                         const regEx = new RegExp(pattern, 'i');
                         if (regEx.test(responseJson.message)) {
-                            this.#logger.info(`Skipped - ${responseJson.message}`);
+                            this.#logger.info(`Skipped creating article shape - ${responseJson.message}`);
                             return null;
                         }
                     }
