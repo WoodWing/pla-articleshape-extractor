@@ -42,6 +42,9 @@ const plaService = new PlaService(appSettings.getPlaServiceUrl(), appSettings.ge
 async function main() {
     try {
         dotenv.config();
+        if (cliParams.userHasAskedForHelpOnly()) {
+            return;
+        }
         const inputPath = cliParams.resolveInputPath();
         const pageLayoutSettings = pageLayoutSettingsReader.readSettings(inputPath);
         const accessToken = resolveAccessToken();

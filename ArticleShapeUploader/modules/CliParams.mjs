@@ -14,15 +14,28 @@ export class CliParams {
     }
 
     /**
+     * Whether the user has asked to show help on usage only.
+     * @returns {boolean}
+     */
+    userHasAskedForHelpOnly() {
+        const args = this.#getArguments();
+        const askedForHelp = args.hasOwnProperty('help');
+        if (askedForHelp) {
+            this.#showUsage();
+        }
+        return askedForHelp;
+    }
+
+    /**
      * Take the directory path from the CLI arguments.
      * This directory should contain the article shapes to upload.
      * @returns {string}
      */
     resolveInputPath() {
         const args = this.#getArguments();
-        if (!'input-path' in args) {
+        if (!args.hasOwnProperty('input-path') || typeof args['input-path'] !== 'string' || args['input-path'].length === 0) {
             this.#showUsage();
-            throw new Error("Argument missing: --input-path");
+            throw new Error("Argument or value missing: --input-path");
         }
         let inputPath = args['input-path'];
         if (inputPath.startsWith('~')) {
@@ -67,12 +80,12 @@ export class CliParams {
      */
     shouldDeletePreviouslyConfiguredArticleShapes() {
         const args = this.#getArguments();
-        if (!'old-shapes' in args) {
+        if (!args.hasOwnProperty('old-shapes') || typeof args['old-shapes'] !== 'string') {
             this.#showUsage();
-            throw new Error("Argument missing: --old-shapes");
+            throw new Error("Argument of value is missing: --old-shapes");
         }        
         const handleOldShapes = args['old-shapes'];
-        if (!handleOldShapes in ['keep', 'delete']) {
+        if (!['keep', 'delete'].includes(handleOldShapes)) {
             this.#showUsage();
             throw new Error(`Unsupported value provided for argument --old-shapes: ${handleOldShapes}.`);
         }
@@ -86,7 +99,7 @@ export class CliParams {
      */
     getTargetBrandName() {
         const args = this.#getArguments();
-        return 'target-brand' in args ? String(args['target-brand']) : null;
+        return args.hasOwnProperty('target-brand') ? String(args['target-brand']) : null;
     }
 
     /**
