@@ -193,6 +193,17 @@ export class PlaService {
             const responseJson = await response.json();
             this.#logHttpTraffic(request, articleShapeWithRenditionsDto, response, responseJson);
             if (!response.ok) {
+                if (response.status === StatusCodes.CONFLICT) { // HTTP 409
+                    const regEx1 = 'Article shape .* with this name is already configured for brand';
+                    const regEx2 = 'Article shape .* with same composition is already configured for brand';
+                    for (const pattern in [regEx1, regEx2]) {
+                        const regEx = new RegExp(pattern, 'i');
+                        if (regEx.test(responseJson.message)) {
+                            this.#logger.info(`Skipped - ${responseJson.message}`);
+                            return null;
+                        }
+                    }
+                }
                 throw new Error(`HTTP ${response.status} ${response.statusText}`);
             }
             this.#logger.info(`Created article shape "${articleShapeName}".`);
