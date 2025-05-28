@@ -21,7 +21,7 @@ function PageLayoutSettings(logger) {
      * @returns {boolean} True when the settings are matching (or new), false otherwise.
      */
     this.exportSettings = async function(doc, folder) {
-        const exportedSuccessfully = false;
+        let exportedSuccessfully = false;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this._logger.info("Exporting Document Settings for layout '{}'.", docName);
         app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
