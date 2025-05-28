@@ -126,15 +126,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @returns {String} UTC date and time with milliseconds in ISO 8601 format.
 	 */
 	this._getDateTimeWithMsAsString = function() {
-		const date = new Date();
-		const dateString = date.getUTCFullYear() 
-			+ '-' + date.getUTCMonth().toString().padStart(2, "0") 
-			+ '-' + date.getUTCDay().toString().padStart(2, "0");
-		const timeString = date.getUTCHours().toString().padStart(2, "0") 
-			+ ':' + date.getUTCMinutes().toString().padStart(2, "0") 
-			+ ':' + date.getUTCSeconds().toString().padStart(2, "0")
-			+ '.' + date.getUTCMilliseconds().toString().padStart(3, "0");
-		return dateString + 'T' + timeString + 'Z';
+		return new Date().toISOString();
 	};
 
 	this._getLogFilepath = function() {
