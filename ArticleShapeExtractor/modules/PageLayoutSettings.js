@@ -12,7 +12,16 @@ const formats = require('uxp').storage.formats;
 function PageLayoutSettings(logger) {
     this._logger = logger;
 
+    /**
+     * Exports the layout settings of the given layout document to a file named
+     * "_manifest/page-layout-settings.json" in the given folder. When this file 
+     * already exists, the settings are compared instead.
+     * @param {Document} doc 
+     * @param {Folder} folder 
+     * @returns {boolean} True when the settings are matching (or new), false otherwise.
+     */
     this.exportSettings = async function(doc, folder) {
+        const exportedSuccessfully = false;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this._logger.info("Exporting Document Settings for layout '{}'.", docName);
         app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
@@ -25,12 +34,17 @@ function PageLayoutSettings(logger) {
             const { inside, outside } = this._getInsideOutsideMargins(doc, page);
             const settings = this._composeSettings(doc, page, inside, outside);
             await this._saveOrComparePageLayoutSettings(settings, folder);
+            exportedSuccessfully = true;
         } catch(error) {
-            this._logger.logError(error);
+            const { ConfigurationError } = require('./Errors.js');
+            if (!(error instanceof ConfigurationError)) {
+                this._logger.logError(error);
+            }
             alert("An error occurred: " + error.message);
         } finally {
             app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
         }
+        return exportedSuccessfully;
     }
 
     /**
@@ -106,6 +120,7 @@ function PageLayoutSettings(logger) {
 
     /**
      * Save a settings object to the "_manifest/page-layout-settings.json" file in a provided export folder.
+     * If the file already exists, it compares whether the given settings are equal with settings from the file.
      * @param {Object} settings
      * @param {Folder} exportFolder
      */

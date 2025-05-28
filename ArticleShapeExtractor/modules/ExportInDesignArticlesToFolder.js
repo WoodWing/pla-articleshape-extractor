@@ -28,7 +28,9 @@ function ExportInDesignArticlesToFolder(
      * @returns {Number} Count of exported article shapes.
      */
     this.run = async function(doc, folder) {
-        await this._pageLayoutSettings.exportSettings(doc, folder);
+        if (!(await this._pageLayoutSettings.exportSettings(doc, folder))) {
+            return 0;
+        }
 
         const lfs = require('uxp').storage.localFileSystem;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
