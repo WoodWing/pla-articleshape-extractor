@@ -42,18 +42,22 @@ function RegenerateArticleShapesService(logger, userQueryName, exportInDesignArt
         const resolveProperties = [
             "ID", "Type", "Name", "Version", 
             "PublicationId", "Publication", "CategoryId",  "Category", "StateId", "State"];
-        await this._queryObjects(searchParams, resolveProperties, async (wflObject) => {
-            //this._logger.debug('QueryObjects resolved object: {}', JSON.stringify(wflObject, null, 4));
-            if (fileMap.get(wflObject.ID) === wflObject.Version) {
-                this._logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
-                    `Article Shapes (JSON files) for layout id ${wflObject.ID} with version ${wflObject.Version} ` +
-                    'already exists in export folder.');
-            } else {
-                const theOpenDoc = app.openObject(wflObject.ID);
-                await this._exportInDesignArticlesToFolder.run(theOpenDoc, folder);
-                theOpenDoc.close(idd.SaveOptions.no);
+        await this._queryObjects(searchParams, resolveProperties, async (wflObjects) => {
+            const layoutIds = [];
+            for (const wflObject of wflObjects) {
+                //this._logger.debug('QueryObjects resolved object: {}', JSON.stringify(wflObject, null, 4));
+                if (fileMap.get(wflObject.ID) === wflObject.Version) {
+                    this._logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
+                        `Article Shapes (JSON files) for layout id ${wflObject.ID} with version ${wflObject.Version} ` +
+                        'already exists in export folder.');
+                } else {
+                    const theOpenDoc = app.openObject(wflObject.ID);
+                    await this._exportInDesignArticlesToFolder.run(theOpenDoc, folder);
+                    theOpenDoc.close(idd.SaveOptions.no);
+                }
+                layoutIds.push(wflObject.ID);
             }
-            app.sendObjectToNext(wflObject.ID);
+            this._sendObjectsToNextStatus(layoutIds); // faster than calling app.sendObjectToNext individually
         });
     };
 
@@ -168,9 +172,9 @@ function RegenerateArticleShapesService(logger, userQueryName, exportInDesignArt
      * Calls the QueryObjects service in paged manner until all objects are retrieved.
      * @param {Array<Object>} searchParams List of QueryParam objects.
      * @param {Array<string>} resolveProperties List of workflow object property names to resolve.
-     * @param {CallableFunction} callbackObjectResolved This function is called for each retrieved object.
+     * @param {CallableFunction} callbackObjectsResolved This function is called for each page of retrieved objects.
      */
-    this._queryObjects = async function(searchParams, resolveProperties, callbackObjectResolved) {
+    this._queryObjects = async function(searchParams, resolveProperties, callbackObjectsResolved) {
         let firstEntry = 1;
         let queryCount = 0; 
         const maxQueryHit = 100; // paranoid prevention of endless loops
@@ -179,11 +183,13 @@ function RegenerateArticleShapesService(logger, userQueryName, exportInDesignArt
             queryCount++;
             this._logger.info(`Running QueryObjects page#${queryCount}...`);
             response = await this._queryObjectsOneResultPage(
-                searchParams, resolveProperties, firstEntry, callbackObjectResolved);
+                searchParams, resolveProperties, firstEntry);
             // firstEntry = response.FirstEntry + response.ListedEntries;
             //  L> Assumed is that the status of a processed layout is changed, and that
             //     the User Query has a layout status in its filters. Then we should NOT page
             //     results because processed layouts already disappear from the search results.
+            const wflObjects = this._getObjectsFromQueryObjectsResponse(response, resolveProperties);
+            await callbackObjectsResolved(wflObjects);
         } while (response.ListedEntries > 0 && queryCount < maxQueryHit);
         if (queryCount === maxQueryHit) {
             const { PrintLayoutAutomationError } = require('./Errors.js');
@@ -196,10 +202,9 @@ function RegenerateArticleShapesService(logger, userQueryName, exportInDesignArt
      * @param {Array<Object>} searchParams List of QueryParam objects.
      * @param {Array<string>} resolveProperties List of workflow object property names to resolve.
      * @param {number} firstEntry Object index to start reading from (in paged results).
-     * @param {CallableFunction} callbackObjectResolved This function is called for each retrieved object.
      * @returns {Object} QueryObjectsResponse
      */
-    this._queryObjectsOneResultPage = async function(searchParams, resolveProperties, firstEntry, callbackObjectResolved) {
+    this._queryObjectsOneResultPage = async function(searchParams, resolveProperties, firstEntry) {
         const startsWithProps = ['ID', 'Type', 'Name']; // service rule: must start with this sequence of props
         if( !startsWithProps.every((value, index) => resolveProperties[index] === value) ) {
             const { ArgumentError } = require('./Errors.js');
@@ -211,7 +216,7 @@ function RegenerateArticleShapesService(logger, userQueryName, exportInDesignArt
         const request = {
             "Params": searchParams,
             "FirstEntry": firstEntry,
-            "MaxEntries": 50,
+            "MaxEntries": 25,
             "RequestProps": resolveProperties,
             "Order": [{ Property: "ID", Direction: true, __classname__: "QueryOrder" }], // oldest first
             "Ticket": app.entSession.activeTicket
@@ -219,7 +224,17 @@ function RegenerateArticleShapesService(logger, userQueryName, exportInDesignArt
         //this._logger.debug('QueryObjects request: {}', JSON.stringify(request, null, 4));
         const response = this._callWebService(request, "QueryObjects");
         //this._logger.debug('QueryObjects response: {}', JSON.stringify(response, null, 4));
+        return response;
+    };
 
+    /**
+     * Build a list of workflow objects from the Columns and Rows of a given QueryObjectsResponse.
+     * @param {Object} response 
+     * @param {Array<string>} resolveProperties Names of workflow object properties to expect.
+     * @returns {Array<Object>} List of resolved objects, each having the properties assigned.
+     */
+    this._getObjectsFromQueryObjectsResponse = function(response, resolveProperties) {
+        const wflObjects = [];
         const columnIndexes = new Map()
         for (var columnIndex = 0; columnIndex < response.Columns.length; columnIndex++) {
             const columnName = response.Columns[columnIndex].Name;
@@ -232,10 +247,30 @@ function RegenerateArticleShapesService(logger, userQueryName, exportInDesignArt
             for (const property of resolveProperties) {
                 wflObject[property] = response.Rows[rowIndex][columnIndexes.get(property)]
             }
-            await callbackObjectResolved(wflObject);
+            wflObjects.push(wflObject);
         }
-        return response;
-    };
+        return wflObjects;
+    }
+
+    /**
+     * Calls the MultiSetObjectProperties service in special manner to move objects to their next status.
+     * @param {Array<string>} objectIds 
+     */
+    this._sendObjectsToNextStatus = function(objectIds) {
+        const request = {
+            Ticket: app.entSession.activeTicket,
+            IDs: objectIds,
+            MetaData: [{
+                Property: "StateId",
+                PropertyValues: [{
+                    Value: "", // special meaning: move to Next Status
+                    __classname__: "PropertyValue"
+                }],
+                __classname__: "MetaDataValue"
+            }]
+        }
+        this._callWebService(request, "MultiSetObjectProperties");
+    }
 }
 
 module.exports = RegenerateArticleShapesService;
