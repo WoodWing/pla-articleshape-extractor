@@ -100,6 +100,7 @@ function ExportInDesignArticlesToFolder(
                 }
             }
             if (pageItems.length === 0) {
+                this._logger.warning("Excluded article '{}' from export because it has no page items.", article.name);
                 continue;
             }
             const managedArticle = this._getManagedArticleFromPageItems(pageItems)
@@ -113,6 +114,7 @@ function ExportInDesignArticlesToFolder(
                 this._logger.error(message);
                 continue;
             }
+            this._logger.info("Exporting article '{}'...", article.name);
             await this._exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
             exportCounter++;
         }
@@ -300,7 +302,7 @@ function ExportInDesignArticlesToFolder(
         let pageItemsIds = [];
         for (let index = 0; index < pageItems.length; index++) {
             const pageItem = pageItems[index];
-            this._logger.info(`Exporting '${pageItem.constructor.name}' page item with id '${pageItem.id}'.`);
+            this._logger.debug(`Exporting '${pageItem.constructor.name}' page item with id '${pageItem.id}'.`);
             pageItemsIds.push(pageItem.id);
         }
         doc.exportPageItemsToSnippet(snippetFile, pageItemsIds);

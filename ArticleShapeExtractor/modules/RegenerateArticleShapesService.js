@@ -45,9 +45,9 @@ function RegenerateArticleShapesService(logger, userQueryName, exportInDesignArt
         await this._queryObjects(searchParams, resolveProperties, async (wflObject) => {
             //this._logger.debug('QueryObjects resolved object: {}', JSON.stringify(wflObject, null, 4));
             if (fileMap.get(wflObject.ID) === wflObject.Version) {
-                this._logger.info('Skipped extracting InDesign Articles for layout document because ' + 
-                    `layout id ${wflObject.ID} with version ${wflObject.Version} already exists ` +
-                    'in export folder. This implies it is already handled in preceding runs before.');
+                this._logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
+                    `Article Shapes (JSON files) for layout id ${wflObject.ID} with version ${wflObject.Version} ` +
+                    'already exists in export folder.');
             } else {
                 const theOpenDoc = app.openObject(wflObject.ID);
                 await this._exportInDesignArticlesToFolder.run(theOpenDoc, folder);
