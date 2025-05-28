@@ -23,6 +23,7 @@ await (async function main() {
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
         await Container.resolve("RegenerateArticleShapesService").run(folder);
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
+        alert("Article Shapes are regenerated.");
 
     } catch(error) {
         // First enable the user interaction again to able to show the alert.
