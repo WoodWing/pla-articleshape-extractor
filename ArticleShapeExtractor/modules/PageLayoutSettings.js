@@ -37,7 +37,9 @@ function PageLayoutSettings(logger) {
             exportedSuccessfully = true;
         } catch(error) {
             const { ConfigurationError } = require('./Errors.js');
-            if (!(error instanceof ConfigurationError)) {
+            if (error instanceof ConfigurationError) {
+                this._logger.error(error.message);
+            } else {
                 this._logger.logError(error);
             }
             alert("An error occurred: " + error.message);
