@@ -1,6 +1,6 @@
 class ArgumentError extends Error {
-    constructor(argument) {
-        super(`Bad argument '${argument}' provided.`);
+    constructor(message) {
+        super(`Bad argument provided. ${message}`);
         this.name = this.constructor.name;
     }
 }

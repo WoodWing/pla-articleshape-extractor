@@ -1,5 +1,6 @@
 const { app } = require("indesign");
 const idd = require("indesign");
+const fs = require("fs");
 
 /**
  * @constructor
@@ -23,109 +24,214 @@ function RegenerateArticleShapesService(logger, userQueryName, exportInDesignArt
             throw new NoStudioSessionError();
         }
 
-        let totalEntries = -1;
-        let listedEntries = 0;
-        
-        //=======================================
-        // Begin the work of the script...do the query and get the results back...
-        //=======================================
-        while (totalEntries != listedEntries) {
-            //=======================================
-            // Send a query to Enterprise
-            //=======================================
-            const query = app.storedUserQuery(this._userQueryName);
-            if(query == undefined) {
-                const { ConfigurationError } = require('./Errors.js');
-                throw new ConfigurationError("User Query '" + this._userQueryName + "' does not exist.");
+        // Bail out when the user query is not configured.
+        const searchParams = this._getUserNamedQuery(this._userQueryName);
+        if (searchParams === null) {
+            const { ConfigurationError } = require('./Errors.js');
+            throw new ConfigurationError("User Query '" + this._userQueryName + "' does not exist.");
+        }
+
+        // Build a layout id-version map from the JSON files that have been extracted before into the folder.
+        const fileMap = await this._buildLayoutIdVersionMapFromJsonFiles(folder);
+        //this._logger.info('Resolved layouts from files: {}', JSON.stringify(Object.fromEntries(fileMap), null, 4));
+
+        // Run QueryObjects, but with the search parameters defined by the User Query.
+        // Note that this is a work-around because the app.storedUserQuery API does not return the layout 
+        // properties we are looking for. And because the returned format is hard to parse and its columns
+        // are not alined with the row fields (=bug).
+        const resolveProperties = [
+            "ID", "Type", "Name", "Version", 
+            "PublicationId", "Publication", "CategoryId",  "Category", "StateId", "State"];
+        await this._queryObjects(searchParams, resolveProperties, async (wflObject) => {
+            //this._logger.debug('QueryObjects resolved object: {}', JSON.stringify(wflObject, null, 4));
+            if (fileMap.get(wflObject.ID) === wflObject.Version) {
+                this._logger.info('Skipped extracting InDesign Articles for layout document because ' + 
+                    `layout id ${wflObject.ID} with version ${wflObject.Version} already exists ` +
+                    'in export folder. This implies it is already handled in preceding runs before.');
+            } else {
+                const theOpenDoc = app.openObject(wflObject.ID);
+                await this._exportInDesignArticlesToFolder.run(theOpenDoc, folder);
+                theOpenDoc.close(idd.SaveOptions.no);
             }
-            
-            //=======================================
-            //Push the query results into an array using new lines as the value to split by
-            //=======================================
-            let stringToArray = query.split(/\n/g);
+            app.sendObjectToNext(wflObject.ID);
+        });
+    };
 
-            //=======================================
-            //Count the number of objects in the array
-            //=======================================
-            const countOfObjects = stringToArray.length;
+    /**
+     * Searches for files with postfix: "(<layout_id>.v<major>.<minor>).json".
+     * For each file found, the layout id and version are added to the map.
+     * @param {Folder} folder 
+     * @returns {Map<string,string>} Layout id-version mapping.
+     */
+    this._buildLayoutIdVersionMapFromJsonFiles = async function (folder) {
+        const entries = await folder.getEntries();
+        const allFiles = entries.filter(entry => entry.isFile);
+        const map = new Map(); // objectId -> Map of version -> entry
+        // 
+        const filenameRegex = /\(([^)]+)\.v(\d+)\.(\d+)\)\.json$/;
+        for (const file of allFiles) {
+            if (!file.name.endsWith('.json')) {
+                continue;
+            }
+            const match = file.name.match(filenameRegex);
+            if (!match) {
+                continue;
+            }
+            const objectId = match[1];
+            const objectVersion = `${match[2]}.${match[3]}`;
+            map.set(objectId, objectVersion);
+        }
+        return map;
+    }
 
-            //=======================================
-            // Iterate through the array, do a regular expression to find the records
-            // Remove the < and > characters and push the record into another array
-            //=======================================
-            if (countOfObjects > 0) {
-                let b = 0;
-                let newArrayOfRecords = new Array();
-
-                for (let a = 1; a < countOfObjects; ++a) {
-                    //=======================================
-                    // Look for records in the query result
-                    // This is done by looking at the returning query, parsing it by 
-                    // Regular Expression, pushing the found records into a new
-                    // array and then grabbing the ID of each record
-                    //=======================================				
-
-                    //=======================================
-                    // Regular Expression looks for items surrounded by brackets
-                    // The regular expression is pretty simple...look for anything surrounded by brackets
-                    //=======================================
-                    const recordExists = new RegExp("<.*>");
-
-                    //=======================================
-                    //Perform the regular expression search
-                    //=======================================
-                    const regExpSearchResult = recordExists.test(stringToArray[a]);
-
-                    //=======================================
-                    // If the RegEx search finds a result process it
-                    //=======================================
-                    if (regExpSearchResult == true) {
-
-                        //=======================================
-                        //Set two variable for the brackets
-                        //=======================================
-                        const finalValueA = stringToArray[a].replace("<", "");
-                        const finalValueB = finalValueA.replace(">", "");
-                        newArrayOfRecords[b] = finalValueB.split(",")
-                        b = b + 1;
-                        myRecord = newArrayOfRecords[b];
-                    }
-                    else {
-                        if (stringToArray[a].indexOf ("Total Entries: ") != -1) {
-                            totalEntries = Number (stringToArray[a].replace("Total Entries: ", "")); 
-                        }
-
-                        if (stringToArray[a].indexOf ("Listed Entries: ") != -1) {
-                            listedEntries = Number (stringToArray[a].replace("Listed Entries: ", "")); 
-                        }
-                    }
-                }
-
-                //=======================================
-                // Count the size of the newly created array
-                //=======================================
-                const countOfNewArrayOfRecords = newArrayOfRecords.length;
-
-                //=======================================
-                // If the count of the array is greater than zero...let's do our stuff
-                //=======================================
-
-                if (countOfNewArrayOfRecords > 0) {
-
-                    for (let x = 0; x < countOfNewArrayOfRecords; ++x) {
-                        //=======================================
-                        // Get the id of the file
-                        //=======================================
-                        const objectId = newArrayOfRecords[x][0];
-                        const theOpenDoc = app.openObject(objectId);
-                        await this._exportInDesignArticlesToFolder.run(theOpenDoc, folder);
-                        theOpenDoc.close(idd.SaveOptions.no);
-                        app.sendObjectToNext(objectId);
-                    }
-
-                } 
+    /**
+     * Retrieves a User Query definition from Studio Server.
+     * In case of making manual changes to the User Query, it is required to re-login Studio for InDesign 
+     * to let it save the user queries in Studio Server. (All queries are saved during the logout operation.)
+     * @param {string} queryName 
+     * @returns {Array<Object>|null} List of QueryParam objects when query found, null otherwise.
+     */
+    this._getUserNamedQuery = function(queryName) {
+        for (const userSetting of this._getUserSettings()) {
+            if (userSetting.Setting === `UserQuery3_${queryName}` ) {
+                const queryParams = this._parseQueryParamsFromXml(userSetting.Value);
+                //this._logger.debug(`Resolved params for User Query ${queryName}: {}`, JSON.stringify(queryParams, null, 4));
+                return queryParams;
             }
         }
+        return null;
+    };
+
+    /**
+     * Parses a User Query definition in XML format.
+     * @param {string} userQueryXml 
+     * @returns {Array<Object>} List of QueryParam objects.
+     */
+    this._parseQueryParamsFromXml = function(userQueryXml) {
+        const queryParamRegex = /<QueryParam>([\s\S]*?)<\/QueryParam>/g;
+        const xmlTagValueRegex = /<(\w+)[^>]*>(.*?)<\/\1>/g;
+        //const nilRegex = /<Special[^>]*xsi:nil="true"[^>]*\/>/;
+        const queryParams = [];
+        let match;
+        while ((match = queryParamRegex.exec(userQueryXml)) !== null) {
+            const xmlTagValue = match[1];
+            const queryParam = {};
+            let tagMatch;
+            while ((tagMatch = xmlTagValueRegex.exec(xmlTagValue)) !== null) {
+                const [, tag, value] = tagMatch;
+                queryParam[tag] = value;
+            }
+            //item["Special"] = nilRegex.test(innerXml) ? null : "non-nil";
+            queryParams.push(queryParam);
+        }
+        return queryParams;
+    };
+
+    /**
+     * Retrieves the user settings from Studio Server.
+     * @returns {Array<Object>} List of Setting objects.
+     */
+    this._getUserSettings = function() {
+        const request = {
+            "Ticket": app.entSession.activeTicket,
+            "Settings": null
+        }
+        const response = this._callWebService(request, "GetUserSettings");
+        //this._logger.debug('Resolved settings: {}', JSON.stringify(response, null, 4));
+        return response.Settings;
+    };
+
+    /**
+     * Calls a workflow service provided by Studio Server.
+     * Uses the JSON-RPC communication protocol.
+     * @param {Object} request
+     * @param {string} serviceName
+     * @returns {Object} Response
+     */
+    this._callWebService = function(request, serviceName) {
+        const serverUrl = app.entSession.activeUrl;
+        const separator = serverUrl.indexOf("?") === -1 ? '?' : '&';
+        const serverUrlJson = `${serverUrl}${separator}protocol=JSON`;
+        const rpcRequest = {
+            "method": serviceName,
+            "id": "1",
+            "params": [request],
+            "jsonrpc": "2.0"
+        };
+        const rawRequest = JSON.stringify(rpcRequest);
+        const rawResponse = app.jsonRequest(serverUrlJson, rawRequest);
+        const rpcResponse = JSON.parse(rawResponse);
+        return rpcResponse.result;
+    };
+
+    /**
+     * Calls the QueryObjects service in paged manner until all objects are retrieved.
+     * @param {Array<Object>} searchParams List of QueryParam objects.
+     * @param {Array<string>} resolveProperties List of workflow object property names to resolve.
+     * @param {CallableFunction} callbackObjectResolved This function is called for each retrieved object.
+     */
+    this._queryObjects = async function(searchParams, resolveProperties, callbackObjectResolved) {
+        let firstEntry = 1;
+        let queryCount = 0; 
+        const maxQueryHit = 100; // paranoid prevention of endless loops
+        let response = null;
+        do {
+            queryCount++;
+            this._logger.info(`Running QueryObjects page#${queryCount}...`);
+            response = await this._queryObjectsOneResultPage(
+                searchParams, resolveProperties, firstEntry, callbackObjectResolved);
+            firstEntry = response.FirstEntry + response.ListedEntries;
+        } while (response.ListedEntries > 0 && queryCount < maxQueryHit);
+        if (queryCount === maxQueryHit) {
+            const { PrintLayoutAutomationError } = require('./Errors.js');
+            throw new PrintLayoutAutomationError(`Too many QueryObjects executed: ${maxQueryHit}.`);
+        }
+    };
+
+    /**
+     * Calls the QueryObjects service.
+     * @param {Array<Object>} searchParams List of QueryParam objects.
+     * @param {Array<string>} resolveProperties List of workflow object property names to resolve.
+     * @param {number} firstEntry Object index to start reading from (in paged results).
+     * @param {CallableFunction} callbackObjectResolved This function is called for each retrieved object.
+     * @returns {Object} QueryObjectsResponse
+     */
+    this._queryObjectsOneResultPage = async function(searchParams, resolveProperties, firstEntry, callbackObjectResolved) {
+        const startsWithProps = ['ID', 'Type', 'Name']; // service rule: must start with this sequence of props
+        if( !startsWithProps.every((value, index) => resolveProperties[index] === value) ) {
+            const { ArgumentError } = require('./Errors.js');
+            throw new ArgumentError("The 'resolveProperties' param should start with 'ID', 'Name' and 'Type' values.");
+        }
+        for (let i = 0; i < searchParams.length; i++ ) {
+            searchParams[i].__classname__ = "QueryParam";
+        }
+        const request = {
+            "Params": searchParams,
+            "FirstEntry": firstEntry,
+            "MaxEntries": 50,
+            "RequestProps": resolveProperties,
+            "Order": [{ Property: "ID", Direction: true, __classname__: "QueryOrder" }], // oldest first
+            "Ticket": app.entSession.activeTicket
+        };
+        //this._logger.debug('QueryObjects request: {}', JSON.stringify(request, null, 4));
+        const response = this._callWebService(request, "QueryObjects");
+        //this._logger.debug('QueryObjects response: {}', JSON.stringify(response, null, 4));
+
+        const columnIndexes = new Map()
+        for (var columnIndex = 0; columnIndex < response.Columns.length; columnIndex++) {
+            const columnName = response.Columns[columnIndex].Name;
+            if (resolveProperties.includes(columnName)) {
+                columnIndexes.set(columnName, columnIndex);
+            }
+        }
+        for (var rowIndex = 0; rowIndex < response.Rows.length; rowIndex++) {
+            let wflObject = {};
+            for (const property of resolveProperties) {
+                wflObject[property] = response.Rows[rowIndex][columnIndexes.get(property)]
+            }
+            await callbackObjectResolved(wflObject);
+        }
+        return response;
     };
 }
 
