@@ -180,7 +180,10 @@ function RegenerateArticleShapesService(logger, userQueryName, exportInDesignArt
             this._logger.info(`Running QueryObjects page#${queryCount}...`);
             response = await this._queryObjectsOneResultPage(
                 searchParams, resolveProperties, firstEntry, callbackObjectResolved);
-            firstEntry = response.FirstEntry + response.ListedEntries;
+            // firstEntry = response.FirstEntry + response.ListedEntries;
+            //  L> Assumed is that the status of a processed layout is changed, and that
+            //     the User Query has a layout status in its filters. Then we should NOT page
+            //     results because processed layouts already disappear from the search results.
         } while (response.ListedEntries > 0 && queryCount < maxQueryHit);
         if (queryCount === maxQueryHit) {
             const { PrintLayoutAutomationError } = require('./Errors.js');
