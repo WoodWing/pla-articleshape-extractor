@@ -3,10 +3,12 @@ const idd = require("indesign");
 
 /**
  * @constructor
+ * @param {Logger} logger
  * @param {String} userQueryName
  * @param {ExportInDesignArticlesToFolder} exportInDesignArticlesToFolder
  */
-function RegenerateArticleShapesService(userQueryName, exportInDesignArticlesToFolder) {
+function RegenerateArticleShapesService(logger, userQueryName, exportInDesignArticlesToFolder) {
+    this._logger = logger;
     this._userQueryName = userQueryName;
     this._exportInDesignArticlesToFolder = exportInDesignArticlesToFolder;
 
