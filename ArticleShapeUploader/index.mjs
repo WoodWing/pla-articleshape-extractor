@@ -4,15 +4,18 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import Ajv from 'ajv';
+import diff from 'deep-diff';
 
 import { AppSettings } from "./modules/AppSettings.mjs";
 import { ColoredLogger } from "./modules/ColoredLogger.mjs";
 import { CliParams } from "./modules/CliParams.mjs";
-import { DocumentSettingsReader } from "./modules/DocumentSettingsReader.mjs";
+import { PageLayoutSettingsReader } from "./modules/PageLayoutSettingsReader.mjs";
 import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
+import { BrandSectionMapReader } from './modules/BrandSectionMapReader.mjs';
 import { ArticleShapeHasher } from "./modules/ArticleShapeHasher.mjs";
+import { JsonValidator } from "./modules/JsonValidator.mjs";
 import { PlaService } from "./modules/PlaService.mjs";
 
 import { uploaderDefaultConfig } from "./config/config.mjs";
@@ -22,12 +25,14 @@ try {
     uploaderLocalConfig = localModule.uploaderLocalConfig;
 } catch (error) {
 }
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const appSettings = new AppSettings(uploaderDefaultConfig, uploaderLocalConfig);
 const logger = new ColoredLogger(appSettings.getLogLevel());
 const cliParams = new CliParams(logger);
-const documentSettingsReader = new DocumentSettingsReader(logger, appSettings.getGrid());
-const articleShapeSchema = JSON.parse(fs.readFileSync('./article-shape.schema.json', 'utf-8'));
-const elementLabelMapper = new ElementLabelMapper(appSettings.getElementLabels());
+const jsonValidator = new JsonValidator(logger, path.join(__dirname, 'schemas'));
+const pageLayoutSettingsReader = new PageLayoutSettingsReader(logger, jsonValidator);
+const elementLabelMapper = new ElementLabelMapper(logger, jsonValidator);
+const brandSectionMapReader = new BrandSectionMapReader(logger, jsonValidator);
 const hasher = new ArticleShapeHasher(elementLabelMapper);
 const plaService = new PlaService(appSettings.getPlaServiceUrl(), appSettings.getLogNetworkTraffic(), logger);
 
@@ -37,19 +42,28 @@ const plaService = new PlaService(appSettings.getPlaServiceUrl(), appSettings.ge
 async function main() {
     try {
         dotenv.config();
-        const inputPath = cliParams.resolveInputPath();
-        documentSettingsReader.readSettings(inputPath);
-        const accessToken = resolveAccessToken();
-        const articleShapeJson = await takeFirstArticleShapeJson(inputPath);
-        const { brandId, sectionId } = cliParams.resolveBrandAndSectionToUse(articleShapeJson.brandId, articleShapeJson.sectionId);
-        const layoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId); // TODO: validate against JSON
-        if (layoutSettings === null) {
-            // TODO: save settings, taken from JSON
+        if (cliParams.userHasAskedForHelpOnly()) {
+            return;
         }
+        const inputPath = cliParams.resolveInputPath();
+        const pageLayoutSettings = pageLayoutSettingsReader.readSettings(inputPath);
+        const accessToken = resolveAccessToken();
+
+        const articleShapeJson = await takeFirstArticleShapeJson(inputPath);
+        const targetBrandName = cliParams.getTargetBrandName();
+        const { brandId, sectionMap } = targetBrandName 
+            ? brandSectionMapReader.readMapAndResolveBrandId(inputPath, targetBrandName) 
+            : { brandId: articleShapeJson.brandId, sectionMap: null };
+
+        const pageGrid = await assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId);
+        pageLayoutSettingsReader.setPageGrid(pageGrid);
+        await assureTallyPageLayoutSettings(accessToken, brandId, pageLayoutSettings)
+        elementLabelMapper.init(await plaService.getElementLabelMapping(accessToken, brandId));
         if (await cliParams.shouldDeletePreviouslyConfiguredArticleShapes()) {
              await plaService.deleteArticleShapes(accessToken, brandId);
         }
-        await scanDirAndUploadFiles(inputPath, accessToken, brandId, sectionId);
+        await scanDirAndUploadFiles(inputPath, accessToken, brandId, sectionMap);
+        await validateBrandConfiguration(accessToken, brandId);
     } catch(error) {
         logger.error(error.message);
     }
@@ -66,7 +80,65 @@ function resolveAccessToken() {
         throw new Error("No PLA_ACCESS_TOKEN environment variable set.");
     }
     logger.debug(`PLA access token: ${accessToken}`);
+
+    const [, payload] = accessToken.split('.');
+    const decoded = Buffer.from(payload, 'base64').toString();
+    logger.info(`Targeting for systemId "${JSON.parse(decoded).systemId}".`);
+
     return accessToken;
+}
+
+/**
+ * Aborts when there are no blueprints configured yet.
+ * Derive the page grid from the blueprint sheets and return it.
+ * Blueprints should be configured already in a normal flow.
+ * Having blueprints, enables us to validate the shapes after.
+ * @param {string} accessToken 
+ * @param {string} brandId 
+ * @returns {{columnCount: number, rowCount: number}} Page grid.
+ */
+async function assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId) {
+    const sheetDimensions = await plaService.getSheetDimensions(accessToken, brandId);
+    if (sheetDimensions.length === 0) {
+        throw new Error("There are no blueprints configured yet.");
+    }
+    logger.info("Found configured blueprints for this brand.");
+
+    let pageGrid = null;
+    for (const sheetDimension of sheetDimensions) {
+        if (sheetDimension.sheet_type === "page") {
+            pageGrid = { columnCount: sheetDimension.width, rowCount: sheetDimension.height };
+            break;
+        } else if (sheetDimension["sheet_type"] === "spread") {
+            pageGrid = { columnCount: sheetDimension.width / 2, rowCount: sheetDimension.height };
+            continue; // prefer picking from sheet type "page"
+        }
+    }
+    if (pageGrid === null) { // should never happen; blueprints always have pages/spreads
+        throw new Error("Could not resolve page dimensions from blueprint sheets.");
+    }
+    logger.info(`Derived page grid ${pageGrid.columnCount}x${pageGrid.rowCount} from blueprint sheet dimensions.`);
+    return pageGrid;
+}
+
+/**
+ * Retrieve the page layout settings from the PLA service and validate them.
+ * Raise error when they differ with the ones read from input folder.
+ * @param {string} accessToken 
+ * @param {string} brandId 
+ * @param {string} inputPageLayoutSettings Read from input path.
+ */
+async function assureTallyPageLayoutSettings(accessToken, brandId, inputPageLayoutSettings) {
+    const plaPageLayoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId);
+    if (plaPageLayoutSettings === null) {
+        throw new Error("There are no page layout settings configured yet. "
+            + "Please import the PLA Config Excel file and try again.");
+    }
+    jsonValidator.validate('page-layout-settings', plaPageLayoutSettings);
+    if (diff(plaPageLayoutSettings, inputPageLayoutSettings)) {
+        logger.error("The page layout settings retrieved from PLA service differ from the ones "
+            + "read from input folder. ", plaPageLayoutSettings, inputPageLayoutSettings);
+    }
 }
 
 /**
@@ -95,9 +167,9 @@ async function takeFirstArticleShapeJson(folderPath) {
  * @param {string} folderPath 
  * @param {string} accessToken 
  * @param {string} brandId 
- * @param {string} sectionId 
+ * @param {Array<string, string>} sectionMap 
  */
-async function scanDirAndUploadFiles(folderPath, accessToken, brandId, sectionId) {
+async function scanDirAndUploadFiles(folderPath, accessToken, brandId, sectionMap) {
     await scanDirForArticleShapeJson(folderPath, async (baseName) => {
         const jsonFilePath = composePathAndAssertExists(folderPath, baseName, 'json');
         const articleShapeJson = validateArticleShapeJson(jsonFilePath);
@@ -112,10 +184,27 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId, sectionId
             composeFileRenditionDto('snapshot', 'image/jpeg', 'jpg'),
             composeFileRenditionDto('definition', 'application/xml', 'idms'),
         ] : [];
+        const sectionId = resolveSectionId(articleShapeJson, sectionMap);
         await uploadArticleShapeWithFiles(
             accessToken, brandId, sectionId, baseName, articleShapeJson, localFiles, fileRenditions);        
         return true;
     });
+}
+
+/**
+ * @param {Object} articleShapeJson 
+ * @param {Array<string,string>} sectionMap 
+ * @returns {string}
+ */
+function resolveSectionId(articleShapeJson, sectionMap) {
+    if (!sectionMap) {
+        return articleShapeJson.sectionId;
+    }
+    const sectionId = sectionMap[articleShapeJson.sectionName];
+    if (!sectionId) {
+        throw new Error(`The edition "${articleShapeJson.sectionName}" was not found.`);
+    }
+    return sectionId;
 }
 
 /**
@@ -126,7 +215,7 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId, sectionId
 async function scanDirForArticleShapeJson(folderPath, callback) {
     const files = fs.readdirSync(folderPath);
     for (const file of files) {
-        if (file.toLowerCase().endsWith('.json') && file !== documentSettingsReader.getFilename()) {
+        if (file.toLowerCase().endsWith('.json')) {
             const baseName = path.basename(file, '.json');
             try {
                 const shouldContinue = await callback(baseName);
@@ -153,19 +242,7 @@ function validateArticleShapeJson(jsonFilePath) {
     } catch(error) {
         throw new Error(`The file "${basename}" is not valid JSON - ${error.message}`);
     }
-    const ajv = new Ajv();
-    const validate = ajv.compile(articleShapeSchema);
-    if (!validate(jsonData)) {
-        let errorMessage = `The file "${basename}" is not valid according to the article-shape.schema.json file:\n`;
-        for (const validationError of validate.errors) {
-            errorMessage +=
-                `- [${validationError.instancePath || '/'}] ${validationError.message}. Details:\n`
-                + `  keyword: ${validationError.keyword}\n`
-                + `  params: ${JSON.stringify(validationError.params, null, 2)}\n`
-                + `  schemaPath: ${validationError.schemaPath}`
-        }
-        throw new Error(errorMessage);
-    }
+    jsonValidator.validate('article-shape',jsonData);
     return jsonData;
 }
 
@@ -269,7 +346,7 @@ async function uploadArticleShapeWithFiles(
 function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash) {
     const actualFoldLineInPoints = sanitizeFoldLineInPoints(articleShapeJson.foldLine);
     const articleWidthInColumns = calculateArticleWidthInColumns(articleShapeJson.geometricBounds.width, actualFoldLineInPoints);
-    const rowHeightInPoints = documentSettingsReader.getRowHeight();
+    const rowHeightInPoints = pageLayoutSettingsReader.getRowHeight();
     const articleHeightInRows = Math.max(1, Math.round(articleShapeJson.geometricBounds.height / rowHeightInPoints));
 
     let articleShapeDto = {
@@ -310,10 +387,10 @@ function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHa
  * @returns {number|null} Fold line, or null if no fold line.
  */
 function sanitizeFoldLineInPoints(foldLineInPoints) {
-    const columnWidthInPoints = documentSettingsReader.getColumnWidth();
+    const columnWidthInPoints = pageLayoutSettingsReader.getColumnWidth();
     // If article is technically placed on the LHS page but too near to the fold line,
     // assume it supposed to be placed at the very left of the RHS page, so no fold line.
-    if (foldLineInPoints < (documentSettingsReader.getPageMarginInside() + (columnWidthInPoints/2))) {
+    if (foldLineInPoints < (pageLayoutSettingsReader.getPageMarginInside() + (columnWidthInPoints/2))) {
         foldLineInPoints = null;
     }
     return foldLineInPoints;
@@ -326,16 +403,16 @@ function sanitizeFoldLineInPoints(foldLineInPoints) {
  * @returns {number}
  */
 function calculateArticleWidthInColumns(actualWidthInPoints, foldLineInPoints) {
-    const columnGutterInPoints = documentSettingsReader.getColumnGutter();
+    const columnGutterInPoints = pageLayoutSettingsReader.getColumnGutter();
     let uniformWidthInPoints = actualWidthInPoints;
     // When there is a fold line, exclude right margin of LHS page and left margin of RHS page.
     // Instead, add the size of a column gutter. So in fact, 'replace' page margins with a gutter.
     // As a result, further calculations will then work the same as without a fold line.
     if (foldLineInPoints !== null) {
-        uniformWidthInPoints -= (2 * documentSettingsReader.getPageMarginInside());
+        uniformWidthInPoints -= (2 * pageLayoutSettingsReader.getPageMarginInside());
         uniformWidthInPoints += columnGutterInPoints;
     }
-    const columnWidthInPoints = documentSettingsReader.getColumnWidth();
+    const columnWidthInPoints = pageLayoutSettingsReader.getColumnWidth();
     const preciseWidthInColumns = (uniformWidthInPoints + columnGutterInPoints) / (columnWidthInPoints + columnGutterInPoints);
     const roundedWidthInColumns = Math.max(1, Math.round(preciseWidthInColumns));
     logger.debug(`Column count calculation:\n`
@@ -362,9 +439,9 @@ function determineFoldLineInColumns(actualFoldLineInPoints, articleWidthInColumn
     if (articleWidthInColumns <= 1) {
         return null; // For a single column article there can never be a fold line.
     }
-    const columnGutterInPoints = documentSettingsReader.getColumnGutter();
-    const columnWidthInPoints = documentSettingsReader.getColumnWidth();
-    const insidePageMarginInPoints = documentSettingsReader.getPageMarginInside();
+    const columnGutterInPoints = pageLayoutSettingsReader.getColumnGutter();
+    const columnWidthInPoints = pageLayoutSettingsReader.getColumnWidth();
+    const insidePageMarginInPoints = pageLayoutSettingsReader.getPageMarginInside();
     const uniformFoldLineInPoints = actualFoldLineInPoints - insidePageMarginInPoints;
     const preciseFoldLineInColumns = (uniformFoldLineInPoints + columnGutterInPoints) / (columnWidthInPoints + columnGutterInPoints);
     const roundedFoldLineInColumns = Math.round(preciseFoldLineInColumns);
@@ -405,6 +482,24 @@ function lookupLocalFileByRendition(fileRenditionName, localFiles) {
             throw new Error(`Unsupported file rendition "${fileRenditionName}".`);
     }
     return localFilePath;
+}
+
+/**
+ * Request for the brand setup validation report composed by the PLA service.
+ * @param {string} accessToken 
+ * @param {string} brandId 
+ */
+async function validateBrandConfiguration(accessToken, brandId) {
+    const validationReport = await plaService.validateBrandConfiguration(accessToken, brandId);
+    let logReport = '';
+    for (const validationItem of validationReport) {
+        logReport += ` - ${validationItem.severity}: ${validationItem.description}\n`;
+    }
+    if (logReport) {
+        logger.error(`Brand setup seems invalid:\n${logReport}`);
+    } else {
+        logger.info("Brand setup is valid.");
+    }
 }
 
 main();

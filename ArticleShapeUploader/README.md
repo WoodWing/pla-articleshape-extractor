@@ -20,25 +20,40 @@ An example - By default, only standard element labels are supported. To allow cu
    export const uploaderLocalConfig = {
    };
    ```
-2. Copy the `elementLabels` structure from the `config.js` file to your `config-local.js` file:
+2. Copy any settings from the `config.js` file to your `config-local.js` file, e.g:
    ```javascript
    export const uploaderLocalConfig = {
-      elementLabels: {
-         body: null,
-      }
+      logLevel: 'WARNING',
    };
    ```
-3. Inside the `elementLabels` structure, copy the `body` setting and adjust values:
+3. Adjust the value of the copied setting in your `config-local.js` file, e.g:
    ```javascript
    export const uploaderLocalConfig = {
-      elementLabels: {
-         body: '^brood \\d$',
-      }
+      logLevel: 'INFO',
    };
    ```
 
 # Usage
 ```bash
 cd ArticleShapeUploader
-node index.mjs --input_path=[your_extracted_article_shapes_folder]
+node index.mjs --input-path=[your_extracted_article_shapes_folder] --old-shapes=[delete|keep]
 ```
+
+Explanation for the above and support for additional parameters can be shown as follows:
+```bash
+cd ArticleShapeUploader
+node index.mjs --help
+```
+
+# Upload shapes to a different brand (than extracted from)
+
+The Article Shape Uploader allows 'copying' shapes from one brand to another. Assumed is that you have two similar brands, and that you have prepared both brands; You have setup the blueprints and configured additional the settings via the PLA Config Excel file and imported this in both brands. For the source brand you already have setup the article shapes and you have executed the Article Shapes Extractor tool to download all to local disk.
+
+In the export folder created by the Article Shape Extractor tool, there is a file named `_manifest/brand-section-map.json` which contains all the ids and names of the brands and sections of the Studio installation. The Article Shape Uploader will use this file in case you want to upload the article shapes for a different brand than you have extracted from. With an optional parameter named `--target-brand` you can specify the brand name to upload for:
+
+```bash
+cd ArticleShapeUploader
+node index.mjs --input-path=[your_extracted_article_shapes_folder] --old-shapes=[delete|keep] --target-brand=[brand_name]
+```
+
+Inside the article shape JSON files, the id and name of the brand and section is embedded. This represents the brand/section where you have extracted the article shape from. When specifying a different brand to upload to, the Article Shape Uploader will use the `_manifest/brand-section-map.json` file to lookup the provided brand name and resolve its id. And, it will take the section name from each article shape JSON file and lookup the section id that is configured under the target brand. Note that the tool assumes that the section names exist in both brands; source and target.

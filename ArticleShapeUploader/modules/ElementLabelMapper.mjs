@@ -3,16 +3,30 @@
  */
 
 export class ElementLabelMapper {
+    #logger;
+    #jsonValidator;
+    #elementMapping = {};
+    
     /**
-     * @param {Object} elementLabels 
+     * @param {ColoredLogger} logger 
+     * @param {JsonValidator} jsonValidator 
      */
-    constructor(elementLabels) {
-        this.labelCache = {};
-        this.elementLabels = {};
-        for (const [standardLabel, customLabel] of Object.entries(elementLabels)) {
-            const customLabelRegEx = customLabel || "^" + standardLabel + "$";
-            this.elementLabels[standardLabel] = new RegExp(customLabelRegEx, 'i');
+    constructor(logger, jsonValidator) {
+        this.#logger = logger;
+        this.#jsonValidator = jsonValidator;
+    }
+
+    /**
+     * @param {Object|null} elementMapping 
+     */
+    init(elementMapping) {
+        if (elementMapping === null) {
+            throw new Error("No element label mapping configured. "
+                + "Please import the PLA Config Excel file and try again.");
         }
+        this.#jsonValidator.validate('element-mapping', elementMapping);
+        this.#logger.info("Element label mapping is configured and valid.");
+        this.#elementMapping = elementMapping;
     }
 
     /**
@@ -20,14 +34,8 @@ export class ElementLabelMapper {
      * @returns {string} The standard label.
      */
     mapCustomToStandardLabel(customLabel) {
-        if (this.labelCache[customLabel]) {
-            return this.labelCache[customLabel];
-        }
-        for (const [standardLabel, customLabelRegExObj] of Object.entries(this.elementLabels)) {
-            if (customLabelRegExObj.test(customLabel)) {
-                this.labelCache[customLabel] = standardLabel;
-                return standardLabel;
-            }
+        if (this.#elementMapping[customLabel]) {
+            return this.#elementMapping[customLabel];
         }
         throw new Error(`No mapping found for element label "${customLabel}". Please check your settings.`);
     }

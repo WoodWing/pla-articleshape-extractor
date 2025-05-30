@@ -1,0 +1,27 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://www.woodwing.com/pla/brand-section-map.schema.json",
+    "title": "Name-Id lookup table for brands and their sections",
+    "type": "object",
+    "additionalProperties": {
+        "type": "object",
+        "required": [
+            "id",
+            "sections"
+        ],
+        "properties": {
+            "id": {
+                "type": "string",
+                "pattern": "^[0-9]+$"
+            },
+            "sections": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[0-9]+$"
+                }
+            }
+        },
+        "additionalProperties": false
+    }
+}

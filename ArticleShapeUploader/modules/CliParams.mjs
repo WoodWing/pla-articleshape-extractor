@@ -4,11 +4,26 @@ import minimist from 'minimist';
 
 export class CliParams {
 
+    #logger;
+
     /**
      * @param {Logger} logger 
      */
     constructor(logger) {
-        this._logger = logger;
+        this.#logger = logger;
+    }
+
+    /**
+     * Whether the user has asked to show help on usage only.
+     * @returns {boolean}
+     */
+    userHasAskedForHelpOnly() {
+        const args = this.#getArguments();
+        const askedForHelp = args.hasOwnProperty('help');
+        if (askedForHelp) {
+            this.#showUsage();
+        }
+        return askedForHelp;
     }
 
     /**
@@ -17,10 +32,10 @@ export class CliParams {
      * @returns {string}
      */
     resolveInputPath() {
-        const args = this._getArguments();
-        if (!'input-path' in args) {
-            this._showUsage();
-            throw new Error("Argument missing: --input-path");
+        const args = this.#getArguments();
+        if (!args.hasOwnProperty('input-path') || typeof args['input-path'] !== 'string' || args['input-path'].length === 0) {
+            this.#showUsage();
+            throw new Error("Argument or value missing: --input-path");
         }
         let inputPath = args['input-path'];
         if (inputPath.startsWith('~')) {
@@ -29,7 +44,7 @@ export class CliParams {
         if (!fs.existsSync(inputPath) || !fs.lstatSync(inputPath).isDirectory()) {
             throw new Error(`Directory "${inputPath}" does not exist.`);
         }
-        this._logger.info(`Input directory: ${inputPath}`);
+        this.#logger.info(`Input directory: ${inputPath}`);
         return inputPath;
     }
 
@@ -37,7 +52,7 @@ export class CliParams {
      * Returns the script arguments given on the CLI.
      * @returns {string[]}
      */
-    _getArguments() {
+    #getArguments() {
         // Define a CLI flag that can be pass in as --uploads or --no-uploads.
         const options = {
             boolean: ['uploads'],
@@ -48,13 +63,12 @@ export class CliParams {
         return minimist(process.argv.slice(2), options); // 2: exclude node and script
     }
 
-    _showUsage() {
+    #showUsage() {
         const usage = "Usage: node index.mjs [arguments]\n\n"
             + "Options:\n"
             + "  --input-path=...          Path of folder that contains article shapes to upload.\n"
             + "  --old-shapes=...          How to handle the previously configured shapes. Options: 'keep' or 'delete'.\n"
-            + "  --brand-id=...            Optional. Override the brand. Overrides the brand provided by the shapes.\n"
-            + "  --section-id=...          Optional. Override the section. Overrides the section provided by the shapes.\n"
+            + "  --target-brand=...        Optional. Name of the brand to upload to. Overrides the brand provided by the shapes. Requires a _manifest/brand-section-map.json file.\n"
             + "  --no-uploads              Optional. Skip uploading files for the article shapes. Don't use for production."
         ;
         console.log(usage);
@@ -65,38 +79,27 @@ export class CliParams {
      * @returns {boolean} True to delete, false to keep.
      */
     shouldDeletePreviouslyConfiguredArticleShapes() {
-        const args = this._getArguments();
-        if (!'old-shapes' in args) {
-            this._showUsage();
-            throw new Error("Argument missing: --old-shapes");
+        const args = this.#getArguments();
+        if (!args.hasOwnProperty('old-shapes') || typeof args['old-shapes'] !== 'string') {
+            this.#showUsage();
+            throw new Error("Argument of value is missing: --old-shapes");
         }        
         const handleOldShapes = args['old-shapes'];
-        if (!handleOldShapes in ['keep', 'delete']) {
-            this._showUsage();
+        if (!['keep', 'delete'].includes(handleOldShapes)) {
+            this.#showUsage();
             throw new Error(`Unsupported value provided for argument --old-shapes: ${handleOldShapes}.`);
         }
-        this._logger.info(`Handling previously configured article shapes: ${handleOldShapes}`);
+        this.#logger.info(`Handling previously configured article shapes: ${handleOldShapes}`);
         return handleOldShapes === 'delete';
     }
 
     /**
-     * Tells which brand/section id to use. If given on CLI, those will override the default provided ones.
-     * @param {string} defaultBrandId
-     * @param {string} defaultSectionId
-     * @returns { brandId: string, sectionId: string }
+     * Returns a different brand to be used (to upload for) than the brand used to download from.
+     * @returns {string|null} The different brand, or null to use the same brand (as downloaded from).
      */
-    resolveBrandAndSectionToUse(defaultBrandId, defaultSectionId) {
-        const args = this._getArguments();
-        const paramBrandId = 'brand-id' in args ? String(args['brand-id']) : null;
-        const paramSectionId = 'section-id' in args ? String(args['section-id']) : null;
-        if ((!paramBrandId && paramSectionId) || (paramBrandId && !paramSectionId)) {
-            this._showUsage();
-            throw new Error("Unsupported combination of arguments. Either --brand-id or --section-id is provided. Expected both or none.");
-        }
-        const useBrandId = paramBrandId || defaultBrandId;
-        const useSectionId = paramSectionId || defaultSectionId;
-        this._logger.info(`Targeting for brandId "${useBrandId}" and sectionId "${useSectionId}"`);
-        return { brandId: useBrandId, sectionId: useSectionId };
+    getTargetBrandName() {
+        const args = this.#getArguments();
+        return args.hasOwnProperty('target-brand') ? String(args['target-brand']) : null;
     }
 
     /**
@@ -104,7 +107,7 @@ export class CliParams {
      * @returns {boolean}
      */
     shouldUploadFiles() {
-        const args = this._getArguments();
+        const args = this.#getArguments();
         return args.uploads === true;
     }
 }
