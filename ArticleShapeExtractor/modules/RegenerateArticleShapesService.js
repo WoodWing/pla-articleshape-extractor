@@ -75,7 +75,7 @@ function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exp
                 if (mapItem) for (const oldFile of mapItem.files) {
                     await this._deleteFile(oldFile);
                 }
-                const theOpenDoc = app.openObject(wflObject.ID);
+                const theOpenDoc = app.openObject(wflObject.ID, false); // false: no checkout
                 await this._exportInDesignArticlesToFolder.run(theOpenDoc, folder);
                 theOpenDoc.close(idd.SaveOptions.no);
             }
