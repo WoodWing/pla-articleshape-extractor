@@ -74,6 +74,7 @@ Container.registerFactory("RegenerateArticleShapesService", function() {
     const RegenerateArticleShapesService = require("./modules/RegenerateArticleShapesService.js");
     return new RegenerateArticleShapesService(
         Container.resolve("Logger"), 
+        Container.resolve("VersionUtils"),
         Container.resolve("Settings").getRegenerateArticleShapesQueryName(),
         Container.resolve("ExportInDesignArticlesToFolder"),
     );

@@ -1,19 +1,26 @@
 const { app } = require("indesign");
 const idd = require("indesign");
-const fs = require("fs");
 
 /**
+ * Understands the batch wise process of opening layouts to (re)extract all placed article shapes from them.
+ * 
  * @constructor
  * @param {Logger} logger
+ * @param {VersionUtils} versionUtils
  * @param {String} userQueryName
  * @param {ExportInDesignArticlesToFolder} exportInDesignArticlesToFolder
  */
-function RegenerateArticleShapesService(logger, userQueryName, exportInDesignArticlesToFolder) {
+function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exportInDesignArticlesToFolder) {
     this._logger = logger;
+    this._versionUtils = versionUtils;
     this._userQueryName = userQueryName;
     this._exportInDesignArticlesToFolder = exportInDesignArticlesToFolder;
 
     /**
+     * Run the pre-configured Used Query to make an inventory of the layouts to be processed. The layouts are
+     * opened (and closed) one-by-one and the placed article shape files are extracted to the given folder.
+     * When a shape files already exist for a certain layout id and version, that layout is skipped for performance 
+     * optimization. All processed layouts (regardless whether skipped) are sent to their next status in the workflow.
      * @param {Folder} folder 
      */
     this.run = async function(folder) {
@@ -32,60 +39,139 @@ function RegenerateArticleShapesService(logger, userQueryName, exportInDesignArt
         }
 
         // Build a layout id-version map from the JSON files that have been extracted before into the folder.
-        const fileMap = await this._buildLayoutIdVersionMapFromJsonFiles(folder);
-        //this._logger.info('Resolved layouts from files: {}', JSON.stringify(Object.fromEntries(fileMap), null, 4));
+        const fileMap = await this._buildMapOfLayoutIdsVersionsAndFiles(folder);
 
         // Run QueryObjects, but with the search parameters defined by the User Query.
         // Note that this is a work-around because the app.storedUserQuery API does not return the layout 
-        // properties we are looking for. And because the returned format is hard to parse and its columns
-        // are not alined with the row fields (=bug).
+        // properties we are looking for (such as Version). And because the returned format is hard to parse 
+        // and its columns are not alined with the row fields (=bug).
         const resolveProperties = [
             "ID", "Type", "Name", "Version", 
             "PublicationId", "Publication", "CategoryId",  "Category", "StateId", "State"];
-        await this._queryObjects(searchParams, resolveProperties, async (wflObjects) => {
-            const layoutIds = [];
-            for (const wflObject of wflObjects) {
-                //this._logger.debug('QueryObjects resolved object: {}', JSON.stringify(wflObject, null, 4));
-                if (fileMap.get(wflObject.ID) === wflObject.Version) {
-                    this._logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
-                        `Article Shapes (JSON files) for layout id ${wflObject.ID} with version ${wflObject.Version} ` +
-                        'already exists in export folder.');
-                } else {
-                    const theOpenDoc = app.openObject(wflObject.ID);
-                    await this._exportInDesignArticlesToFolder.run(theOpenDoc, folder);
-                    theOpenDoc.close(idd.SaveOptions.no);
-                }
-                layoutIds.push(wflObject.ID);
-            }
-            this._sendObjectsToNextStatus(layoutIds); // faster than calling app.sendObjectToNext individually
-        });
+        await this._queryObjects(
+            searchParams, 
+            resolveProperties, 
+            (wflObjects) => this._processQueriedLayouts(wflObjects, fileMap, folder)
+        );
     };
 
     /**
-     * Searches for files with postfix: "(<layout_id>.v<major>.<minor>).json".
-     * For each file found, the layout id and version are added to the map.
-     * @param {Folder} folder 
-     * @returns {Map<string,string>} Layout id-version mapping.
+     * Process queried layout objects, compare against disk state, export if needed.
+     * @param {Array} wflObjects Workflow layout objects.
+     * @param {Map<string,{layoutVersion:<string>,shapeFiles:Array<File>}>} fileMap Indexed by layout ids.
+     * @param {Folder} folder Target folder for exporting.
      */
-    this._buildLayoutIdVersionMapFromJsonFiles = async function (folder) {
-        const entries = await folder.getEntries();
-        const allFiles = entries.filter(entry => entry.isFile);
-        const map = new Map(); // objectId -> Map of version -> entry
-        // 
-        const filenameRegex = /\(([^)]+)\.v(\d+)\.(\d+)\)\.json$/;
-        for (const file of allFiles) {
-            if (!file.name.endsWith('.json')) {
+    this._processQueriedLayouts = async function (wflObjects, fileMap, folder) {
+        const layoutIds = [];
+        for (const wflObject of wflObjects) {
+            //this._logger.debug('QueryObjects resolved object: {}', JSON.stringify(wflObject, null, 4));
+            const mapItem = fileMap.get(wflObject.ID);
+            if (mapItem && mapItem.layoutVersion === wflObject.Version) {
+                this._logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
+                    `Article Shapes (JSON files) for layout id ${wflObject.ID} with version ${wflObject.Version} ` +
+                    'already exists in expo rt folder.');
+            } else {
+                // If query has newer layout version, remove files of old version from disk.
+                if (mapItem) for (const oldFile of mapItem.files) {
+                    await this._deleteFile(oldFile);
+                }
+                const theOpenDoc = app.openObject(wflObject.ID);
+                await this._exportInDesignArticlesToFolder.run(theOpenDoc, folder);
+                theOpenDoc.close(idd.SaveOptions.no);
+            }
+            layoutIds.push(wflObject.ID);
+            if (mapItem) { // Remove item from map to mark it as handled.
+                fileMap.delete(wflObject.ID);
+            }
+        }
+        this._sendObjectsToNextStatus(layoutIds); // faster than calling app.sendObjectToNext individually
+    }
+
+    /**
+     * Collect article shape files from a given folder and build a structure map.
+     * Those files assumed to have a postfix "(<layout_id>.v<major>.<minor>).".
+     * @param {Folder} folder 
+     * @returns {Promise<Map<string,{layoutVersion:<string>,shapeFiles:Array<File>}>>} Structured map, indexed by layout id.
+     */
+    this._buildMapOfLayoutIdsVersionsAndFiles = async function (folder) {
+        const shapeFiles = await this._filterArticleShapeFiles(folder);
+        //this._logger.info('Resolved layouts from files: {}', JSON.stringify(Object.fromEntries(shapeFiles), null, 4));
+        const fileMap = new Map();
+        for (const { shapeFile: shapeFile, layoutId, layoutVersion } of shapeFiles) {
+            const mapItem = fileMap.get(layoutId);
+            if (!mapItem) {
+                fileMap.set(layoutId, {layoutVersion: layoutVersion, shapeFiles: [shapeFile]});
                 continue;
             }
-            const match = file.name.match(filenameRegex);
+            // Only allow one version per layout. Assure that version is the latest.
+            // Compare the file version against the version tracked in the map.
+            switch (this._versionUtils.versionCompare(layoutVersion, mapItem.layoutVersion)) {
+                case 0: // File on disk has same version.
+                    mapItem.shapeFiles.push(shapeFile);
+                    break;
+                case 1: // File on disk is newer.
+                    for (const oldFile of mapItem.shapeFiles) {
+                         await this._deleteFile(oldFile);
+                    }
+                    mapItem.shapeFiles = [shapeFile];
+                    mapItem.layoutVersion = layoutVersion;
+                    break;
+                case -1: // File on disk is older.
+                    await this._deleteFile(shapeFile);
+                    break;
+            }
+        }
+        //this._logger.info('Resolved layouts from files: {}', JSON.stringify(Object.fromEntries(fileMap), null, 4));
+        return fileMap;
+    }
+
+    /**
+     * Return a list of article shape files (from the given folder) having postfix "(<layout_id>.v<major>.<minor>).".
+     * @param {Folder} folder
+     * @returns {Promise<Array<{shapeFile: File, layoutId: string, layoutVersion: string}>>}
+     */
+    this._filterArticleShapeFiles = async function (folder) {
+        const entriesInFolder = await folder.getEntries();
+        const filesInFolder = entriesInFolder.filter(entry => entry.isFile);
+        const result = [];
+        for (const shapeFile of filesInFolder) {
+            const match = this._extractLayoutIdAndVersionFromFilename(shapeFile.name);
             if (!match) {
                 continue;
             }
-            const objectId = match[1];
-            const objectVersion = `${match[2]}.${match[3]}`;
-            map.set(objectId, objectVersion);
+            const [layoutId, layoutVersion] = match;
+            result.push({ shapeFile, layoutId, layoutVersion });
         }
-        return map;
+        return result;
+    };    
+
+    /**
+     * Extract the layout id and version from a filename with postfix "(<layout_id>.v<major>.<minor>).".
+     * @param {string} filename
+     * @returns {[string, string] | null} Tuple of [layoutId, version] if matching postfix, null otherwise.
+     */
+    this._extractLayoutIdAndVersionFromFilename = function(filename) {
+        const filenameRegex = /\(([^)]+)\.v(\d+)\.(\d+)\)\./;
+        const match = filename.match(filenameRegex);
+        if (!match) {
+            return null;
+        }
+        const layoutId = match[1];
+        const layoutVersion = `${match[2]}.${match[3]}`;
+        return [layoutId, layoutVersion];
+    }
+
+    /**
+     * Remove a file from disk. Log warning on failure.
+     * @param {File} file 
+     */
+    this._deleteFile = async function(file) {
+        this._logger.debug(`Deleting file: ${file.name}`);
+        try {
+            await file.delete();
+        } catch (err) {
+            this._logger.warning(`Failed to delete file: ${file.name}`, err);
+        }
     }
 
     /**
