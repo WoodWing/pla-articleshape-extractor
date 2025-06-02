@@ -70,6 +70,17 @@ Container.registerFactory("ExportInDesignArticlesToFolder", function() {
     );
 });
 
+Container.registerFactory("StudioJsonRpcClient", function() {
+    const { app } = require("indesign");
+    const StudioJsonRpcClient = require("./modules/StudioJsonRpcClient.js");
+    return new StudioJsonRpcClient(
+        Container.resolve("Logger"),
+        Container.resolve("Settings").getLogNetworkTraffic(),
+        app.entSession?.activeUrl, 
+        app.entSession?.activeTicket,
+    );
+});
+
 Container.registerFactory("RegenerateArticleShapesService", function() {
     const RegenerateArticleShapesService = require("./modules/RegenerateArticleShapesService.js");
     return new RegenerateArticleShapesService(
@@ -77,13 +88,16 @@ Container.registerFactory("RegenerateArticleShapesService", function() {
         Container.resolve("VersionUtils"),
         Container.resolve("Settings").getRegenerateArticleShapesSettings(),
         Container.resolve("ExportInDesignArticlesToFolder"),
-        Container.resolve("Settings").getLogNetworkTraffic(),
+        Container.resolve("StudioJsonRpcClient"),
     );
 });
 
 Container.registerFactory("BrandSectionMapResolver", function() {
     const BrandSectionMapResolver = require("./modules/BrandSectionMapResolver.js");
-    return new BrandSectionMapResolver(Container.resolve("Logger"));
+    return new BrandSectionMapResolver(
+        Container.resolve("Logger"),
+        Container.resolve("StudioJsonRpcClient"),
+    );
 });
 
 function initBootstrap() {

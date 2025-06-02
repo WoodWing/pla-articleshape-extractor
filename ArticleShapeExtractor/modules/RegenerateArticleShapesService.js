@@ -9,14 +9,14 @@ const idd = require("indesign");
  * @param {VersionUtils} versionUtils
  * @param {{{brand: <string>, issue: <string>, category: <string>, status: <string>}, layoutStatusOnSuccess: <string>, layoutStatusOnError: <string>}} settings
  * @param {ExportInDesignArticlesToFolder} exportInDesignArticlesToFolder
- * @param {boolean} logNetworkTraffic
+ * @param {StudioJsonRpcClient} studioJsonRpcClient
  */
-function RegenerateArticleShapesService(logger, versionUtils, settings, exportInDesignArticlesToFolder, logNetworkTraffic) {
+function RegenerateArticleShapesService(logger, versionUtils, settings, exportInDesignArticlesToFolder, studioJsonRpcClient) {
     this._logger = logger;
     this._versionUtils = versionUtils;
     this._settings = settings;
     this._exportInDesignArticlesToFolder = exportInDesignArticlesToFolder;
-    this._logNetworkTraffic = logNetworkTraffic;
+    this._studioJsonRpcClient = studioJsonRpcClient;
 
     /**
      * Run the pre-configured Used Query to make an inventory of the layouts to be processed. The layouts are
@@ -28,7 +28,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
     this.run = async function(folder) {
 
         // Bail out when user is currently not logged in.
-        if (!app.entSession || app.entSession.activeServer === '' || app.entSession.activeUser === '') {
+        if (!this._studioJsonRpcClient.hasSession() ) {
             const { NoStudioSessionError } = require('./Errors.js');
             throw new NoStudioSessionError();
         }
@@ -39,7 +39,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
         // Run QueryObjects to filter layouts, and for each page of search results, let callback process them.
         const resolveProperties = [ "ID", "Type", "Name", "Version" ];
         const queryParams = this._composeQueryParams();
-        await this._queryObjects(
+        await this._studioJsonRpcClient.queryObjects(
             queryParams, 
             resolveProperties, 
             (wflObjects) => this._processQueriedLayouts(wflObjects, fileMap, folder)
@@ -84,10 +84,10 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
         }
         const handledLayoutIds = [...extractedLayoutIds, ...skippedLayoutIds];
         if (handledLayoutIds) {
-            this._sendObjectsToStatus(handledLayoutIds, this._settings.layoutStatusOnSuccess);
+            this._studioJsonRpcClient.sendObjectsToStatus(handledLayoutIds, this._settings.layoutStatusOnSuccess);
         }
         if (failedLayoutIds) {
-            this._sendObjectsToStatus(failedLayoutIds, this._settings.layoutStatusOnError);
+            this._studioJsonRpcClient.sendObjectsToStatus(failedLayoutIds, this._settings.layoutStatusOnError);
         }
     }
 
@@ -216,148 +216,6 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
             Value: value,
             __classname__: "QueryParam",
         } 
-    }
-
-    /**
-     * Calls a workflow service provided by Studio Server.
-     * Uses the JSON-RPC communication protocol.
-     * @param {Object} request
-     * @param {string} serviceName
-     * @returns {Object} Response
-     */
-    this._callWebService = function(request, serviceName) {
-        const serverUrl = app.entSession.activeUrl;
-        const separator = serverUrl.indexOf("?") === -1 ? '?' : '&';
-        const serverUrlJson = `${serverUrl}${separator}protocol=JSON`;
-        const rpcRequest = {
-            "method": serviceName,
-            "id": "1",
-            "params": [request],
-            "jsonrpc": "2.0"
-        };
-        const rawRequest = JSON.stringify(rpcRequest);
-        const rawResponse = app.jsonRequest(serverUrlJson, rawRequest);
-        const rpcResponse = JSON.parse(rawResponse);
-        this._logHttpTraffic(serverUrlJson, rpcRequest, rpcResponse);
-        return rpcResponse.result;
-    };
-
-    /**
-     * Log the URL, request JSON-RPC body and response JSON-RPC body.
-     * @param {string} serverUrlJson
-     * @param {Object} rpcRequest 
-     * @param {Object} rpcResponse 
-     */
-    this._logHttpTraffic = function(serverUrlJson, rpcRequest, rpcResponse) {
-        if (!this._logNetworkTraffic) {
-            return;
-        }
-        const dottedLine = "- - - - - - - - - - - - - - - - - - - - - - -";
-        this._logger.debug(
-            `Network traffic:\n${dottedLine}\n${serverUrlJson}\nRequest:\n`
-            + `${JSON.stringify(rpcRequest, null, 3)}\n`
-            + `${dottedLine}\nResponse:\n`
-            + `${JSON.stringify(rpcResponse, null, 3)}\n`
-            + dottedLine);
-    }
-
-    /**
-     * Calls the QueryObjects service in paged manner until all objects are retrieved.
-     * @param {Array<Object>} searchParams List of QueryParam objects.
-     * @param {Array<string>} resolveProperties List of workflow object property names to resolve.
-     * @param {CallableFunction} callbackObjectsResolved This function is called for each page of retrieved objects.
-     */
-    this._queryObjects = async function(searchParams, resolveProperties, callbackObjectsResolved) {
-        let firstEntry = 1;
-        let queryCount = 0; 
-        const maxQueryHit = 100; // paranoid prevention of endless loops
-        let response = null;
-        do {
-            queryCount++;
-            this._logger.info(`Running QueryObjects page#${queryCount}...`);
-            response = await this._queryObjectsOneResultPage(
-                searchParams, resolveProperties, firstEntry);
-            // firstEntry = response.FirstEntry + response.ListedEntries;
-            //  L> Assumed is that the status of a processed layout is changed; Hence it does NOT page
-            //     the results because processed layouts already disappear from the search results.
-            const wflObjects = this._getObjectsFromQueryObjectsResponse(response, resolveProperties);
-            await callbackObjectsResolved(wflObjects);
-        } while (response.ListedEntries > 0 && queryCount < maxQueryHit);
-        if (queryCount === maxQueryHit) {
-            const { PrintLayoutAutomationError } = require('./Errors.js');
-            throw new PrintLayoutAutomationError(`Too many QueryObjects executed: ${maxQueryHit}.`);
-        }
-    };
-
-    /**
-     * Calls the QueryObjects service.
-     * @param {Array<Object>} searchParams List of QueryParam objects.
-     * @param {Array<string>} resolveProperties List of workflow object property names to resolve.
-     * @param {number} firstEntry Object index to start reading from (in paged results).
-     * @returns {Object} QueryObjectsResponse
-     */
-    this._queryObjectsOneResultPage = async function(searchParams, resolveProperties, firstEntry) {
-        const startsWithProps = ['ID', 'Type', 'Name']; // service rule: must start with this sequence of props
-        if( !startsWithProps.every((value, index) => resolveProperties[index] === value) ) {
-            const { ArgumentError } = require('./Errors.js');
-            throw new ArgumentError("The 'resolveProperties' param should start with 'ID', 'Name' and 'Type' values.");
-        }
-        const request = {
-            "Params": searchParams,
-            "FirstEntry": firstEntry,
-            "MaxEntries": 25,
-            "RequestProps": resolveProperties,
-            "Order": [{ Property: "ID", Direction: true, __classname__: "QueryOrder" }], // oldest first
-            "Ticket": app.entSession.activeTicket
-        };
-        const response = this._callWebService(request, "QueryObjects");
-        return response;
-    };
-
-    /**
-     * Build a list of workflow objects from the Columns and Rows of a given QueryObjectsResponse.
-     * @param {Object} response 
-     * @param {Array<string>} resolveProperties Names of workflow object properties to expect.
-     * @returns {Array<Object>} List of resolved objects, each having the properties assigned.
-     */
-    this._getObjectsFromQueryObjectsResponse = function(response, resolveProperties) {
-        const wflObjects = [];
-        const columnIndexes = new Map()
-        for (var columnIndex = 0; columnIndex < response.Columns.length; columnIndex++) {
-            const columnName = response.Columns[columnIndex].Name;
-            if (resolveProperties.includes(columnName)) {
-                columnIndexes.set(columnName, columnIndex);
-            }
-        }
-        for (var rowIndex = 0; rowIndex < response.Rows.length; rowIndex++) {
-            let wflObject = {};
-            for (const property of resolveProperties) {
-                wflObject[property] = response.Rows[rowIndex][columnIndexes.get(property)]
-            }
-            wflObjects.push(wflObject);
-        }
-        return wflObjects;
-    }
-
-    /**
-     * Call the MultiSetObjectProperties service to move objects to another status.
-     * @param {string} status
-     * @param {Array<string>} objectIds 
-     */
-    this._sendObjectsToStatus = function(objectIds, statusId) {
-        const request = {
-            Ticket: app.entSession.activeTicket,
-            IDs: objectIds,
-            MetaData: [{
-                Property: "StateId",
-                PropertyValues: [{
-                    Value: statusId,
-                    __classname__: "PropertyValue"
-                }],
-                __classname__: "MetaDataValue"
-            }]
-        }
-        this._callWebService(request, "MultiSetObjectProperties");
     }
 }
 

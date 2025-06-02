@@ -1,13 +1,14 @@
-const { app } = require("indesign");
-
 /**
- * Understands how to obtain the id/name info for all brands and their categories.
+ * Understands how to obtain the id/name info for all brands and their categories
+ * and how to provides that information in the _manifest subfolder of the export folder.
  * 
  * @constructor
  * @param {Logger} logger 
+ * @param {StudioJsonRpcClient} studioJsonRpcClient
  */
-function BrandSectionMapResolver(logger) {
+function BrandSectionMapResolver(logger, studioJsonRpcClient) {
     this._logger = logger;
+    this._studioJsonRpcClient = studioJsonRpcClient;
 
     /**
      * Resolves all brand ids/names and their section ids/names from Studio Server.
@@ -15,41 +16,12 @@ function BrandSectionMapResolver(logger) {
      * @param {Folder} exportFolder 
      */
     this.run = async function(exportFolder) {
-        if (!app.entSession || !app.entSession.activeServer ) {
+        if (!this._studioJsonRpcClient.hasSession()) {
             return; // only provide info when having a session
         }
-        const publicationInfos = this._getPublicationInfos(
-            app.entSession.activeUrl, app.entSession.activeTicket);
+        const publicationInfos = this._studioJsonRpcClient.getPublicationInfos(["Categories"]);
         const brandSectionMap = this._composeBrandSectionMap(publicationInfos);
         await this._saveBrandSectionMapToDisk(brandSectionMap, exportFolder);
-    }
-
-    /**
-     * Calls the GetPublications workflow service provided by Studio Server.
-     * Uses the JSON-RPC communication protocol.
-     * @param {string} serverUrl 
-     * @param {string} ticket 
-     * @returns {Array<Object>} List of PublicationInfo data objects.
-     */
-    this._getPublicationInfos = function(serverUrl, ticket) {
-        const separator = serverUrl.indexOf("?") === -1 ? '?' : '&';
-        const serverUrlJson = `${serverUrl}${separator}protocol=JSON`;
-        const wflRequest = {
-            "Ticket": ticket,
-            "RequestInfo": ["Categories"]
-        }
-        const rpcRequest = {
-            "method": "GetPublications",
-            "id": "1",
-            "params": [wflRequest],
-            "jsonrpc": "2.0"
-        };
-        const rawRequest = JSON.stringify(rpcRequest);
-        const rawResponse = app.jsonRequest(serverUrlJson, rawRequest);
-        const rpcResponse = JSON.parse(rawResponse);
-        const wflResponse = rpcResponse.result;
-        this._logger.info(`Resolved ${wflResponse.Publications.length} brands (with their sections) from Studio Server.`);
-        return wflResponse.Publications;
     }
 
     /**

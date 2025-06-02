@@ -19,6 +19,13 @@ class NoStudioSessionError extends Error {
     }
 }
 
+class StudioServerCommunicationError extends Error {
+    constructor() {
+        super("Communication error with WoodWing Studio Server.");
+        this.name = this.constructor.name;
+    }
+}
+
 class NoDocumentOpenedError extends Error {
     constructor() {
         super("No document opened.");
@@ -79,6 +86,7 @@ module.exports = {
     ArgumentError,
     ConfigurationError,
     NoStudioSessionError,
+    StudioServerCommunicationError,
     NoDocumentOpenedError,
     NoDocumentPagesError,
     NoFramesSelectedError,
