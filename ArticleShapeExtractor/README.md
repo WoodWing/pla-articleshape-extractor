@@ -8,9 +8,6 @@ Install the tool in your InDesign application:
    1. Select menu `Window > Utilities > Scripts` to display the `Scripts` panel.
    2. Right-click either the `Application` or `User` item and select the `Reveal in Finder` item from the context menu. 
 3. Copy the [ArticleShapeExtractor](ArticleShapeExtractor) folder to the `Scripts/Scripts Panel` folder. 
-4. Copy the files from [Startup Scripts](<Startup Scripts>) to the `Scripts/startup scripts` folder.
-5. Restart InDesign.
-   * The `WoodWing Studio` menu should now list an additional menu item, named `Extract article shapes`.
 
 # Configure keyboard shortcuts
 In InDesign, configure shortcut keys to the installed scripts:
@@ -22,10 +19,20 @@ In InDesign, configure shortcut keys to the installed scripts:
    * `Cmd+3` to `ArticleShapeExtractor:command:CreateThirdArticle.idjs`
    * `Cmd+4` to `ArticleShapeExtractor:command:CreateFillerArticle.idjs`
    * `Shift+Cmd+E` to `ArticleShapeExtractor:command:ExtractArticleShapes.idjs`
+   * `Shift+Cmd+R` to `ArticleShapeExtractor:command:RegenerateArticleShapes.idjs`
 4. Save it as a new set.
 
 # Usage
-Extract Article Shapes from a layout in InDesign:
+There are two ways of using this tool, depending on the process stage:
+| phase | use case | stage
+|---|---|---
+| 1 | Tagging of article shapes | Tag and extract shapes one-by-one.
+| 2 | Regenerate article shapes | Regenerate (extract) shapes batch-wise.
+
+## Phase 1 - Tagging of article shapes
+Before article shapes can be extracted, they must be tagged first. This is done by grouping article frames into InDesign Articles and giving them a name with special naming convention. Once tagged, the shapes can be extracted to an export folder. 
+
+Steps to tag and extract Article Shapes from a layout in InDesign:
 1. Open a new or existing layout in InDesign.
 2. Click menu `Window > Articles` to open the `Articles` panel.
 3. For the frames on the layout you would like to export:
@@ -42,7 +49,14 @@ Extract Article Shapes from a layout in InDesign:
    * For each InDesign Article a `idms`, `jpg` and `json` file is created.
    * You can use the `jpg` files to verify if the export was correct.
 
-The extracted Article Shapes can be converted to a Print Layout Automation configuration file (`csv` or `xls`) using [this link](https://woodwing.github.io/pla-articleshape-extractor/create-pla-config.html).
+By saving the layout, the tagging is saved which makes it ready for the next phase, see chapter below.
+
+## Phase 2 - Regenerate article shapes
+1. Check whether the `regenerateArticleShapesSettings` option in your config file is filled in correctly. See Configuration chapter below.
+1. Close any opened layouts in InDesign.
+2. Press the `Shift+Cmd+R` shortcut key to run the `RegenerateArticleShapes.idjs` script and select a folder to export the shapes to.
+3. Wait until all layouts are processed.
+
 
 # Configuration
 The [config.js](ArticleShapeExtractor/config/config.js) file contains factory settings. All supported settings are listed and explained in that file. Don't edit this file directly, but first copy any setting to your [config-local.js](ArticleShapeExtractor/config/config-local.js) file and make adjustments in that file instead. Make sure you also copy the surrounding/parental structure elements, if any.
@@ -77,6 +91,16 @@ An example - By default, the logging feature is disabled. To enable it:
    > Note that in the provided example your should replace `[YOUR-NAME]` with your actual user name as known on your machine. 
 
 4. Optionally - In case you want to automatically clean the log file before each script execution, also include the `wipe` setting and set it to `true`.
+
+5. For phase 2 only - Copy the `regenerateArticleShapesSettings` option from the `config.js` file to your `config-local.js` file:
+   ```javascript
+   regenerateArticleShapesSettings: {
+      ...
+   }
+   ```
+   At the `...` all the settings should be listed. Fill in the settings in your `config-local.js` file. The layouts that are filtered by the specified settings will be processed when running the `RegenerateArticleShapes.idjs` script.
+
+   > Tip: You could use the `Search...` option in the `Studio` panel to fill in the same filter settings to assure the correct layouts are listed.
 
 # Development notes
 
