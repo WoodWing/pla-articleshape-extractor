@@ -77,6 +77,7 @@ Container.registerFactory("RegenerateArticleShapesService", function() {
         Container.resolve("VersionUtils"),
         Container.resolve("Settings").getRegenerateArticleShapesQueryName(),
         Container.resolve("ExportInDesignArticlesToFolder"),
+        Container.resolve("Settings").getLogNetworkTraffic(),
     );
 });
 

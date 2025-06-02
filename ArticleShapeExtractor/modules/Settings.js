@@ -49,6 +49,13 @@ function Settings(defaultConfig, localConfig) {
     this.getLoggerConfig = function() {
         return this._configData.logger;
     }
+
+    /**
+     * @returns {boolean}
+     */
+    this.getLogNetworkTraffic = function() {
+        return this._configData.logger.logNetworkTraffic;
+    }
     
     /**
      * @returns {String}

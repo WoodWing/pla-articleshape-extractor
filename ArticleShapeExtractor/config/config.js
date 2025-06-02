@@ -24,6 +24,7 @@ const plaDefaultConfig = {
         filename: "pla.log",
         folder: "", // Directory where to create the log file.
         wipe: true, // Whether to clean the log file before starting a new operation.
+        logNetworkTraffic: false, // Log all HTTP requests/responses. Requires "DEBUG" level.
     },    
 
     // Error on attempts running scripts on older InDesign versions that are not compatible.

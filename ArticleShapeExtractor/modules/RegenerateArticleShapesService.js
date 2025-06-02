@@ -9,12 +9,14 @@ const idd = require("indesign");
  * @param {VersionUtils} versionUtils
  * @param {String} userQueryName
  * @param {ExportInDesignArticlesToFolder} exportInDesignArticlesToFolder
+ * @param {boolean} logNetworkTraffic
  */
-function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exportInDesignArticlesToFolder) {
+function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exportInDesignArticlesToFolder, logNetworkTraffic) {
     this._logger = logger;
     this._versionUtils = versionUtils;
     this._userQueryName = userQueryName;
     this._exportInDesignArticlesToFolder = exportInDesignArticlesToFolder;
+    this._logNetworkTraffic = logNetworkTraffic;
 
     /**
      * Run the pre-configured Used Query to make an inventory of the layouts to be processed. The layouts are
@@ -69,7 +71,7 @@ function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exp
             if (mapItem && mapItem.layoutVersion === wflObject.Version) {
                 this._logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
                     `Article Shapes (JSON files) for layout id ${wflObject.ID} with version ${wflObject.Version} ` +
-                    'already exists in expo rt folder.');
+                    'already exists in export folder.');
             } else {
                 // If query has newer layout version, remove files of old version from disk.
                 if (mapItem) for (const oldFile of mapItem.files) {
@@ -227,7 +229,6 @@ function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exp
             "Settings": null
         }
         const response = this._callWebService(request, "GetUserSettings");
-        //this._logger.debug('Resolved settings: {}', JSON.stringify(response, null, 4));
         return response.Settings;
     };
 
@@ -251,8 +252,28 @@ function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exp
         const rawRequest = JSON.stringify(rpcRequest);
         const rawResponse = app.jsonRequest(serverUrlJson, rawRequest);
         const rpcResponse = JSON.parse(rawResponse);
+        this._logHttpTraffic(serverUrlJson, rpcRequest, rpcResponse);
         return rpcResponse.result;
     };
+
+    /**
+     * Log the URL, request JSON-RPC body and response JSON-RPC body.
+     * @param {string} serverUrlJson
+     * @param {Object} rpcRequest 
+     * @param {Object} rpcResponse 
+     */
+    this._logHttpTraffic = function(serverUrlJson, rpcRequest, rpcResponse) {
+        if (!this._logNetworkTraffic) {
+            return;
+        }
+        const dottedLine = "- - - - - - - - - - - - - - - - - - - - - - -";
+        this._logger.debug(
+            `Network traffic:\n${dottedLine}\n${serverUrlJson}\nRequest:\n`
+            + `${JSON.stringify(rpcRequest, null, 3)}\n`
+            + `${dottedLine}\nResponse:\n`
+            + `${JSON.stringify(rpcResponse, null, 3)}\n`
+            + dottedLine);
+    }
 
     /**
      * Calls the QueryObjects service in paged manner until all objects are retrieved.
@@ -307,9 +328,7 @@ function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exp
             "Order": [{ Property: "ID", Direction: true, __classname__: "QueryOrder" }], // oldest first
             "Ticket": app.entSession.activeTicket
         };
-        //this._logger.debug('QueryObjects request: {}', JSON.stringify(request, null, 4));
         const response = this._callWebService(request, "QueryObjects");
-        //this._logger.debug('QueryObjects response: {}', JSON.stringify(response, null, 4));
         return response;
     };
 
