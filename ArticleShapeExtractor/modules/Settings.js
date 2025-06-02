@@ -37,10 +37,31 @@ function Settings(defaultConfig, localConfig) {
     }
 
     /**
-     * @returns {String}
+     * @returns {{{brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}}
      */    
-    this.getRegenerateArticleShapesQueryName = function() {
-        return this._configData.regenerateArticleShapesQueryName;
+    this.getRegenerateArticleShapesSettings = function() {
+        const { ConfigurationError } = require('./Errors.js');
+        const settings = this._configData.regenerateArticleShapesSettings;
+        const tip = "Please check your 'config/config.js' and your 'config/config-local.js' files.";
+        for (const paramName of ["brand", "issue", "category", "status"]) {
+            if (!settings.filter.hasOwnProperty(paramName) || typeof settings.filter[paramName] !== "string") {
+                throw new ConfigurationError(`The regenerateArticleShapesSettings → filter → ${paramName} option is not set.\n${tip}`);
+            }
+            if (paramName !== "issue" && settings.filter[paramName].length === 0) { // "issue" filter may be left empty
+                throw new ConfigurationError(`The regenerateArticleShapesSettings → filter → ${paramName} option is empty.\n${tip}`);
+            }
+        }
+        const layoutStatusFilter = this._configData.regenerateArticleShapesSettings.filter;
+        for (const setting of ["layoutStatusOnSuccess", "layoutStatusOnError"]) {
+            if (!settings.hasOwnProperty(setting) || typeof settings[setting] !== "string" || settings[setting].length === 0) {
+                throw new ConfigurationError(`The regenerateArticleShapesSettings → ${setting} option is not set.\n${tip}`);
+            }
+            if (layoutStatusFilter === settings[setting]) {
+                throw new ConfigurationError(`The status configured for the regenerateArticleShapesSettings → ${setting} `
+                    + `option should differ from the regenerateArticleShapesSettings → filter → status option.\n${tip}`);
+            }
+        }
+        return this._configData.regenerateArticleShapesSettings;
     }
 
     /**

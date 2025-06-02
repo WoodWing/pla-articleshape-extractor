@@ -7,14 +7,14 @@ const idd = require("indesign");
  * @constructor
  * @param {Logger} logger
  * @param {VersionUtils} versionUtils
- * @param {String} userQueryName
+ * @param {{{brand: <string>, issue: <string>, category: <string>, status: <string>}, layoutStatusOnSuccess: <string>, layoutStatusOnError: <string>}} settings
  * @param {ExportInDesignArticlesToFolder} exportInDesignArticlesToFolder
  * @param {boolean} logNetworkTraffic
  */
-function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exportInDesignArticlesToFolder, logNetworkTraffic) {
+function RegenerateArticleShapesService(logger, versionUtils, settings, exportInDesignArticlesToFolder, logNetworkTraffic) {
     this._logger = logger;
     this._versionUtils = versionUtils;
-    this._userQueryName = userQueryName;
+    this._settings = settings;
     this._exportInDesignArticlesToFolder = exportInDesignArticlesToFolder;
     this._logNetworkTraffic = logNetworkTraffic;
 
@@ -33,25 +33,14 @@ function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exp
             throw new NoStudioSessionError();
         }
 
-        // Bail out when the user query is not configured.
-        const searchParams = this._getUserNamedQuery(this._userQueryName);
-        if (searchParams === null) {
-            const { ConfigurationError } = require('./Errors.js');
-            throw new ConfigurationError("User Query '" + this._userQueryName + "' does not exist.");
-        }
-
         // Build a layout id-version map from the JSON files that have been extracted before into the folder.
         const fileMap = await this._buildMapOfLayoutIdsVersionsAndFiles(folder);
 
-        // Run QueryObjects, but with the search parameters defined by the User Query.
-        // Note that this is a work-around because the app.storedUserQuery API does not return the layout 
-        // properties we are looking for (such as Version). And because the returned format is hard to parse 
-        // and its columns are not alined with the row fields (=bug).
-        const resolveProperties = [
-            "ID", "Type", "Name", "Version", 
-            "PublicationId", "Publication", "CategoryId",  "Category", "StateId", "State"];
+        // Run QueryObjects to filter layouts, and for each page of search results, let callback process them.
+        const resolveProperties = [ "ID", "Type", "Name", "Version" ];
+        const queryParams = this._composeQueryParams();
         await this._queryObjects(
-            searchParams, 
+            queryParams, 
             resolveProperties, 
             (wflObjects) => this._processQueriedLayouts(wflObjects, fileMap, folder)
         );
@@ -60,11 +49,13 @@ function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exp
     /**
      * Process queried layout objects, compare against disk state, export if needed.
      * @param {Array} wflObjects Workflow layout objects.
-     * @param {Map<string,{layoutVersion:<string>,shapeFiles:Array<File>}>} fileMap Indexed by layout ids.
+     * @param {Map<string,{layoutVersion:string,shapeFiles:Array<File>}>} fileMap Indexed by layout ids.
      * @param {Folder} folder Target folder for exporting.
      */
     this._processQueriedLayouts = async function (wflObjects, fileMap, folder) {
-        const layoutIds = [];
+        const extractedLayoutIds = [];
+        const skippedLayoutIds = [];
+        const failedLayoutIds = [];
         for (const wflObject of wflObjects) {
             //this._logger.debug('QueryObjects resolved object: {}', JSON.stringify(wflObject, null, 4));
             const mapItem = fileMap.get(wflObject.ID);
@@ -72,21 +63,32 @@ function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exp
                 this._logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
                     `Article Shapes (JSON files) for layout id ${wflObject.ID} with version ${wflObject.Version} ` +
                     'already exists in export folder.');
+                skippedLayoutIds.push(wflObject.ID);
             } else {
                 // If query has newer layout version, remove files of old version from disk.
                 if (mapItem) for (const oldFile of mapItem.files) {
                     await this._deleteFile(oldFile);
                 }
                 const theOpenDoc = app.openObject(wflObject.ID, false); // false: no checkout
-                await this._exportInDesignArticlesToFolder.run(theOpenDoc, folder);
+                const shapeCount = await this._exportInDesignArticlesToFolder.run(theOpenDoc, folder);
                 theOpenDoc.close(idd.SaveOptions.no);
+                if (shapeCount > 0) {
+                    extractedLayoutIds.push(wflObject.ID);
+                } else { // no article shapes extracted means error; this layout has nothing for us
+                    failedLayoutIds.push(wflObject.ID);
+                }
             }
-            layoutIds.push(wflObject.ID);
             if (mapItem) { // Remove item from map to mark it as handled.
                 fileMap.delete(wflObject.ID);
             }
         }
-        this._sendObjectsToNextStatus(layoutIds); // faster than calling app.sendObjectToNext individually
+        const handledLayoutIds = [...extractedLayoutIds, ...skippedLayoutIds];
+        if (handledLayoutIds) {
+            this._sendObjectsToStatus(handledLayoutIds, this._settings.layoutStatusOnSuccess);
+        }
+        if (failedLayoutIds) {
+            this._sendObjectsToStatus(failedLayoutIds, this._settings.layoutStatusOnError);
+        }
     }
 
     /**
@@ -177,60 +179,44 @@ function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exp
     }
 
     /**
-     * Retrieves a User Query definition from Studio Server.
-     * In case of making manual changes to the User Query, it is required to re-login Studio for InDesign 
-     * to let it save the user queries in Studio Server. (All queries are saved during the logout operation.)
-     * @param {string} queryName 
-     * @returns {Array<Object>|null} List of QueryParam objects when query found, null otherwise.
+     * Use the local filter settings to compose search params (applicable to the QueryObjects workflow service).
+     * @returns {Array<{Property: string, Operation: string, Value: string, __classname__: string}>} List of QueryParam objects.
      */
-    this._getUserNamedQuery = function(queryName) {
-        for (const userSetting of this._getUserSettings()) {
-            if (userSetting.Setting === `UserQuery3_${queryName}` ) {
-                const queryParams = this._parseQueryParamsFromXml(userSetting.Value);
-                //this._logger.debug(`Resolved params for User Query ${queryName}: {}`, JSON.stringify(queryParams, null, 4));
-                return queryParams;
-            }
-        }
-        return null;
-    };
-
-    /**
-     * Parses a User Query definition in XML format.
-     * @param {string} userQueryXml 
-     * @returns {Array<Object>} List of QueryParam objects.
-     */
-    this._parseQueryParamsFromXml = function(userQueryXml) {
-        const queryParamRegex = /<QueryParam>([\s\S]*?)<\/QueryParam>/g;
-        const xmlTagValueRegex = /<(\w+)[^>]*>(.*?)<\/\1>/g;
-        //const nilRegex = /<Special[^>]*xsi:nil="true"[^>]*\/>/;
+    this._composeQueryParams = function() {
+        // Map the local filter settings onto the workflow object property names.
+        const settingToProperty = { brand: "Publication", issue: "Issue", category: "Category", status: "State" };
         const queryParams = [];
-        let match;
-        while ((match = queryParamRegex.exec(userQueryXml)) !== null) {
-            const xmlTagValue = match[1];
-            const queryParam = {};
-            let tagMatch;
-            while ((tagMatch = xmlTagValueRegex.exec(xmlTagValue)) !== null) {
-                const [, tag, value] = tagMatch;
-                queryParam[tag] = value;
+        for (const setting in settingToProperty) {
+            if (settingToProperty.hasOwnProperty(setting)) {
+                if (setting === 'issue' && this._settings.filter[setting].length === 0) {
+                    continue; // the issue filter can be left empty, which refers to 'all' issues
+                }
+                const queryParam = this._composeQueryParam(
+                    settingToProperty[setting], 
+                    "=", 
+                    this._settings.filter[setting]);
+                queryParams.push(queryParam);
             }
-            //item["Special"] = nilRegex.test(innerXml) ? null : "non-nil";
-            queryParams.push(queryParam);
         }
+        queryParams.push(this._composeQueryParam("Type", "=", "Layout"));
         return queryParams;
     };
 
     /**
-     * Retrieves the user settings from Studio Server.
-     * @returns {Array<Object>} List of Setting objects.
+     * Compose a QueryParam data object (applicable to the QueryObjects workflow service).
+     * @param {string} property 
+     * @param {string} operation 
+     * @param {string} value 
+     * @returns {{Property: string, Operation: string, Value: string, __classname__: string}} QueryParam object.
      */
-    this._getUserSettings = function() {
-        const request = {
-            "Ticket": app.entSession.activeTicket,
-            "Settings": null
-        }
-        const response = this._callWebService(request, "GetUserSettings");
-        return response.Settings;
-    };
+    this._composeQueryParam = function(property, operation, value) {
+        return {
+            Property: property,
+            Operation: operation,
+            Value: value,
+            __classname__: "QueryParam",
+        } 
+    }
 
     /**
      * Calls a workflow service provided by Studio Server.
@@ -292,9 +278,8 @@ function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exp
             response = await this._queryObjectsOneResultPage(
                 searchParams, resolveProperties, firstEntry);
             // firstEntry = response.FirstEntry + response.ListedEntries;
-            //  L> Assumed is that the status of a processed layout is changed, and that
-            //     the User Query has a layout status in its filters. Then we should NOT page
-            //     results because processed layouts already disappear from the search results.
+            //  L> Assumed is that the status of a processed layout is changed; Hence it does NOT page
+            //     the results because processed layouts already disappear from the search results.
             const wflObjects = this._getObjectsFromQueryObjectsResponse(response, resolveProperties);
             await callbackObjectsResolved(wflObjects);
         } while (response.ListedEntries > 0 && queryCount < maxQueryHit);
@@ -316,9 +301,6 @@ function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exp
         if( !startsWithProps.every((value, index) => resolveProperties[index] === value) ) {
             const { ArgumentError } = require('./Errors.js');
             throw new ArgumentError("The 'resolveProperties' param should start with 'ID', 'Name' and 'Type' values.");
-        }
-        for (let i = 0; i < searchParams.length; i++ ) {
-            searchParams[i].__classname__ = "QueryParam";
         }
         const request = {
             "Params": searchParams,
@@ -358,17 +340,18 @@ function RegenerateArticleShapesService(logger, versionUtils, userQueryName, exp
     }
 
     /**
-     * Calls the MultiSetObjectProperties service in special manner to move objects to their next status.
+     * Call the MultiSetObjectProperties service to move objects to another status.
+     * @param {string} status
      * @param {Array<string>} objectIds 
      */
-    this._sendObjectsToNextStatus = function(objectIds) {
+    this._sendObjectsToStatus = function(objectIds, statusId) {
         const request = {
             Ticket: app.entSession.activeTicket,
             IDs: objectIds,
             MetaData: [{
                 Property: "StateId",
                 PropertyValues: [{
-                    Value: "", // special meaning: move to Next Status
+                    Value: statusId,
                     __classname__: "PropertyValue"
                 }],
                 __classname__: "MetaDataValue"

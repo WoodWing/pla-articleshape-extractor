@@ -2,8 +2,21 @@
 
 const plaDefaultConfig = {
     
-    // User Query in Studio Server that returns layouts to automatically extract article shapes from.
-    regenerateArticleShapesQueryName: "RegenerateArticleShapes",
+    // Settings for the Regenerate Article Shapes process.
+    regenerateArticleShapesSettings: {
+
+        // Search parameters in Studio Server that returns layouts to be processed.
+        filter: {
+            brand: "", // name of the brand/publication
+            issue: "", // name of the issue (leave empty for all issues)
+            category: "", // name of the category/section
+            status: "", // name of the layout status
+        },
+
+        // Name of layout status, to be set after processing:
+        layoutStatusOnSuccess: "", // when processed OK
+        layoutStatusOnError: "", // when process failed
+    },
 
     // Settings used if the layout is not stored in Studio.
     offlineFallback: {
