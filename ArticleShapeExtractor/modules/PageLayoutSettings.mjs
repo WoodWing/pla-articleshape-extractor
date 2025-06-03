@@ -11,11 +11,16 @@ class PageLayoutSettings{
     /** @type {Logger} */
     #logger;
 
+    /** @type {FileUtils} */
+    #fileUtils;
+
     /**
      * @param {Logger} logger 
+     * @param {FileUtils} fileUtils
      */
-    constructor(logger) {
+    constructor(logger, fileUtils) {
         this.#logger = logger;
+        this.#fileUtils = fileUtils;
     }
 
     /**
@@ -135,8 +140,8 @@ class PageLayoutSettings{
     async #saveOrComparePageLayoutSettings(settings, exportFolder) {
         const manifestFoldername = "_manifest";
         const settingsFilename = "page-layout-settings.json";
-        const { entry: settingsFolder, _ } = await this.#getOrCreateSubFolder(exportFolder, manifestFoldername);
-        const { entry: settingsFile, created } = await this.#getOrCreateFile(settingsFolder, settingsFilename);
+        const { entry: settingsFolder, _ } = await this.#fileUtils.getOrCreateSubFolder(exportFolder, manifestFoldername);
+        const { entry: settingsFile, created } = await this.#fileUtils.getOrCreateFile(settingsFolder, settingsFilename);
         if (created) {
             const settingsJson = JSON.stringify(settings, null, 4);
             const byteCount = await settingsFile.write(settingsJson, {format: formats.utf8}); 

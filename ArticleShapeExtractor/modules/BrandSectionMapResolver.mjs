@@ -10,13 +10,18 @@ class BrandSectionMapResolver {
     /** @type {StudioJsonRpcClient} */
     #studioJsonRpcClient;
 
+    /** @type {FileUtils} */
+    #fileUtils;
+
     /**
      * @param {Logger} logger 
      * @param {StudioJsonRpcClient} studioJsonRpcClient
+     * @param {FileUtils} fileUtils
      */
-    constructor(logger, studioJsonRpcClient) {
+    constructor(logger, studioJsonRpcClient, fileUtils) {
         this.#logger = logger;
         this.#studioJsonRpcClient = studioJsonRpcClient;
+        this.#fileUtils = fileUtils;
     }
 
     /**
@@ -58,6 +63,7 @@ class BrandSectionMapResolver {
      */
     async #saveBrandSectionMapToDisk(brandSectionMap, exportFolder) {
         const filepath = window.path.join(exportFolder, "_manifest", "brand-section-map.json");
+        await this.#fileUtils.getOrCreateSubFolder(exportFolder, "_manifest");
         const lfs = require('uxp').storage.localFileSystem;
         const formats = require('uxp').storage.formats;
         const jsonFile = await lfs.createEntryWithUrl(filepath, { overwrite: true });

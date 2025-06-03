@@ -53,9 +53,17 @@ Container.registerFactory("InDesignArticleService", function() {
     return new InDesignArticleService();
 });
 
+Container.registerFactory("FileUtils", function() {
+    const FileUtils = require("./modules/FileUtils.mjs");
+    return new FileUtils();
+});
+
 Container.registerFactory("PageLayoutSettings", function() {
     const PageLayoutSettings = require("./modules/PageLayoutSettings.mjs");
-    return new PageLayoutSettings(Container.resolve("Logger"));
+    return new PageLayoutSettings(
+        Container.resolve("Logger"),
+        Container.resolve("FileUtils"),
+    );
 });
 
 Container.registerFactory("ExportInDesignArticlesToFolder", function() {
@@ -97,6 +105,7 @@ Container.registerFactory("BrandSectionMapResolver", function() {
     return new BrandSectionMapResolver(
         Container.resolve("Logger"),
         Container.resolve("StudioJsonRpcClient"),
+        Container.resolve("FileUtils"),
     );
 });
 
