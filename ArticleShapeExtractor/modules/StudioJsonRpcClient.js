@@ -60,7 +60,6 @@ function StudioJsonRpcClient(logger, logNetworkTraffic, serverUrl, ticket) {
             "jsonrpc": "2.0"
         };
         const rawRequest = JSON.stringify(rpcRequest);
-        this._logger.debug("Request: {}", JSON.stringify(rpcRequest, null, 3));
         const rawResponse = app.jsonRequest(serverUrlJson, rawRequest);
         try {
             const rpcResponse = JSON.parse(rawResponse);
