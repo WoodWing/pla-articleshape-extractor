@@ -15,7 +15,7 @@ class PreferencesManager {
      * @returns {Object} Original preferences.
      */
     overridePreferences(updates) {
-        originalPreferences = {};
+        const originalPreferences = {};
         for (const key in updates) {
             originalPreferences[key] =  this.#appPreferences[key];
             this.#appPreferences[key] = updates[key]; 
