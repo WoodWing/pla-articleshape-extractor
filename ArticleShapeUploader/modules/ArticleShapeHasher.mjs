@@ -27,6 +27,7 @@ import crypto from 'crypto';
  */
 export class ArticleShapeHasher {
 
+    /** @type {ElementLabelMapper} */
     #elementLabelMapper;
 
     /**

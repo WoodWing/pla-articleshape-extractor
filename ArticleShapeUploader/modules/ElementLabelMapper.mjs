@@ -3,8 +3,14 @@
  */
 
 export class ElementLabelMapper {
+    
+    /** @type {ColoredLogger} */
     #logger;
+
+    /** @type {JsonValidator} */
     #jsonValidator;
+
+    /** @type {Object} */
     #elementMapping = {};
     
     /**

@@ -2,10 +2,10 @@ import chalk from "chalk";
 
 export class ColoredLogger {
 
+	/** @type {number} */
 	#level;
 	
     /**
-     * @constructor
 	 * @param {string} logLevel
      */
     constructor(logLevel) {

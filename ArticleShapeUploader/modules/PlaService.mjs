@@ -7,8 +7,13 @@ import { StatusCodes } from 'http-status-codes';
  */
 export class PlaService {
 
+    /** @type {string} */
     #plaServiceUrl;
+
+    /** @type {boolean} */
     #logNetworkTraffic;
+
+    /** @type {ColoredLogger} */
     #logger;
 
     /**

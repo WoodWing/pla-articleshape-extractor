@@ -2,11 +2,15 @@ import fs from 'fs';
 import path from 'path';
 
 export class BrandSectionMapReader {
+
+    /** @type {ColoredLogger} */
     #logger;
+
+    /** @type {JsonValidator} */
     #jsonValidator;
     
     /**
-     * @param {Logger} logger 
+     * @param {ColoredLogger} logger 
      * @param {JsonValidator} jsonValidator
      */
     constructor(logger, jsonValidator) {
