@@ -9,7 +9,7 @@ const plaDefaultConfig = {
         filter: {
             brand: "", // name of the brand/publication
             issue: "", // name of the issue (leave empty for all issues)
-            category: "", // name of the category/section
+            category: "", // name of the category/section (leave empty for all categories/sections)
             status: "", // name of the layout status
         },
 

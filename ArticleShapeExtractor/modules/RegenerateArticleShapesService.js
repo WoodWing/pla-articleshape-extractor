@@ -188,8 +188,9 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
         const queryParams = [];
         for (const setting in settingToProperty) {
             if (settingToProperty.hasOwnProperty(setting)) {
-                if (setting === 'issue' && this._settings.filter[setting].length === 0) {
-                    continue; // the issue filter can be left empty, which refers to 'all' issues
+                if (['issue', 'category'].includes(setting) 
+                    && this._settings.filter[setting].length === 0) {
+                    continue; // these filters can be left empty, which refers to 'all'
                 }
                 const queryParam = this._composeQueryParam(
                     settingToProperty[setting], 

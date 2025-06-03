@@ -47,7 +47,7 @@ function Settings(defaultConfig, localConfig) {
             if (!settings.filter.hasOwnProperty(paramName) || typeof settings.filter[paramName] !== "string") {
                 throw new ConfigurationError(`The regenerateArticleShapesSettings → filter → ${paramName} option is not set.\n${tip}`);
             }
-            if (paramName !== "issue" && settings.filter[paramName].length === 0) { // "issue" filter may be left empty
+            if (!["issue", "category"].includes(paramName) && settings.filter[paramName].length === 0) { // these filters may be left empty
                 throw new ConfigurationError(`The regenerateArticleShapesSettings → filter → ${paramName} option is empty.\n${tip}`);
             }
         }
