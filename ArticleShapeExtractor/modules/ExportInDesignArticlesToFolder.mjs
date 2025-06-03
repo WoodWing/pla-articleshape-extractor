@@ -454,7 +454,7 @@ class ExportInDesignArticlesToFolder {
             }
 
             for (let k = 0; k < threadedFrames.length; k++) {
-                frame = threadedFrames[k];
+                const frame = threadedFrames[k];
 
                 if (frame.geometricBounds[1] < topLeftX) {
                     topLeftX = frame.geometricBounds[1];
