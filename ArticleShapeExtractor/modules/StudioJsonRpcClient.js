@@ -112,7 +112,9 @@ function StudioJsonRpcClient(logger, logNetworkTraffic, serverUrl, ticket) {
             //  L> Assumed is that the status of a processed layout is changed; Hence it does NOT page
             //     the results because processed layouts already disappear from the search results.
             const wflObjects = this._getObjectsFromQueryObjectsResponse(response, resolveProperties);
-            await callbackObjectsResolved(wflObjects);
+            if (wflObjects.length > 0) {
+                await callbackObjectsResolved(wflObjects);
+            }
         } while (response.ListedEntries > 0 && queryCount < maxQueryHit);
         if (queryCount === maxQueryHit) {
             const { PrintLayoutAutomationError } = require('./Errors.js');
