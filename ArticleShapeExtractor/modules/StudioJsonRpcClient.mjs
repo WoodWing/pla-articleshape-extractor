@@ -82,7 +82,7 @@ class StudioJsonRpcClient {
             return rpcResponse.result;
         } catch (SyntaxError) {
             this.#logger.error("Could not parse response: {}", rawResponse);
-            const { StudioServerCommunicationError } = require('./Errors.js');
+            const { StudioServerCommunicationError } = require('./Errors.mjs');
             throw new StudioServerCommunicationError();
         }
     };
@@ -131,7 +131,7 @@ class StudioJsonRpcClient {
             }
         } while (response.ListedEntries > 0 && queryCount < maxQueryHit);
         if (queryCount === maxQueryHit) {
-            const { PrintLayoutAutomationError } = require('./Errors.js');
+            const { PrintLayoutAutomationError } = require('./Errors.mjs');
             throw new PrintLayoutAutomationError(`Too many QueryObjects executed: ${maxQueryHit}.`);
         }
     };
@@ -146,7 +146,7 @@ class StudioJsonRpcClient {
     async #queryObjectsOneResultPage(searchParams, resolveProperties, firstEntry) {
         const startsWithProps = ['ID', 'Type', 'Name']; // service rule: must start with this sequence of props
         if( !startsWithProps.every((value, index) => resolveProperties[index] === value) ) {
-            const { ArgumentError } = require('./Errors.js');
+            const { ArgumentError } = require('./Errors.mjs');
             throw new ArgumentError("The 'resolveProperties' param should start with 'ID', 'Name' and 'Type' values.");
         }
         const request = {

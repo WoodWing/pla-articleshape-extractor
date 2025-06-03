@@ -33,7 +33,7 @@ class PageLayoutSettings{
         app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
         try {
             if (doc.pages.length === 0) {
-                const { NoDocumentPagesError } = require('./Errors.js');
+                const { NoDocumentPagesError } = require('./Errors.mjs');
                 throw new NoDocumentPagesError();
             }
             const page = doc.pages.item(0);
@@ -42,7 +42,7 @@ class PageLayoutSettings{
             await this.#saveOrComparePageLayoutSettings(settings, folder);
             exportedSuccessfully = true;
         } catch(error) {
-            const { ConfigurationError } = require('./Errors.js');
+            const { ConfigurationError } = require('./Errors.mjs');
             if (error instanceof ConfigurationError) {
                 this.#logger.error(error.message);
             } else {
@@ -106,7 +106,7 @@ class PageLayoutSettings{
                 inside = page.marginPreferences.left;
                 outside = page.marginPreferences.right;
             } else {
-                const { UnexpectedPageSetupError } = require('./Errors.js');
+                const { UnexpectedPageSetupError } = require('./Errors.mjs');
                 const message = `Facing pages is enabled but page side ${page.side} is neither left or right.`;
                 throw new UnexpectedPageSetupError(message);
             }
@@ -115,7 +115,7 @@ class PageLayoutSettings{
                 inside = page.marginPreferences.left;
                 outside = page.marginPreferences.right;
             } else {
-                const { UnexpectedPageSetupError } = require('./Errors.js');
+                const { UnexpectedPageSetupError } = require('./Errors.mjs');
                 const message = `Facing pages is disabled but page side ${page.side} is not single.`;
                 throw new UnexpectedPageSetupError(message);
             }
@@ -141,14 +141,14 @@ class PageLayoutSettings{
             const settingsJson = JSON.stringify(settings, null, 4);
             const byteCount = await settingsFile.write(settingsJson, {format: formats.utf8}); 
             if (!byteCount ) {
-                const { ConfigurationError } = require('./Errors.js');
+                const { ConfigurationError } = require('./Errors.mjs');
                 const message = `Could not write into file "${manifestFoldername}/${settingsFilename}".\nPlease check access rights.`;
                 throw new ConfigurationError(message);
             }
         } else {
             const settingsOfPrecedingLayout = JSON.parse(await settingsFile.read({format: formats.utf8}));
             if (!this.#isDeepEqual(settings, settingsOfPrecedingLayout)) {
-                const { ConfigurationError } = require('./Errors.js');
+                const { ConfigurationError } = require('./Errors.mjs');
                 const message = "\n" 
                     + "Page layout settings of current layout differ with preceding layout, processed just before.\n"
                     + `Note that setting of preceding layout were saved in "${manifestFoldername}/${settingsFilename}".\n`

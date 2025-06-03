@@ -1,18 +1,18 @@
 await (async function main() {
     const { app } = require("indesign");
     const initBootstrap = require('../bootstrap.js');
-    const Container = require("../modules/Container.js");
+    const Container = require("../modules/Container.mjs");
     try {
         initBootstrap();
 
         if (app.documents.length === 0) {
-            const { NoDocumentOpenedError } = require('../modules/Errors.js');
+            const { NoDocumentOpenedError } = require('../modules/Errors.mjs');
             throw new NoDocumentOpenedError();
         }
 
         const doc = app.activeDocument;
         if (doc.articles.length === 0) {
-            const { NoArticlesInDocumentError } = require('../modules/Errors.js');
+            const { NoArticlesInDocumentError } = require('../modules/Errors.mjs');
             throw new NoArticlesInDocumentError();
         }
 
@@ -22,7 +22,7 @@ await (async function main() {
         const domains = require('uxp').storage.domains;
         const folder = await lfs.getFolder({initialDomain: domains.userDocuments});
         if (!folder || !folder.isFolder) {
-            const { NoFolderSelectedError } = require('../modules/Errors.js');
+            const { NoFolderSelectedError } = require('../modules/Errors.mjs');
             throw new NoFolderSelectedError();
         }
 
@@ -32,7 +32,7 @@ await (async function main() {
         // Export article shapes to disk.
         let exportCounter = await Container.resolve("ExportInDesignArticlesToFolder").run(doc, folder);
         if (exportCounter === 0) {
-            const { PrintLayoutAutomationError } = require('../modules/Errors.js');
+            const { PrintLayoutAutomationError } = require('../modules/Errors.mjs');
             throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.");
         }
         alert(exportCounter + " articles have been exported as Article Shapes.");

@@ -2,7 +2,7 @@ await (async function main() {
     const { app } = require("indesign");
     const idd = require("indesign");
     const initBootstrap = require('../bootstrap.js');
-    const Container = require("../modules/Container.js");
+    const Container = require("../modules/Container.mjs");
     try {
         initBootstrap();
 
@@ -12,7 +12,7 @@ await (async function main() {
         const domains = require('uxp').storage.domains;
         const folder = await lfs.getFolder({initialDomain: domains.userDocuments});
         if (!folder || !folder.isFolder) {
-            const { NoFolderSelectedError } = require('../modules/Errors.js');
+            const { NoFolderSelectedError } = require('../modules/Errors.mjs');
             throw new NoFolderSelectedError();
         }
 

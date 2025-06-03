@@ -55,7 +55,7 @@ class RegenerateArticleShapesService {
 
         // Bail out when user is currently not logged in.
         if (!this.#studioJsonRpcClient.hasSession() ) {
-            const { NoStudioSessionError } = require('./Errors.js');
+            const { NoStudioSessionError } = require('./Errors.mjs');
             throw new NoStudioSessionError();
         }
 
@@ -154,7 +154,7 @@ class RegenerateArticleShapesService {
      * @param {string} statusName 
      */
     #raiseStatusConfigError(statusName) {
-        const { ConfigurationError } = require('./Errors.js');
+        const { ConfigurationError } = require('./Errors.mjs');
         const message = `\nStatus '${statusName}' seems not configured for `
             + `brand '${this.#settings.filter.brand}'.\n`
             + "Please check the 'regenerateArticleShapesSettings' option "

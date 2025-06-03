@@ -328,7 +328,7 @@ class ExportInDesignArticlesToFolder {
         doc.exportPageItemsToSnippet(snippetFile, pageItemsIds);
 
         // Export JPEG image.
-        const PreferencesManager = require('./PreferencesManager.js');
+        const PreferencesManager = require('./PreferencesManager.mjs');
         const preferencesManager = new PreferencesManager(app.jpegExportPreferences);
         let originalPreferences = null;
         let group = null;
