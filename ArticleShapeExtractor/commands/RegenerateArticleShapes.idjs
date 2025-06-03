@@ -21,9 +21,12 @@ await (async function main() {
         
         // Export article shapes to disk.
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
-        await Container.resolve("RegenerateArticleShapesService").run(folder);
+        const report = await Container.resolve("RegenerateArticleShapesService").run(folder);
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
-        alert("Article Shapes are regenerated.");
+        const completedMessage = "Article Shapes are regenerated.";
+        const reportMessage = `Extracted: ${report.extracted}, Skipped: ${report.skipped}, Failed: ${report.failed}.`;
+        Container.resolve("Logger").info(`${completedMessage} => ${reportMessage}`);
+        alert(`${completedMessage}\n${reportMessage}`, "Completed");
 
     } catch(error) {
         // First enable the user interaction again to able to show the alert.

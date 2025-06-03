@@ -39,22 +39,25 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
         const fileMap = await this._buildMapOfLayoutIdsVersionsAndFiles(folder);
 
         // Run QueryObjects to filter layouts, and for each page of search results, let callback process them.
+        const report = { extracted: 0, skipped: 0, failed: 0 };
         const resolveProperties = [ "ID", "Type", "Name", "Version", "PublicationId" ];
         const queryParams = this._composeQueryParams();
         await this._studioJsonRpcClient.queryObjects(
             queryParams, 
             resolveProperties, 
-            (wflObjects) => this._processQueriedLayouts(wflObjects, fileMap, folder)
+            (wflObjects) => this._processQueriedLayouts(wflObjects, fileMap, folder, report)
         );
+        return report;
     };
 
     /**
      * Process queried layout objects, compare against disk state, export if needed.
-     * @param {Array} wflObjects Workflow layout objects.
+     * @param {Array<Object>} wflObjects Workflow layout objects.
      * @param {Map<string,{layoutVersion:string,shapeFiles:Array<File>}>} fileMap Indexed by layout ids.
      * @param {Folder} folder Target folder for exporting.
+     * @param {{extracted: number, skipped: number, failed: number}} report
      */
-    this._processQueriedLayouts = async function (wflObjects, fileMap, folder) {
+    this._processQueriedLayouts = async function (wflObjects, fileMap, folder, report) {
         const extractedLayoutIds = [];
         const skippedLayoutIds = [];
         const failedLayoutIds = [];
@@ -92,6 +95,9 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
         if (failedLayoutIds.length > 0) {
             this._studioJsonRpcClient.sendObjectsToStatus(failedLayoutIds, this._layoutStatusIdOnError);
         }
+        report.extracted += extractedLayoutIds.length;
+        report.skipped += skippedLayoutIds.length;
+        report.failed += failedLayoutIds.length;
     }
 
     /**
