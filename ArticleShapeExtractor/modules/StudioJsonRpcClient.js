@@ -173,8 +173,8 @@ function StudioJsonRpcClient(logger, logNetworkTraffic, serverUrl, ticket) {
 
     /**
      * Call the MultiSetObjectProperties service to move objects to another status.
-     * @param {string} status
      * @param {Array<string>} objectIds 
+     * @param {string} statusId
      */
     this.sendObjectsToStatus = function(objectIds, statusId) {
         const request = {
