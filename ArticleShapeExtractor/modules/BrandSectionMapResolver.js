@@ -4,13 +4,19 @@
  */
 class BrandSectionMapResolver {
 
+    /** @type {Logger} */
+    #logger;
+
+    /** @type {StudioJsonRpcClient} */
+    #studioJsonRpcClient;
+
     /**
      * @param {Logger} logger 
      * @param {StudioJsonRpcClient} studioJsonRpcClient
      */
     constructor(logger, studioJsonRpcClient) {
-        this._logger = logger;
-        this._studioJsonRpcClient = studioJsonRpcClient;
+        this.#logger = logger;
+        this.#studioJsonRpcClient = studioJsonRpcClient;
     }
 
     /**
@@ -19,19 +25,19 @@ class BrandSectionMapResolver {
      * @param {Folder} exportFolder 
      */
     async run(exportFolder) {
-        if (!this._studioJsonRpcClient.hasSession()) {
+        if (!this.#studioJsonRpcClient.hasSession()) {
             return; // only provide info when having a session
         }
-        const publicationInfos = this._studioJsonRpcClient.getPublicationInfos(null, ["Categories"]);
-        const brandSectionMap = this._composeBrandSectionMap(publicationInfos);
-        await this._saveBrandSectionMapToDisk(brandSectionMap, exportFolder);
+        const publicationInfos = this.#studioJsonRpcClient.getPublicationInfos(null, ["Categories"]);
+        const brandSectionMap = this.#composeBrandSectionMap(publicationInfos);
+        await this.#saveBrandSectionMapToDisk(brandSectionMap, exportFolder);
     }
 
     /**
      * @param {Array<Object>} publicationInfos List of PublicationInfo data objects.
      * @returns {Object}
      */
-    _composeBrandSectionMap(publicationInfos) {
+    #composeBrandSectionMap(publicationInfos) {
         const brandSetup = {};
         for (const publicationInfo of publicationInfos) {
             const categories = {};
@@ -50,14 +56,14 @@ class BrandSectionMapResolver {
      * @param {Object} brandSectionMap
      * @param {Folder} exportFolder
      */
-    async _saveBrandSectionMapToDisk(brandSectionMap, exportFolder) {
+    async #saveBrandSectionMapToDisk(brandSectionMap, exportFolder) {
         const filepath = window.path.join(exportFolder, "_manifest", "brand-section-map.json");
         const lfs = require('uxp').storage.localFileSystem;
         const formats = require('uxp').storage.formats;
         const jsonFile = await lfs.createEntryWithUrl(filepath, { overwrite: true });
         const jsonString = JSON.stringify(brandSectionMap, null, 4);
         jsonFile.write(jsonString, {format: formats.utf8}); 
-        this._logger.info(`Saved the ids/names of brands and their sections to "${filepath}".`);
+        this.#logger.info(`Saved the ids/names of brands and their sections to "${filepath}".`);
     }
 }
 

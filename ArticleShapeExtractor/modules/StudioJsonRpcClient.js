@@ -5,18 +5,29 @@ const { app } = require("indesign");
  */
 class StudioJsonRpcClient {
 
+    /** @type {Logger} */
+    #logger;
+    
+    /** @type {boolean} */
+    #logNetworkTraffic;
+    
+    /** @type {string|null} */
+    #serverUrl;
+    
+    /** @type {string|null} */
+    #ticket;
+
     /**
-     * @constructor
      * @param {Logger} logger 
      * @param {boolean} logNetworkTraffic
      * @param {string|null} serverUrl 
      * @param {string|null} ticket 
      */    
     constructor(logger, logNetworkTraffic, serverUrl, ticket) {
-        this._logger = logger;
-        this._logNetworkTraffic = logNetworkTraffic;
-        this._serverUrl = serverUrl;
-        this._ticket = ticket;
+        this.#logger = logger;
+        this.#logNetworkTraffic = logNetworkTraffic;
+        this.#serverUrl = serverUrl;
+        this.#ticket = ticket;
     }
 
     /**
@@ -24,7 +35,7 @@ class StudioJsonRpcClient {
      * @returns {boolean}
      */
     hasSession() {
-        return this._serverUrl && this._ticket;
+        return this.#serverUrl && this.#ticket;
     }
 
     /**
@@ -35,7 +46,7 @@ class StudioJsonRpcClient {
      */
     getPublicationInfos(brandIds, requestInfo) {
         const request = {
-            Ticket: this._ticket
+            Ticket: this.#ticket
         }
         if (brandIds) {
             request["IDs"] = brandIds;
@@ -43,7 +54,7 @@ class StudioJsonRpcClient {
         if (requestInfo) {
             request["RequestInfo"] = requestInfo;
         }
-        const response = this._callWebService(request, "GetPublications");
+        const response = this.#callWebService(request, "GetPublications");
         return response.Publications;
     }
 
@@ -54,9 +65,9 @@ class StudioJsonRpcClient {
      * @param {string} serviceName
      * @returns {Object} Response
      */
-    _callWebService(request, serviceName) {
-        const separator = this._serverUrl.indexOf("?") === -1 ? '?' : '&';
-        const serverUrlJson = `${this._serverUrl}${separator}protocol=JSON`;
+    #callWebService(request, serviceName) {
+        const separator = this.#serverUrl.indexOf("?") === -1 ? '?' : '&';
+        const serverUrlJson = `${this.#serverUrl}${separator}protocol=JSON`;
         const rpcRequest = {
             "method": serviceName,
             "id": "1",
@@ -67,10 +78,10 @@ class StudioJsonRpcClient {
         const rawResponse = app.jsonRequest(serverUrlJson, rawRequest);
         try {
             const rpcResponse = JSON.parse(rawResponse);
-            this._logHttpTraffic(serverUrlJson, rpcRequest, rpcResponse);
+            this.#logHttpTraffic(serverUrlJson, rpcRequest, rpcResponse);
             return rpcResponse.result;
         } catch (SyntaxError) {
-            this._logger.error("Could not parse response: {}", rawResponse);
+            this.#logger.error("Could not parse response: {}", rawResponse);
             const { StudioServerCommunicationError } = require('./Errors.js');
             throw new StudioServerCommunicationError();
         }
@@ -82,12 +93,12 @@ class StudioJsonRpcClient {
      * @param {Object} rpcRequest 
      * @param {Object} rpcResponse 
      */
-    _logHttpTraffic(serverUrlJson, rpcRequest, rpcResponse) {
-        if (!this._logNetworkTraffic) {
+    #logHttpTraffic(serverUrlJson, rpcRequest, rpcResponse) {
+        if (!this.#logNetworkTraffic) {
             return;
         }
         const dottedLine = "- - - - - - - - - - - - - - - - - - - - - - -";
-        this._logger.debug(
+        this.#logger.debug(
             `Network traffic:\n${dottedLine}\n${serverUrlJson}\nRequest:\n`
             + `${JSON.stringify(rpcRequest, null, 3)}\n`
             + `${dottedLine}\nResponse:\n`
@@ -108,13 +119,13 @@ class StudioJsonRpcClient {
         let response = null;
         do {
             queryCount++;
-            this._logger.info(`Running QueryObjects page#${queryCount}...`);
-            response = await this._queryObjectsOneResultPage(
+            this.#logger.info(`Running QueryObjects page#${queryCount}...`);
+            response = await this.#queryObjectsOneResultPage(
                 searchParams, resolveProperties, firstEntry);
             // firstEntry = response.FirstEntry + response.ListedEntries;
             //  L> Assumed is that the status of a processed layout is changed; Hence it does NOT page
             //     the results because processed layouts already disappear from the search results.
-            const wflObjects = this._getObjectsFromQueryObjectsResponse(response, resolveProperties);
+            const wflObjects = this.#getObjectsFromQueryObjectsResponse(response, resolveProperties);
             if (wflObjects.length > 0) {
                 await callbackObjectsResolved(wflObjects);
             }
@@ -132,21 +143,21 @@ class StudioJsonRpcClient {
      * @param {number} firstEntry Object index to start reading from (in paged results).
      * @returns {Object} QueryObjectsResponse
      */
-    async _queryObjectsOneResultPage(searchParams, resolveProperties, firstEntry) {
+    async #queryObjectsOneResultPage(searchParams, resolveProperties, firstEntry) {
         const startsWithProps = ['ID', 'Type', 'Name']; // service rule: must start with this sequence of props
         if( !startsWithProps.every((value, index) => resolveProperties[index] === value) ) {
             const { ArgumentError } = require('./Errors.js');
             throw new ArgumentError("The 'resolveProperties' param should start with 'ID', 'Name' and 'Type' values.");
         }
         const request = {
-            "Ticket": this._ticket,
+            "Ticket": this.#ticket,
             "Params": searchParams,
             "FirstEntry": firstEntry,
             "MaxEntries": 25,
             "RequestProps": resolveProperties,
             "Order": [{ Property: "ID", Direction: true, __classname__: "QueryOrder" }], // oldest first
         };
-        const response = this._callWebService(request, "QueryObjects");
+        const response = this.#callWebService(request, "QueryObjects");
         return response;
     };
 
@@ -156,7 +167,7 @@ class StudioJsonRpcClient {
      * @param {Array<string>} resolveProperties Names of workflow object properties to expect.
      * @returns {Array<Object>} List of resolved objects, each having the properties assigned.
      */
-    _getObjectsFromQueryObjectsResponse(response, resolveProperties) {
+    #getObjectsFromQueryObjectsResponse(response, resolveProperties) {
         const wflObjects = [];
         const columnIndexes = new Map()
         for (var columnIndex = 0; columnIndex < response.Columns.length; columnIndex++) {
@@ -182,7 +193,7 @@ class StudioJsonRpcClient {
      */
     sendObjectsToStatus(objectIds, statusId) {
         const request = {
-            Ticket: this._ticket,
+            Ticket: this.#ticket,
             IDs: objectIds,
             MetaData: [{
                 Property: "StateId",
@@ -193,7 +204,7 @@ class StudioJsonRpcClient {
                 __classname__: "MetaDataValue"
             }]
         }
-        this._callWebService(request, "MultiSetObjectProperties");
+        this.#callWebService(request, "MultiSetObjectProperties");
     }
 }
 

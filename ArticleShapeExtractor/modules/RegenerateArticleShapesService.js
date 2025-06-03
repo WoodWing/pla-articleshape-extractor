@@ -6,8 +6,28 @@ const idd = require("indesign");
  */
 class RegenerateArticleShapesService {
 
+    /** @type {Logger} */
+    #logger;
+    
+    /** @type {VersionUtils} */
+    #versionUtils;
+    
+    /** @type {{{brand: <string>, issue: <string>, category: <string>, status: <string>}, layoutStatusOnSuccess: <string>, layoutStatusOnError: <string>}} */
+    #settings;
+    
+    /** @type {ExportInDesignArticlesToFolder} */
+    #exportInDesignArticlesToFolder;
+    
+    /** @type {StudioJsonRpcClient} */
+    #studioJsonRpcClient;
+    
+    /** @type {string|null} */
+    #layoutStatusIdOnSuccess;
+    
+    /** @type {string|null} */
+    #layoutStatusIdOnError;
+
     /**
-     * @constructor
      * @param {Logger} logger
      * @param {VersionUtils} versionUtils
      * @param {{{brand: <string>, issue: <string>, category: <string>, status: <string>}, layoutStatusOnSuccess: <string>, layoutStatusOnError: <string>}} settings
@@ -15,13 +35,13 @@ class RegenerateArticleShapesService {
      * @param {StudioJsonRpcClient} studioJsonRpcClient
      */
     constructor(logger, versionUtils, settings, exportInDesignArticlesToFolder, studioJsonRpcClient) {
-        this._logger = logger;
-        this._versionUtils = versionUtils;
-        this._settings = settings;
-        this._exportInDesignArticlesToFolder = exportInDesignArticlesToFolder;
-        this._studioJsonRpcClient = studioJsonRpcClient;
-        this._layoutStatusIdOnSuccess = null;
-        this._layoutStatusIdOnError = null;
+        this.#logger = logger;
+        this.#versionUtils = versionUtils;
+        this.#settings = settings;
+        this.#exportInDesignArticlesToFolder = exportInDesignArticlesToFolder;
+        this.#studioJsonRpcClient = studioJsonRpcClient;
+        this.#layoutStatusIdOnSuccess = null;
+        this.#layoutStatusIdOnError = null;
     }
 
     /**
@@ -34,22 +54,22 @@ class RegenerateArticleShapesService {
     async run(folder) {
 
         // Bail out when user is currently not logged in.
-        if (!this._studioJsonRpcClient.hasSession() ) {
+        if (!this.#studioJsonRpcClient.hasSession() ) {
             const { NoStudioSessionError } = require('./Errors.js');
             throw new NoStudioSessionError();
         }
 
         // Build a layout id-version map from the JSON files that have been extracted before into the folder.
-        const fileMap = await this._buildMapOfLayoutIdsVersionsAndFiles(folder);
+        const fileMap = await this.#buildMapOfLayoutIdsVersionsAndFiles(folder);
 
         // Run QueryObjects to filter layouts, and for each page of search results, let callback process them.
         const report = { extracted: 0, skipped: 0, failed: 0 };
         const resolveProperties = [ "ID", "Type", "Name", "Version", "PublicationId" ];
-        const queryParams = this._composeQueryParams();
-        await this._studioJsonRpcClient.queryObjects(
+        const queryParams = this.#composeQueryParams();
+        await this.#studioJsonRpcClient.queryObjects(
             queryParams, 
             resolveProperties, 
-            (wflObjects) => this._processQueriedLayouts(wflObjects, fileMap, folder, report)
+            (wflObjects) => this.#processQueriedLayouts(wflObjects, fileMap, folder, report)
         );
         return report;
     };
@@ -61,26 +81,26 @@ class RegenerateArticleShapesService {
      * @param {Folder} folder Target folder for exporting.
      * @param {{extracted: number, skipped: number, failed: number}} report
      */
-    async _processQueriedLayouts(wflObjects, fileMap, folder, report) {
+    async #processQueriedLayouts(wflObjects, fileMap, folder, report) {
         const extractedLayoutIds = [];
         const skippedLayoutIds = [];
         const failedLayoutIds = [];
         for (const wflObject of wflObjects) {
-            //this._logger.debug('QueryObjects resolved object: {}', JSON.stringify(wflObject, null, 4));
-            this._resolveLayoutStatusIds(wflObject.PublicationId);
+            //this.#logger.debug('QueryObjects resolved object: {}', JSON.stringify(wflObject, null, 4));
+            this.#resolveLayoutStatusIds(wflObject.PublicationId);
             const mapItem = fileMap.get(wflObject.ID);
             if (mapItem && mapItem.layoutVersion === wflObject.Version) {
-                this._logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
+                this.#logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
                     `Article Shapes (JSON files) for layout id ${wflObject.ID} with version ${wflObject.Version} ` +
                     'already exists in export folder.');
                 skippedLayoutIds.push(wflObject.ID);
             } else {
                 // If query has newer layout version, remove files of old version from disk.
                 if (mapItem) for (const oldFile of mapItem.files) {
-                    await this._deleteFile(oldFile);
+                    await this.#deleteFile(oldFile);
                 }
                 const theOpenDoc = app.openObject(wflObject.ID, false); // false: no checkout
-                const shapeCount = await this._exportInDesignArticlesToFolder.run(theOpenDoc, folder);
+                const shapeCount = await this.#exportInDesignArticlesToFolder.run(theOpenDoc, folder);
                 theOpenDoc.close(idd.SaveOptions.no);
                 if (shapeCount > 0) {
                     extractedLayoutIds.push(wflObject.ID);
@@ -94,10 +114,10 @@ class RegenerateArticleShapesService {
         }
         const handledLayoutIds = [...extractedLayoutIds, ...skippedLayoutIds];
         if (handledLayoutIds.length > 0) {
-            this._studioJsonRpcClient.sendObjectsToStatus(handledLayoutIds, this._layoutStatusIdOnSuccess);
+            this.#studioJsonRpcClient.sendObjectsToStatus(handledLayoutIds, this.#layoutStatusIdOnSuccess);
         }
         if (failedLayoutIds.length > 0) {
-            this._studioJsonRpcClient.sendObjectsToStatus(failedLayoutIds, this._layoutStatusIdOnError);
+            this.#studioJsonRpcClient.sendObjectsToStatus(failedLayoutIds, this.#layoutStatusIdOnError);
         }
         report.extracted += extractedLayoutIds.length;
         report.skipped += skippedLayoutIds.length;
@@ -107,25 +127,25 @@ class RegenerateArticleShapesService {
     /**
      * @param {string} brandId 
      */
-    _resolveLayoutStatusIds(brandId) {
-        if (this._layoutStatusIdOnSuccess !== null && this._layoutStatusIdOnError !== null) {
+    #resolveLayoutStatusIds(brandId) {
+        if (this.#layoutStatusIdOnSuccess !== null && this.#layoutStatusIdOnError !== null) {
             return;
         }
-        const publicationInfos = this._studioJsonRpcClient.getPublicationInfos([brandId], ["States"]);
+        const publicationInfos = this.#studioJsonRpcClient.getPublicationInfos([brandId], ["States"]);
         const publicationInfo = publicationInfos.find(pub => pub.Id === brandId);
         const layoutStatuses = publicationInfo.States.filter(state => state.Type === "Layout");
         for (const layoutStatus of layoutStatuses) {
-            if (layoutStatus.Name === this._settings.layoutStatusOnSuccess) {
-                this._layoutStatusIdOnSuccess = layoutStatus.Id;
-            } else if (layoutStatus.Name === this._settings.layoutStatusOnError) {
-                this._layoutStatusIdOnError = layoutStatus.Id;
+            if (layoutStatus.Name === this.#settings.layoutStatusOnSuccess) {
+                this.#layoutStatusIdOnSuccess = layoutStatus.Id;
+            } else if (layoutStatus.Name === this.#settings.layoutStatusOnError) {
+                this.#layoutStatusIdOnError = layoutStatus.Id;
             }
         }
-        if (this._layoutStatusIdOnSuccess === null) {
-            this._raiseStatusConfigError(this._settings.layoutStatusOnSuccess);
+        if (this.#layoutStatusIdOnSuccess === null) {
+            this.#raiseStatusConfigError(this.#settings.layoutStatusOnSuccess);
         }
-        if (this._layoutStatusIdOnError === null) {
-            this._raiseStatusConfigError(this._settings.layoutStatusOnError);
+        if (this.#layoutStatusIdOnError === null) {
+            this.#raiseStatusConfigError(this.#settings.layoutStatusOnError);
         }
     }
 
@@ -133,10 +153,10 @@ class RegenerateArticleShapesService {
      * Informs the status name in local config file is not setup for the brand.
      * @param {string} statusName 
      */
-    _raiseStatusConfigError(statusName) {
+    #raiseStatusConfigError(statusName) {
         const { ConfigurationError } = require('./Errors.js');
         const message = `\nStatus '${statusName}' seems not configured for `
-            + `brand '${this._settings.filter.brand}'.\n`
+            + `brand '${this.#settings.filter.brand}'.\n`
             + "Please check the 'regenerateArticleShapesSettings' option "
             + "in your 'config/config.js' or 'config/config-local.js' file.";
         throw new ConfigurationError(message);        
@@ -148,9 +168,9 @@ class RegenerateArticleShapesService {
      * @param {Folder} folder 
      * @returns {Promise<Map<string,{layoutVersion:<string>,shapeFiles:Array<File>}>>} Structured map, indexed by layout id.
      */
-    async _buildMapOfLayoutIdsVersionsAndFiles(folder) {
-        const shapeFiles = await this._filterArticleShapeFiles(folder);
-        //this._logger.info('Resolved layouts from files: {}', JSON.stringify(Object.fromEntries(shapeFiles), null, 4));
+    async #buildMapOfLayoutIdsVersionsAndFiles(folder) {
+        const shapeFiles = await this.#filterArticleShapeFiles(folder);
+        //this.#logger.info('Resolved layouts from files: {}', JSON.stringify(Object.fromEntries(shapeFiles), null, 4));
         const fileMap = new Map();
         for (const { shapeFile: shapeFile, layoutId, layoutVersion } of shapeFiles) {
             const mapItem = fileMap.get(layoutId);
@@ -160,23 +180,23 @@ class RegenerateArticleShapesService {
             }
             // Only allow one version per layout. Assure that version is the latest.
             // Compare the file version against the version tracked in the map.
-            switch (this._versionUtils.versionCompare(layoutVersion, mapItem.layoutVersion)) {
+            switch (this.#versionUtils.versionCompare(layoutVersion, mapItem.layoutVersion)) {
                 case 0: // File on disk has same version.
                     mapItem.shapeFiles.push(shapeFile);
                     break;
                 case 1: // File on disk is newer.
                     for (const oldFile of mapItem.shapeFiles) {
-                         await this._deleteFile(oldFile);
+                         await this.#deleteFile(oldFile);
                     }
                     mapItem.shapeFiles = [shapeFile];
                     mapItem.layoutVersion = layoutVersion;
                     break;
                 case -1: // File on disk is older.
-                    await this._deleteFile(shapeFile);
+                    await this.#deleteFile(shapeFile);
                     break;
             }
         }
-        //this._logger.info('Resolved layouts from files: {}', JSON.stringify(Object.fromEntries(fileMap), null, 4));
+        //this.#logger.info('Resolved layouts from files: {}', JSON.stringify(Object.fromEntries(fileMap), null, 4));
         return fileMap;
     }
 
@@ -185,12 +205,12 @@ class RegenerateArticleShapesService {
      * @param {Folder} folder
      * @returns {Promise<Array<{shapeFile: File, layoutId: string, layoutVersion: string}>>}
      */
-    async _filterArticleShapeFiles(folder) {
+    async #filterArticleShapeFiles(folder) {
         const entriesInFolder = await folder.getEntries();
         const filesInFolder = entriesInFolder.filter(entry => entry.isFile);
         const result = [];
         for (const shapeFile of filesInFolder) {
-            const match = this._extractLayoutIdAndVersionFromFilename(shapeFile.name);
+            const match = this.#extractLayoutIdAndVersionFromFilename(shapeFile.name);
             if (!match) {
                 continue;
             }
@@ -205,7 +225,7 @@ class RegenerateArticleShapesService {
      * @param {string} filename
      * @returns {[string, string] | null} Tuple of [layoutId, version] if matching postfix, null otherwise.
      */
-    _extractLayoutIdAndVersionFromFilename(filename) {
+    #extractLayoutIdAndVersionFromFilename(filename) {
         const filenameRegex = /\(([^)]+)\.v(\d+)\.(\d+)\)\./;
         const match = filename.match(filenameRegex);
         if (!match) {
@@ -220,12 +240,12 @@ class RegenerateArticleShapesService {
      * Remove a file from disk. Log warning on failure.
      * @param {File} file 
      */
-    async _deleteFile(file) {
-        this._logger.debug(`Deleting file: ${file.name}`);
+    async #deleteFile(file) {
+        this.#logger.debug(`Deleting file: ${file.name}`);
         try {
             await file.delete();
         } catch (err) {
-            this._logger.warning(`Failed to delete file: ${file.name}`, err);
+            this.#logger.warning(`Failed to delete file: ${file.name}`, err);
         }
     }
 
@@ -233,24 +253,24 @@ class RegenerateArticleShapesService {
      * Use the local filter settings to compose search params (applicable to the QueryObjects workflow service).
      * @returns {Array<{Property: string, Operation: string, Value: string, __classname__: string}>} List of QueryParam objects.
      */
-    _composeQueryParams() {
+    #composeQueryParams() {
         // Map the local filter settings onto the workflow object property names.
         const settingToProperty = { brand: "Publication", issue: "Issue", category: "Category", status: "State" };
         const queryParams = [];
         for (const setting in settingToProperty) {
             if (settingToProperty.hasOwnProperty(setting)) {
                 if (['issue', 'category'].includes(setting) 
-                    && this._settings.filter[setting].length === 0) {
+                    && this.#settings.filter[setting].length === 0) {
                     continue; // these filters can be left empty, which refers to 'all'
                 }
-                const queryParam = this._composeQueryParam(
+                const queryParam = this.#composeQueryParam(
                     settingToProperty[setting], 
                     "=", 
-                    this._settings.filter[setting]);
+                    this.#settings.filter[setting]);
                 queryParams.push(queryParam);
             }
         }
-        queryParams.push(this._composeQueryParam("Type", "=", "Layout"));
+        queryParams.push(this.#composeQueryParam("Type", "=", "Layout"));
         return queryParams;
     };
 
@@ -261,7 +281,7 @@ class RegenerateArticleShapesService {
      * @param {string} value 
      * @returns {{Property: string, Operation: string, Value: string, __classname__: string}} QueryParam object.
      */
-    _composeQueryParam(property, operation, value) {
+    #composeQueryParam(property, operation, value) {
         return {
             Property: property,
             Operation: operation,

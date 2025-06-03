@@ -4,6 +4,19 @@ const fs = require('fs');
  * Understands how to write messages of given severity to a log file.
  */
 class Logger {
+
+	/** @type {string} */
+	#path;
+
+	/** @type {string} */
+	#name;
+
+	/** @type {string} */
+	#level;
+
+	/** @type {boolean} */
+	#wipe;
+
 	/**
 	 * @param {String} filePath 
 	 * @param {String} filename 
@@ -14,15 +27,15 @@ class Logger {
 
 		this.LOGLEVEL = ["DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"];
 
-		this.path = filePath;
-		this.name = filename;
-		this.level = this.LOGLEVEL.indexOf(logLevel);
-		this.wipe = wipe;
+		this.#path = filePath;
+		this.#name = filename;
+		this.#level = this.LOGLEVEL.indexOf(logLevel);
+		this.#wipe = wipe;
 
-		if (this.level > 0 && (!filePath || !logLevel) ) {
+		if (this.#level > 0 && (!filePath || !logLevel) ) {
 			throw new Error("No log folder or filename provided.");
 		}
-		if (this.level === -1) {
+		if (this.#level === -1) {
 			throw new Error(`Unknown log level '${logLevel}' provided.`);
 		}
 	}
@@ -33,10 +46,10 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
 	debug() {
-		if(5 > this.level)
+		if(5 > this.#level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
-		this._log(5, args);
+		this.#log(5, args);
 	};
 
 	/**
@@ -45,10 +58,10 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
 	info() {
-		if(4 > this.level)
+		if(4 > this.#level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
-		this._log(4, args);
+		this.#log(4, args);
 	};
 
 	/**
@@ -57,10 +70,10 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
 	warning() {
-		if(3 > this.level)
+		if(3 > this.#level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
-		this._log(3, args);
+		this.#log(3, args);
 	};
 
 	/**
@@ -69,10 +82,10 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
 	error() {
-		if(2 > this.level)
+		if(2 > this.#level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
-		this._log(2, args);
+		this.#log(2, args);
 	};
 
 	/**
@@ -81,17 +94,17 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
 	critical() {
-		if(1 > this.level)
+		if(1 > this.#level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
-		this._log(1, args);
+		this.#log(1, args);
 	};
 
 	/**
 	 * @param {String} logLevel 
 	 * @param {String} args 
 	 */
-	_log(logLevel, args) {
+	#log(logLevel, args) {
 		const template = args.shift();
 		// Replace undefined arguments with '*undefined*' to distinguish from ''
 		args.forEach(function(replacement, i) {
@@ -102,21 +115,21 @@ class Logger {
 		const message = template.includes('{') && template.includes('}')
 			? template.replace(/{}/g, () => args.shift())
 			: template;		
-		this._writeLine(logLevel, message);
+		this.#writeLine(logLevel, message);
 	};
 
 	/**
 	 * @param {String} logLevel 
 	 * @param {String} message 
 	 */
-	_writeLine(logLevel, message) {
-		const logLine = `[${this._getDateTimeWithMsAsString()}] [${this.LOGLEVEL[logLevel].padEnd(8)}] ${message}\n`;
-		const logPath = this._getLogFilepath();
+	#writeLine(logLevel, message) {
+		const logLine = `[${this.#getDateTimeWithMsAsString()}] [${this.LOGLEVEL[logLevel].padEnd(8)}] ${message}\n`;
+		const logPath = this.#getLogFilepath();
 		try {
 			let mode = "a"; // append or create
-			if (this.wipe) {
+			if (this.#wipe) {
 				mode = "w"; // overwrite or create
-				this.wipe = false;
+				this.#wipe = false;
 			}
         	fs.writeFileSync(logPath, logLine, {encoding: "utf-8", flag: mode});		
 		} catch(error) {
@@ -127,12 +140,12 @@ class Logger {
 	/**
 	 * @returns {String} UTC date and time with milliseconds in ISO 8601 format.
 	 */
-	_getDateTimeWithMsAsString() {
+	#getDateTimeWithMsAsString() {
 		return new Date().toISOString();
 	};
 
-	_getLogFilepath() {
-		return `file:${this.path.rtrim('/')}/${this.name}`;
+	#getLogFilepath() {
+		return `file:${this.#path.rtrim('/')}/${this.#name}`;
 	};
 
 	/**

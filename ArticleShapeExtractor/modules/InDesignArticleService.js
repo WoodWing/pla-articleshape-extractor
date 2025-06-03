@@ -31,9 +31,9 @@ class InDesignArticleService {
 
         // Add new InDesign Articles.
         const doc = app.activeDocument;
-        const articles = this._getInDesignArticles(doc, frame);
+        const articles = this.#getInDesignArticles(doc, frame);
         if (articles.length == 0) {
-            this._createNewInDesignArticleWithSelectedFrames(doc, articleName);
+            this.#createNewInDesignArticleWithSelectedFrames(doc, articleName);
             alert("A new article '" + articleName + "' has been created, and selected frames have been added.");
             return;
         }
@@ -47,8 +47,8 @@ class InDesignArticleService {
             const storyTypeNames = ["Lead", "Secondary", "Third", "Filler"];
             for (let storyTypeIndex = 0; storyTypeIndex < storyTypeNames.length; storyTypeIndex++) {
                 const storyTypeName = storyTypeNames[storyTypeIndex];
-                newName = this._replaceTextCaseInsensitive(newName, storyTypeName, articleName);
-                newName = this._cleanWhitespaces(newName)
+                newName = this.#replaceTextCaseInsensitive(newName, storyTypeName, articleName);
+                newName = this.#cleanWhitespaces(newName)
             };
             if (newName != oldName) {
                 article.name = newName;
@@ -62,7 +62,7 @@ class InDesignArticleService {
      * @param {PageItem} Valid text/graphic frame.
      * @returns {Array<Article>}
      */
-    _getInDesignArticles(doc, frame) {
+    #getInDesignArticles(doc, frame) {
         const docArticles = doc.articles;
         let frameArticles = [];
 
@@ -71,7 +71,7 @@ class InDesignArticleService {
             const docArticle = docArticles.item(i);
 
             // Check if the frame is in the article's members
-            if (this._isFrameMemberOfInDesignArticle(docArticle, frame)) {
+            if (this.#isFrameMemberOfInDesignArticle(docArticle, frame)) {
                 frameArticles.push(docArticle);
             }
         }
@@ -84,7 +84,7 @@ class InDesignArticleService {
      * @param {PageItem} frame - The frame to check for membership.
      * @returns {Boolean} - True if the frame is already a member of the article, false otherwise.
      */
-    _isFrameMemberOfInDesignArticle(article, frame) {
+    #isFrameMemberOfInDesignArticle(article, frame) {
         const articleMembers = article.articleMembers.everyItem().getElements(); // Get all members as an array
         for (let i = 0; i < articleMembers.length; i++) {
             if (articleMembers[i].itemRef.equals(frame)) {
@@ -98,7 +98,7 @@ class InDesignArticleService {
      * Create a new InDesign Article with the given name. Add the selected frames to the article.
      * @param {String} articleName
      */
-    _createNewInDesignArticleWithSelectedFrames(doc, articleName) {
+    #createNewInDesignArticleWithSelectedFrames(doc, articleName) {
 
         // Create a new InDesign Article (even if an article with the same name already exists).
         const article = doc.articles.add();
@@ -123,7 +123,7 @@ class InDesignArticleService {
      * @param {String} replacement 
      * @returns {String} Text with substitutes.
      */
-    _replaceTextCaseInsensitive(text, search, replacement) {
+    #replaceTextCaseInsensitive(text, search, replacement) {
         const regex = new RegExp(search, "gi"); // "g" = global, "i" = case insensitive
         return text.replace(regex, replacement);
     };
@@ -133,7 +133,7 @@ class InDesignArticleService {
      * @param {String} text 
      * @returns {String} Cleaned text.
      */
-    _cleanWhitespaces(text) {
+    #cleanWhitespaces(text) {
         return text.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
     };
 

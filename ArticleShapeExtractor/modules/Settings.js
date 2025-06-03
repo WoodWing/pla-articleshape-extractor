@@ -1,17 +1,27 @@
 /**
  * Understands how to merge the local settings into the default settings.
  * Provides a getter function for each individual setting.
- * 
- * @constructor
- * @param {Object} defaultConfig Factory default settings.
- * @param {Object} localConfig Local override settings.
  */
 class Settings {
+
+    /** @type {Object} */
+    #configData;
+
+    /**
+     * @param {Object} defaultConfig Factory default settings.
+     * @param {Object} localConfig Local override settings.
+     */
     constructor(defaultConfig, localConfig) {
-        this._configData = this._deepMerge(defaultConfig, localConfig);
+        this.#configData = this.#deepMerge(defaultConfig, localConfig);
     }
 
-    _deepMerge(defaultData, localData) {
+    /**
+     * Recursively merge two structural settings objects.
+     * @param {Object} defaultData Default values.
+     * @param {Object} localData Override values.
+     * @returns {Object} Merged settings.
+     */
+    #deepMerge(defaultData, localData) {
         let merged = {};
         for (let key in defaultData) {
             if (defaultData.hasOwnProperty(key)) {
@@ -21,7 +31,7 @@ class Settings {
         for (let key in localData) {
             if (localData.hasOwnProperty(key)) {
                 if (typeof localData[key] === "object" && typeof defaultData[key] === "object") {
-                    merged[key] = this._deepMerge(defaultData[key], localData[key]);
+                    merged[key] = this.#deepMerge(defaultData[key], localData[key]);
                 } else {
                     merged[key] = localData[key];
                 }
@@ -34,7 +44,7 @@ class Settings {
      * @returns {Object}
      */
     getOfflineFallbackConfig() {
-        return this._configData.offlineFallback;
+        return this.#configData.offlineFallback;
     }
 
     /**
@@ -42,7 +52,7 @@ class Settings {
      */    
     getRegenerateArticleShapesSettings() {
         const { ConfigurationError } = require('./Errors.js');
-        const settings = this._configData.regenerateArticleShapesSettings;
+        const settings = this.#configData.regenerateArticleShapesSettings;
         const tip = "Please check your 'config/config.js' and your 'config/config-local.js' files.";
         for (const paramName of ["brand", "issue", "category", "status"]) {
             if (!settings.filter.hasOwnProperty(paramName) || typeof settings.filter[paramName] !== "string") {
@@ -52,7 +62,7 @@ class Settings {
                 throw new ConfigurationError(`The regenerateArticleShapesSettings → filter → ${paramName} option is empty.\n${tip}`);
             }
         }
-        const layoutStatusFilter = this._configData.regenerateArticleShapesSettings.filter;
+        const layoutStatusFilter = this.#configData.regenerateArticleShapesSettings.filter;
         for (const setting of ["layoutStatusOnSuccess", "layoutStatusOnError"]) {
             if (!settings.hasOwnProperty(setting) || typeof settings[setting] !== "string" || settings[setting].length === 0) {
                 throw new ConfigurationError(`The regenerateArticleShapesSettings → ${setting} option is not set.\n${tip}`);
@@ -62,28 +72,28 @@ class Settings {
                     + `option should differ from the regenerateArticleShapesSettings → filter → status option.\n${tip}`);
             }
         }
-        return this._configData.regenerateArticleShapesSettings;
+        return this.#configData.regenerateArticleShapesSettings;
     }
 
     /**
      * @returns {Object}
      */
     getLoggerConfig() {
-        return this._configData.logger;
+        return this.#configData.logger;
     }
 
     /**
      * @returns {boolean}
      */
     getLogNetworkTraffic() {
-        return this._configData.logger.logNetworkTraffic;
+        return this.#configData.logger.logNetworkTraffic;
     }
     
     /**
      * @returns {String}
      */
     getMinimumRequiredInDesignVersion() {
-        return this._configData.minimumRequiredInDesignVersion;
+        return this.#configData.minimumRequiredInDesignVersion;
     }
 }
 

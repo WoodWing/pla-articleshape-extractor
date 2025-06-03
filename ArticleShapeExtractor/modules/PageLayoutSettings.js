@@ -8,11 +8,14 @@ const formats = require('uxp').storage.formats;
  */
 class PageLayoutSettings{
 
+    /** @type {Logger} */
+    #logger;
+
     /**
      * @param {Logger} logger 
      */
     constructor(logger) {
-        this._logger = logger;
+        this.#logger = logger;
     }
 
     /**
@@ -26,7 +29,7 @@ class PageLayoutSettings{
     async exportSettings(doc, folder) {
         let exportedSuccessfully = false;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
-        this._logger.info("Exporting Document Settings for layout '{}'.", docName);
+        this.#logger.info("Exporting Document Settings for layout '{}'.", docName);
         app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
         try {
             if (doc.pages.length === 0) {
@@ -34,16 +37,16 @@ class PageLayoutSettings{
                 throw new NoDocumentPagesError();
             }
             const page = doc.pages.item(0);
-            const { inside, outside } = this._getInsideOutsideMargins(doc, page);
-            const settings = this._composeSettings(doc, page, inside, outside);
-            await this._saveOrComparePageLayoutSettings(settings, folder);
+            const { inside, outside } = this.#getInsideOutsideMargins(doc, page);
+            const settings = this.#composeSettings(doc, page, inside, outside);
+            await this.#saveOrComparePageLayoutSettings(settings, folder);
             exportedSuccessfully = true;
         } catch(error) {
             const { ConfigurationError } = require('./Errors.js');
             if (error instanceof ConfigurationError) {
-                this._logger.error(error.message);
+                this.#logger.error(error.message);
             } else {
-                this._logger.logError(error);
+                this.#logger.logError(error);
             }
             alert("An error occurred: " + error.message);
         } finally {
@@ -59,20 +62,20 @@ class PageLayoutSettings{
      * @param {Number} outside 
      * @returns {dimensions: {width: Number, height: Number}, margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}
      */
-    _composeSettings(doc, page, inside, outside) {
+    #composeSettings(doc, page, inside, outside) {
         return {
             dimensions: {
-                width: this._roundTo3Decimals(doc.documentPreferences.pageWidth),
-                height: this._roundTo3Decimals(doc.documentPreferences.pageHeight)
+                width: this.#roundTo3Decimals(doc.documentPreferences.pageWidth),
+                height: this.#roundTo3Decimals(doc.documentPreferences.pageHeight)
             },
             margins: {
-                top: this._roundTo3Decimals(page.marginPreferences.top), 
-                bottom: this._roundTo3Decimals(page.marginPreferences.bottom), 
-                inside: this._roundTo3Decimals(inside), 
-                outside: this._roundTo3Decimals(outside)
+                top: this.#roundTo3Decimals(page.marginPreferences.top), 
+                bottom: this.#roundTo3Decimals(page.marginPreferences.bottom), 
+                inside: this.#roundTo3Decimals(inside), 
+                outside: this.#roundTo3Decimals(outside)
             }, 
             columns: {
-                gutter: this._roundTo3Decimals(page.marginPreferences.columnGutter)
+                gutter: this.#roundTo3Decimals(page.marginPreferences.columnGutter)
             }
         };        
     }
@@ -82,7 +85,7 @@ class PageLayoutSettings{
      * @param {Number} precisionNumber 
      * @returns {Number}
      */
-    _roundTo3Decimals(precisionNumber) {
+    #roundTo3Decimals(precisionNumber) {
         return Math.round(precisionNumber * 1000) / 1000;
     }    
 
@@ -92,7 +95,7 @@ class PageLayoutSettings{
      * @param {Page} page 
      * @returns {inside: Number, outside: Number}
      */
-    _getInsideOutsideMargins(doc, page) {
+    #getInsideOutsideMargins(doc, page) {
         let inside = null;
         let outside = null;
         if (doc.documentPreferences.facingPages) { // spread setup
@@ -129,11 +132,11 @@ class PageLayoutSettings{
      * @param {Object} settings
      * @param {Folder} exportFolder
      */
-    async _saveOrComparePageLayoutSettings(settings, exportFolder) {
+    async #saveOrComparePageLayoutSettings(settings, exportFolder) {
         const manifestFoldername = "_manifest";
         const settingsFilename = "page-layout-settings.json";
-        const { entry: settingsFolder, _ } = await this._getOrCreateSubFolder(exportFolder, manifestFoldername);
-        const { entry: settingsFile, created } = await this._getOrCreateFile(settingsFolder, settingsFilename);
+        const { entry: settingsFolder, _ } = await this.#getOrCreateSubFolder(exportFolder, manifestFoldername);
+        const { entry: settingsFile, created } = await this.#getOrCreateFile(settingsFolder, settingsFilename);
         if (created) {
             const settingsJson = JSON.stringify(settings, null, 4);
             const byteCount = await settingsFile.write(settingsJson, {format: formats.utf8}); 
@@ -144,7 +147,7 @@ class PageLayoutSettings{
             }
         } else {
             const settingsOfPrecedingLayout = JSON.parse(await settingsFile.read({format: formats.utf8}));
-            if (!this._isDeepEqual(settings, settingsOfPrecedingLayout)) {
+            if (!this.#isDeepEqual(settings, settingsOfPrecedingLayout)) {
                 const { ConfigurationError } = require('./Errors.js');
                 const message = "\n" 
                     + "Page layout settings of current layout differ with preceding layout, processed just before.\n"
@@ -162,7 +165,7 @@ class PageLayoutSettings{
      * @param {string} subfolderName
      * @returns {{entry: Folder, created: boolean}}
      */
-    async _getOrCreateSubFolder(parentFolder, subfolderName) {
+    async #getOrCreateSubFolder(parentFolder, subfolderName) {
         try {
             return {entry: await parentFolder.getEntry(subfolderName), created: false};
         } catch (e) {
@@ -176,7 +179,7 @@ class PageLayoutSettings{
      * @param {string} filename 
      * @returns {{entry: File, created: boolean}}
      */
-    async _getOrCreateFile(folder, filename) {
+    async #getOrCreateFile(folder, filename) {
         try {
             return {entry: await folder.getEntry(filename), created: false};
         } catch (e) {
@@ -190,12 +193,12 @@ class PageLayoutSettings{
      * @param {any} rhs 
      * @returns {boolean}
      */
-    _isDeepEqual(lhs, rhs) {
+    #isDeepEqual(lhs, rhs) {
         const objectKeys = Object.keys;
         if (lhs && rhs && (typeof lhs) === 'object' && (typeof rhs) === 'object') {
             return objectKeys(lhs).length === objectKeys(rhs).length &&
                 objectKeys(lhs).every(
-                    key => this._isDeepEqual(lhs[key], rhs[key])
+                    key => this.#isDeepEqual(lhs[key], rhs[key])
                 )
         }
         return lhs === rhs;

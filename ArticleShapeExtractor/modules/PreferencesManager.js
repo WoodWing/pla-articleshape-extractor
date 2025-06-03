@@ -1,10 +1,13 @@
 class PreferencesManager {
 
+    /** @type {Object} */
+    #appPreferences;
+
     /**
      * @param {Object} appPreferences 
      */
     constructor(appPreferences) {
-        this._appPreferences = appPreferences;
+        this.#appPreferences = appPreferences;
     }
 
     /**
@@ -14,8 +17,8 @@ class PreferencesManager {
     overridePreferences(updates) {
         originalPreferences = {};
         for (const key in updates) {
-            originalPreferences[key] =  this._appPreferences[key];
-            this._appPreferences[key] = updates[key]; 
+            originalPreferences[key] =  this.#appPreferences[key];
+            this.#appPreferences[key] = updates[key]; 
         }
         return originalPreferences;
     };
@@ -25,7 +28,7 @@ class PreferencesManager {
      */
     restoreOriginalPreferences(originalPreferences) {
         for (const key in originalPreferences) {
-            this._appPreferences[key] = originalPreferences[key];
+            this.#appPreferences[key] = originalPreferences[key];
         }
     };
 }
