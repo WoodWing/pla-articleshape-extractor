@@ -17,6 +17,8 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
     this._settings = settings;
     this._exportInDesignArticlesToFolder = exportInDesignArticlesToFolder;
     this._studioJsonRpcClient = studioJsonRpcClient;
+    this._layoutStatusIdOnSuccess = null;
+    this._layoutStatusIdOnError = null;
 
     /**
      * Run the pre-configured Used Query to make an inventory of the layouts to be processed. The layouts are
@@ -37,7 +39,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
         const fileMap = await this._buildMapOfLayoutIdsVersionsAndFiles(folder);
 
         // Run QueryObjects to filter layouts, and for each page of search results, let callback process them.
-        const resolveProperties = [ "ID", "Type", "Name", "Version" ];
+        const resolveProperties = [ "ID", "Type", "Name", "Version", "PublicationId" ];
         const queryParams = this._composeQueryParams();
         await this._studioJsonRpcClient.queryObjects(
             queryParams, 
@@ -58,6 +60,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
         const failedLayoutIds = [];
         for (const wflObject of wflObjects) {
             //this._logger.debug('QueryObjects resolved object: {}', JSON.stringify(wflObject, null, 4));
+            this._resolveLayoutStatusIds(wflObject.PublicationId);
             const mapItem = fileMap.get(wflObject.ID);
             if (mapItem && mapItem.layoutVersion === wflObject.Version) {
                 this._logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
@@ -89,6 +92,44 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
         if (failedLayoutIds) {
             this._studioJsonRpcClient.sendObjectsToStatus(failedLayoutIds, this._settings.layoutStatusOnError);
         }
+    }
+
+    /**
+     * @param {string} brandId 
+     */
+    this._resolveLayoutStatusIds = function(brandId) {
+        if (this._layoutStatusIdOnSuccess !== null && this._layoutStatusIdOnError !== null) {
+            return;
+        }
+        const publicationInfos = this._studioJsonRpcClient.getPublicationInfos([brandId], ["States"]);
+        const publicationInfo = publicationInfos.find(pub => pub.Id === brandId);
+        const layoutStatuses = publicationInfo.States.filter(state => state.Type === "Layout");
+        for (const layoutStatus of layoutStatuses) {
+            if (layoutStatus.Name === this._settings.layoutStatusOnSuccess) {
+                this._layoutStatusIdOnSuccess = layoutStatus.Id;
+            } else if (layoutStatus.Name === this._settings.layoutStatusOnError) {
+                this._layoutStatusIdOnError = layoutStatus.Id;
+            }
+        }
+        if (this._layoutStatusIdOnSuccess === null) {
+            this._raiseStatusConfigError(this._settings.layoutStatusOnSuccess);
+        }
+        if (this._layoutStatusIdOnError === null) {
+            this._raiseStatusConfigError(this._settings.layoutStatusOnError);
+        }
+    }
+
+    /**
+     * Informs the status name in local config file is not setup for the brand.
+     * @param {string} statusName 
+     */
+    this._raiseStatusConfigError = function(statusName) {
+        const { ConfigurationError } = require('./Errors.js');
+        const message = `\nStatus '${statusName}' seems not configured for `
+            + `brand '${this._settings.filter.brand}'.\n`
+            + "Please check the 'regenerateArticleShapesSettings' option "
+            + "in your 'config/config.js' or 'config/config-local.js' file.";
+        throw new ConfigurationError(message);        
     }
 
     /**

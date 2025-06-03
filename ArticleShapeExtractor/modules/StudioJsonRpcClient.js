@@ -25,13 +25,19 @@ function StudioJsonRpcClient(logger, logNetworkTraffic, serverUrl, ticket) {
 
     /**
      * Call the GetPublications workflow service provided by Studio Server.
-     * @param {Array<string>} requestInfo
+     * @param {Array<string>|null} brandIds List of ids, or null for all brands.
+     * @param {Array<string>|null} requestInfo Brand setup info to resolve: "FeatureAccessList", "ObjectTypeProperties", "ActionProperties", "States", "CurrentIssue", "PubChannels", "Categories"
      * @returns {Array<Object>} List of PublicationInfo data objects.
      */
-    this.getPublicationInfos = function(requestInfo) {
+    this.getPublicationInfos = function(brandIds, requestInfo) {
         const request = {
-            "Ticket": this._ticket,
-            "RequestInfo": requestInfo
+            Ticket: this._ticket
+        }
+        if (brandIds) {
+            request["IDs"] = brandIds;
+        }
+        if (requestInfo) {
+            request["RequestInfo"] = requestInfo;
         }
         const response = this._callWebService(request, "GetPublications");
         return response.Publications;

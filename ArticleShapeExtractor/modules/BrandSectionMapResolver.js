@@ -19,7 +19,7 @@ function BrandSectionMapResolver(logger, studioJsonRpcClient) {
         if (!this._studioJsonRpcClient.hasSession()) {
             return; // only provide info when having a session
         }
-        const publicationInfos = this._studioJsonRpcClient.getPublicationInfos(["Categories"]);
+        const publicationInfos = this._studioJsonRpcClient.getPublicationInfos(null, ["Categories"]);
         const brandSectionMap = this._composeBrandSectionMap(publicationInfos);
         await this._saveBrandSectionMapToDisk(brandSectionMap, exportFolder);
     }
