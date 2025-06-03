@@ -86,11 +86,11 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
             }
         }
         const handledLayoutIds = [...extractedLayoutIds, ...skippedLayoutIds];
-        if (handledLayoutIds) {
-            this._studioJsonRpcClient.sendObjectsToStatus(handledLayoutIds, this._settings.layoutStatusOnSuccess);
+        if (handledLayoutIds.length > 0) {
+            this._studioJsonRpcClient.sendObjectsToStatus(handledLayoutIds, this._layoutStatusIdOnSuccess);
         }
-        if (failedLayoutIds) {
-            this._studioJsonRpcClient.sendObjectsToStatus(failedLayoutIds, this._settings.layoutStatusOnError);
+        if (failedLayoutIds.length > 0) {
+            this._studioJsonRpcClient.sendObjectsToStatus(failedLayoutIds, this._layoutStatusIdOnError);
         }
     }
 
