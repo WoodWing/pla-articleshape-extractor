@@ -2,27 +2,29 @@ const fs = require('fs');
 
 /**
  * Understands how to write messages of given severity to a log file.
- * 
- * @constructor
- * @param {String} filePath 
- * @param {String} filename 
- * @param {String} logLevel 
- * @param {Boolean} wipe 
  */
-function Logger(filePath, filename, logLevel, wipe) {
+class Logger {
+	/**
+	 * @param {String} filePath 
+	 * @param {String} filename 
+	 * @param {String} logLevel 
+	 * @param {Boolean} wipe 
+	 */
+	constructor (filePath, filename, logLevel, wipe) {
 
-	this.LOGLEVEL = ["DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"];
+		this.LOGLEVEL = ["DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"];
 
-	this.path = filePath;
-	this.name = filename;
-	this.level = this.LOGLEVEL.indexOf(logLevel);
-	this.wipe = wipe;
+		this.path = filePath;
+		this.name = filename;
+		this.level = this.LOGLEVEL.indexOf(logLevel);
+		this.wipe = wipe;
 
-	if (this.level > 0 && (!filePath || !logLevel) ) {
-        throw new Error("No log folder or filename provided.");
-    }
-	if (this.level === -1) {
-		throw new Error(`Unknown log level '${logLevel}' provided.`);
+		if (this.level > 0 && (!filePath || !logLevel) ) {
+			throw new Error("No log folder or filename provided.");
+		}
+		if (this.level === -1) {
+			throw new Error(`Unknown log level '${logLevel}' provided.`);
+		}
 	}
 
 	/**
@@ -30,7 +32,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @param {String} message
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
-	this.debug = function () {
+	debug() {
 		if(5 > this.level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
@@ -42,7 +44,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @param {String} message
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
-	this.info = function () {
+	info() {
 		if(4 > this.level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
@@ -54,7 +56,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @param {String} message
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
-	this.warning = function () {
+	warning() {
 		if(3 > this.level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
@@ -66,7 +68,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @param {String} message
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
-	this.error = function () {
+	error() {
 		if(2 > this.level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
@@ -78,7 +80,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @param {String} message
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
-	this.critical = function () {
+	critical() {
 		if(1 > this.level)
 			return;
 		const args = Array.prototype.slice.call(arguments);
@@ -89,7 +91,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @param {String} logLevel 
 	 * @param {String} args 
 	 */
-	this._log = function (logLevel, args) {
+	_log(logLevel, args) {
 		const template = args.shift();
 		// Replace undefined arguments with '*undefined*' to distinguish from ''
 		args.forEach(function(replacement, i) {
@@ -107,7 +109,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @param {String} logLevel 
 	 * @param {String} message 
 	 */
-	this._writeLine = function (logLevel, message) {
+	_writeLine(logLevel, message) {
 		const logLine = `[${this._getDateTimeWithMsAsString()}] [${this.LOGLEVEL[logLevel].padEnd(8)}] ${message}\n`;
 		const logPath = this._getLogFilepath();
 		try {
@@ -125,11 +127,11 @@ function Logger(filePath, filename, logLevel, wipe) {
 	/**
 	 * @returns {String} UTC date and time with milliseconds in ISO 8601 format.
 	 */
-	this._getDateTimeWithMsAsString = function() {
+	_getDateTimeWithMsAsString() {
 		return new Date().toISOString();
 	};
 
-	this._getLogFilepath = function() {
+	_getLogFilepath() {
 		return `file:${this.path.rtrim('/')}/${this.name}`;
 	};
 
@@ -138,7 +140,7 @@ function Logger(filePath, filename, logLevel, wipe) {
 	 * @param {Error} error 
 	 * @returns 
 	 */
-	this.logError = function(error) {
+	logError(error) {
 		let message = error.message + " (" + error.name + ")";
 		if (error.stack) {
 			message += "\n- stack:\n" + error.stack;

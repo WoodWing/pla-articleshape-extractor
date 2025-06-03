@@ -2,24 +2,28 @@ const { app } = require("indesign");
 
 /**
  * Understands how to communicate with Studio Server using the JSON-RPC protocol.
- * 
- * @constructor
- * @param {Logger} logger 
- * @param {boolean} logNetworkTraffic
- * @param {string|null} serverUrl 
- * @param {string|null} ticket 
  */
-function StudioJsonRpcClient(logger, logNetworkTraffic, serverUrl, ticket) {
-    this._logger = logger;
-    this._logNetworkTraffic = logNetworkTraffic;
-    this._serverUrl = serverUrl;
-    this._ticket = ticket;
+class StudioJsonRpcClient {
+
+    /**
+     * @constructor
+     * @param {Logger} logger 
+     * @param {boolean} logNetworkTraffic
+     * @param {string|null} serverUrl 
+     * @param {string|null} ticket 
+     */    
+    constructor(logger, logNetworkTraffic, serverUrl, ticket) {
+        this._logger = logger;
+        this._logNetworkTraffic = logNetworkTraffic;
+        this._serverUrl = serverUrl;
+        this._ticket = ticket;
+    }
 
     /**
      * Whether or not a session with the Studio Server has been setup.
      * @returns {boolean}
      */
-    this.hasSession = function() {
+    hasSession() {
         return this._serverUrl && this._ticket;
     }
 
@@ -29,7 +33,7 @@ function StudioJsonRpcClient(logger, logNetworkTraffic, serverUrl, ticket) {
      * @param {Array<string>|null} requestInfo Brand setup info to resolve: "FeatureAccessList", "ObjectTypeProperties", "ActionProperties", "States", "CurrentIssue", "PubChannels", "Categories"
      * @returns {Array<Object>} List of PublicationInfo data objects.
      */
-    this.getPublicationInfos = function(brandIds, requestInfo) {
+    getPublicationInfos(brandIds, requestInfo) {
         const request = {
             Ticket: this._ticket
         }
@@ -50,7 +54,7 @@ function StudioJsonRpcClient(logger, logNetworkTraffic, serverUrl, ticket) {
      * @param {string} serviceName
      * @returns {Object} Response
      */
-    this._callWebService = function(request, serviceName) {
+    _callWebService(request, serviceName) {
         const separator = this._serverUrl.indexOf("?") === -1 ? '?' : '&';
         const serverUrlJson = `${this._serverUrl}${separator}protocol=JSON`;
         const rpcRequest = {
@@ -78,7 +82,7 @@ function StudioJsonRpcClient(logger, logNetworkTraffic, serverUrl, ticket) {
      * @param {Object} rpcRequest 
      * @param {Object} rpcResponse 
      */
-    this._logHttpTraffic = function(serverUrlJson, rpcRequest, rpcResponse) {
+    _logHttpTraffic(serverUrlJson, rpcRequest, rpcResponse) {
         if (!this._logNetworkTraffic) {
             return;
         }
@@ -97,7 +101,7 @@ function StudioJsonRpcClient(logger, logNetworkTraffic, serverUrl, ticket) {
      * @param {Array<string>} resolveProperties List of workflow object property names to resolve.
      * @param {CallableFunction} callbackObjectsResolved This function is called for each page of retrieved objects.
      */
-    this.queryObjects = async function(searchParams, resolveProperties, callbackObjectsResolved) {
+    async queryObjects(searchParams, resolveProperties, callbackObjectsResolved) {
         let firstEntry = 1;
         let queryCount = 0; 
         const maxQueryHit = 100; // paranoid prevention of endless loops
@@ -128,7 +132,7 @@ function StudioJsonRpcClient(logger, logNetworkTraffic, serverUrl, ticket) {
      * @param {number} firstEntry Object index to start reading from (in paged results).
      * @returns {Object} QueryObjectsResponse
      */
-    this._queryObjectsOneResultPage = async function(searchParams, resolveProperties, firstEntry) {
+    async _queryObjectsOneResultPage(searchParams, resolveProperties, firstEntry) {
         const startsWithProps = ['ID', 'Type', 'Name']; // service rule: must start with this sequence of props
         if( !startsWithProps.every((value, index) => resolveProperties[index] === value) ) {
             const { ArgumentError } = require('./Errors.js');
@@ -152,7 +156,7 @@ function StudioJsonRpcClient(logger, logNetworkTraffic, serverUrl, ticket) {
      * @param {Array<string>} resolveProperties Names of workflow object properties to expect.
      * @returns {Array<Object>} List of resolved objects, each having the properties assigned.
      */
-    this._getObjectsFromQueryObjectsResponse = function(response, resolveProperties) {
+    _getObjectsFromQueryObjectsResponse(response, resolveProperties) {
         const wflObjects = [];
         const columnIndexes = new Map()
         for (var columnIndex = 0; columnIndex < response.Columns.length; columnIndex++) {
@@ -176,7 +180,7 @@ function StudioJsonRpcClient(logger, logNetworkTraffic, serverUrl, ticket) {
      * @param {Array<string>} objectIds 
      * @param {string} statusId
      */
-    this.sendObjectsToStatus = function(objectIds, statusId) {
+    sendObjectsToStatus(objectIds, statusId) {
         const request = {
             Ticket: this._ticket,
             IDs: objectIds,

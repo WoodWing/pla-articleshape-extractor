@@ -1,6 +1,6 @@
 const { app } = require("indesign");
 
-function InDesignArticleService() {
+class InDesignArticleService {
 
     /**
      * Create a new InDesign Article for the currently selected frames. Or, when the frames are
@@ -12,7 +12,7 @@ function InDesignArticleService() {
      * 
      * @param {String} articleName 
      */
-    this.addOrRenameInDesignArticle = function(articleName) {
+    addOrRenameInDesignArticle(articleName) {
         if (app.documents.length === 0) {
             const { NoDocumentOpenedError } = require('./Errors.js');
             throw new NoDocumentOpenedError();
@@ -62,7 +62,7 @@ function InDesignArticleService() {
      * @param {PageItem} Valid text/graphic frame.
      * @returns {Array<Article>}
      */
-    this._getInDesignArticles = function(doc, frame) {
+    _getInDesignArticles(doc, frame) {
         const docArticles = doc.articles;
         let frameArticles = [];
 
@@ -84,7 +84,7 @@ function InDesignArticleService() {
      * @param {PageItem} frame - The frame to check for membership.
      * @returns {Boolean} - True if the frame is already a member of the article, false otherwise.
      */
-    this._isFrameMemberOfInDesignArticle = function(article, frame) {
+    _isFrameMemberOfInDesignArticle(article, frame) {
         const articleMembers = article.articleMembers.everyItem().getElements(); // Get all members as an array
         for (let i = 0; i < articleMembers.length; i++) {
             if (articleMembers[i].itemRef.equals(frame)) {
@@ -98,7 +98,7 @@ function InDesignArticleService() {
      * Create a new InDesign Article with the given name. Add the selected frames to the article.
      * @param {String} articleName
      */
-    this._createNewInDesignArticleWithSelectedFrames = function(doc, articleName) {
+    _createNewInDesignArticleWithSelectedFrames(doc, articleName) {
 
         // Create a new InDesign Article (even if an article with the same name already exists).
         const article = doc.articles.add();
@@ -123,7 +123,7 @@ function InDesignArticleService() {
      * @param {String} replacement 
      * @returns {String} Text with substitutes.
      */
-    this._replaceTextCaseInsensitive = function(text, search, replacement) {
+    _replaceTextCaseInsensitive(text, search, replacement) {
         const regex = new RegExp(search, "gi"); // "g" = global, "i" = case insensitive
         return text.replace(regex, replacement);
     };
@@ -133,7 +133,7 @@ function InDesignArticleService() {
      * @param {String} text 
      * @returns {String} Cleaned text.
      */
-    this._cleanWhitespaces = function(text) {
+    _cleanWhitespaces(text) {
         return text.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
     };
 
@@ -142,7 +142,7 @@ function InDesignArticleService() {
      * @param {pageItem|null} object
      * @returns {Boolean}
      */
-    this.isValidArticleTextFrame = function(pageItem) {
+    isValidArticleTextFrame(pageItem) {
         return pageItem && pageItem.constructorName === "TextFrame" && pageItem.isValid
     };
 
@@ -152,7 +152,7 @@ function InDesignArticleService() {
      * @param {pageItem|null} object
      * @returns {Boolean}
      */
-    this.isValidArticleGraphicFrame = function(pageItem) {
+    isValidArticleGraphicFrame(pageItem) {
         const graphicClasses = ["Rectangle", "Oval", "Polygon"];
         return pageItem && graphicClasses.includes(pageItem.constructorName) && pageItem.isValid;
     };
@@ -162,7 +162,7 @@ function InDesignArticleService() {
      * @param {pageItem|null} object
      * @returns {Boolean}
      */
-    this.isValidArticleComponentFrame = function(pageItem) {
+    isValidArticleComponentFrame(pageItem) {
         return this.isValidArticleTextFrame(pageItem) || this.isValidArticleGraphicFrame(pageItem)
     }
 }

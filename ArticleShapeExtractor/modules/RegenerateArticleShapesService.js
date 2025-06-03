@@ -3,22 +3,26 @@ const idd = require("indesign");
 
 /**
  * Understands the batch wise process of opening layouts to (re)extract all placed article shapes from them.
- * 
- * @constructor
- * @param {Logger} logger
- * @param {VersionUtils} versionUtils
- * @param {{{brand: <string>, issue: <string>, category: <string>, status: <string>}, layoutStatusOnSuccess: <string>, layoutStatusOnError: <string>}} settings
- * @param {ExportInDesignArticlesToFolder} exportInDesignArticlesToFolder
- * @param {StudioJsonRpcClient} studioJsonRpcClient
  */
-function RegenerateArticleShapesService(logger, versionUtils, settings, exportInDesignArticlesToFolder, studioJsonRpcClient) {
-    this._logger = logger;
-    this._versionUtils = versionUtils;
-    this._settings = settings;
-    this._exportInDesignArticlesToFolder = exportInDesignArticlesToFolder;
-    this._studioJsonRpcClient = studioJsonRpcClient;
-    this._layoutStatusIdOnSuccess = null;
-    this._layoutStatusIdOnError = null;
+class RegenerateArticleShapesService {
+
+    /**
+     * @constructor
+     * @param {Logger} logger
+     * @param {VersionUtils} versionUtils
+     * @param {{{brand: <string>, issue: <string>, category: <string>, status: <string>}, layoutStatusOnSuccess: <string>, layoutStatusOnError: <string>}} settings
+     * @param {ExportInDesignArticlesToFolder} exportInDesignArticlesToFolder
+     * @param {StudioJsonRpcClient} studioJsonRpcClient
+     */
+    constructor(logger, versionUtils, settings, exportInDesignArticlesToFolder, studioJsonRpcClient) {
+        this._logger = logger;
+        this._versionUtils = versionUtils;
+        this._settings = settings;
+        this._exportInDesignArticlesToFolder = exportInDesignArticlesToFolder;
+        this._studioJsonRpcClient = studioJsonRpcClient;
+        this._layoutStatusIdOnSuccess = null;
+        this._layoutStatusIdOnError = null;
+    }
 
     /**
      * Run the pre-configured Used Query to make an inventory of the layouts to be processed. The layouts are
@@ -27,7 +31,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
      * optimization. All processed layouts (regardless whether skipped) are sent to their next status in the workflow.
      * @param {Folder} folder 
      */
-    this.run = async function(folder) {
+    async run(folder) {
 
         // Bail out when user is currently not logged in.
         if (!this._studioJsonRpcClient.hasSession() ) {
@@ -57,7 +61,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
      * @param {Folder} folder Target folder for exporting.
      * @param {{extracted: number, skipped: number, failed: number}} report
      */
-    this._processQueriedLayouts = async function (wflObjects, fileMap, folder, report) {
+    async _processQueriedLayouts(wflObjects, fileMap, folder, report) {
         const extractedLayoutIds = [];
         const skippedLayoutIds = [];
         const failedLayoutIds = [];
@@ -103,7 +107,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
     /**
      * @param {string} brandId 
      */
-    this._resolveLayoutStatusIds = function(brandId) {
+    _resolveLayoutStatusIds(brandId) {
         if (this._layoutStatusIdOnSuccess !== null && this._layoutStatusIdOnError !== null) {
             return;
         }
@@ -129,7 +133,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
      * Informs the status name in local config file is not setup for the brand.
      * @param {string} statusName 
      */
-    this._raiseStatusConfigError = function(statusName) {
+    _raiseStatusConfigError(statusName) {
         const { ConfigurationError } = require('./Errors.js');
         const message = `\nStatus '${statusName}' seems not configured for `
             + `brand '${this._settings.filter.brand}'.\n`
@@ -144,7 +148,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
      * @param {Folder} folder 
      * @returns {Promise<Map<string,{layoutVersion:<string>,shapeFiles:Array<File>}>>} Structured map, indexed by layout id.
      */
-    this._buildMapOfLayoutIdsVersionsAndFiles = async function (folder) {
+    async _buildMapOfLayoutIdsVersionsAndFiles(folder) {
         const shapeFiles = await this._filterArticleShapeFiles(folder);
         //this._logger.info('Resolved layouts from files: {}', JSON.stringify(Object.fromEntries(shapeFiles), null, 4));
         const fileMap = new Map();
@@ -181,7 +185,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
      * @param {Folder} folder
      * @returns {Promise<Array<{shapeFile: File, layoutId: string, layoutVersion: string}>>}
      */
-    this._filterArticleShapeFiles = async function (folder) {
+    async _filterArticleShapeFiles(folder) {
         const entriesInFolder = await folder.getEntries();
         const filesInFolder = entriesInFolder.filter(entry => entry.isFile);
         const result = [];
@@ -201,7 +205,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
      * @param {string} filename
      * @returns {[string, string] | null} Tuple of [layoutId, version] if matching postfix, null otherwise.
      */
-    this._extractLayoutIdAndVersionFromFilename = function(filename) {
+    _extractLayoutIdAndVersionFromFilename(filename) {
         const filenameRegex = /\(([^)]+)\.v(\d+)\.(\d+)\)\./;
         const match = filename.match(filenameRegex);
         if (!match) {
@@ -216,7 +220,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
      * Remove a file from disk. Log warning on failure.
      * @param {File} file 
      */
-    this._deleteFile = async function(file) {
+    async _deleteFile(file) {
         this._logger.debug(`Deleting file: ${file.name}`);
         try {
             await file.delete();
@@ -229,7 +233,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
      * Use the local filter settings to compose search params (applicable to the QueryObjects workflow service).
      * @returns {Array<{Property: string, Operation: string, Value: string, __classname__: string}>} List of QueryParam objects.
      */
-    this._composeQueryParams = function() {
+    _composeQueryParams() {
         // Map the local filter settings onto the workflow object property names.
         const settingToProperty = { brand: "Publication", issue: "Issue", category: "Category", status: "State" };
         const queryParams = [];
@@ -257,7 +261,7 @@ function RegenerateArticleShapesService(logger, versionUtils, settings, exportIn
      * @param {string} value 
      * @returns {{Property: string, Operation: string, Value: string, __classname__: string}} QueryParam object.
      */
-    this._composeQueryParam = function(property, operation, value) {
+    _composeQueryParam(property, operation, value) {
         return {
             Property: property,
             Operation: operation,

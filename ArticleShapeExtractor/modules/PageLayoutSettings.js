@@ -5,12 +5,15 @@ const formats = require('uxp').storage.formats;
 
 /**
  * Understands how to get the settings from InDesign as shown in the Margins and Columns dialog.
- * 
- * @constructor
- * @param {Logger} logger 
  */
-function PageLayoutSettings(logger) {
-    this._logger = logger;
+class PageLayoutSettings{
+
+    /**
+     * @param {Logger} logger 
+     */
+    constructor(logger) {
+        this._logger = logger;
+    }
 
     /**
      * Exports the layout settings of the given layout document to a file named
@@ -20,7 +23,7 @@ function PageLayoutSettings(logger) {
      * @param {Folder} folder 
      * @returns {boolean} True when the settings are matching (or new), false otherwise.
      */
-    this.exportSettings = async function(doc, folder) {
+    async exportSettings(doc, folder) {
         let exportedSuccessfully = false;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this._logger.info("Exporting Document Settings for layout '{}'.", docName);
@@ -56,7 +59,7 @@ function PageLayoutSettings(logger) {
      * @param {Number} outside 
      * @returns {dimensions: {width: Number, height: Number}, margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}
      */
-    this._composeSettings = function(doc, page, inside, outside) {
+    _composeSettings(doc, page, inside, outside) {
         return {
             dimensions: {
                 width: this._roundTo3Decimals(doc.documentPreferences.pageWidth),
@@ -79,7 +82,7 @@ function PageLayoutSettings(logger) {
      * @param {Number} precisionNumber 
      * @returns {Number}
      */
-    this._roundTo3Decimals = function(precisionNumber) {
+    _roundTo3Decimals(precisionNumber) {
         return Math.round(precisionNumber * 1000) / 1000;
     }    
 
@@ -89,7 +92,7 @@ function PageLayoutSettings(logger) {
      * @param {Page} page 
      * @returns {inside: Number, outside: Number}
      */
-    this._getInsideOutsideMargins = function(doc, page) {
+    _getInsideOutsideMargins(doc, page) {
         let inside = null;
         let outside = null;
         if (doc.documentPreferences.facingPages) { // spread setup
@@ -126,7 +129,7 @@ function PageLayoutSettings(logger) {
      * @param {Object} settings
      * @param {Folder} exportFolder
      */
-    this._saveOrComparePageLayoutSettings = async function(settings, exportFolder) {
+    async _saveOrComparePageLayoutSettings(settings, exportFolder) {
         const manifestFoldername = "_manifest";
         const settingsFilename = "page-layout-settings.json";
         const { entry: settingsFolder, _ } = await this._getOrCreateSubFolder(exportFolder, manifestFoldername);
@@ -159,7 +162,7 @@ function PageLayoutSettings(logger) {
      * @param {string} subfolderName
      * @returns {{entry: Folder, created: boolean}}
      */
-    this._getOrCreateSubFolder = async function(parentFolder, subfolderName) {
+    async _getOrCreateSubFolder(parentFolder, subfolderName) {
         try {
             return {entry: await parentFolder.getEntry(subfolderName), created: false};
         } catch (e) {
@@ -173,7 +176,7 @@ function PageLayoutSettings(logger) {
      * @param {string} filename 
      * @returns {{entry: File, created: boolean}}
      */
-    this._getOrCreateFile = async function (folder, filename) {
+    async _getOrCreateFile(folder, filename) {
         try {
             return {entry: await folder.getEntry(filename), created: false};
         } catch (e) {
@@ -187,7 +190,7 @@ function PageLayoutSettings(logger) {
      * @param {any} rhs 
      * @returns {boolean}
      */
-    this._isDeepEqual = function(lhs, rhs) {
+    _isDeepEqual(lhs, rhs) {
         const objectKeys = Object.keys;
         if (lhs && rhs && (typeof lhs) === 'object' && (typeof rhs) === 'object') {
             return objectKeys(lhs).length === objectKeys(rhs).length &&

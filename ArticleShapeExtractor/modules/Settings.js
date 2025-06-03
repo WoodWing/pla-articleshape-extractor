@@ -6,9 +6,12 @@
  * @param {Object} defaultConfig Factory default settings.
  * @param {Object} localConfig Local override settings.
  */
-function Settings(defaultConfig, localConfig) {
+class Settings {
+    constructor(defaultConfig, localConfig) {
+        this._configData = this._deepMerge(defaultConfig, localConfig);
+    }
 
-    this._deepMerge = function(defaultData, localData) {
+    _deepMerge(defaultData, localData) {
         let merged = {};
         for (let key in defaultData) {
             if (defaultData.hasOwnProperty(key)) {
@@ -27,19 +30,17 @@ function Settings(defaultConfig, localConfig) {
         return merged;
     };
 
-    this._configData = this._deepMerge(defaultConfig, localConfig);
-
     /**
      * @returns {Object}
      */
-    this.getOfflineFallbackConfig = function() {
+    getOfflineFallbackConfig() {
         return this._configData.offlineFallback;
     }
 
     /**
      * @returns {{{brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}}
      */    
-    this.getRegenerateArticleShapesSettings = function() {
+    getRegenerateArticleShapesSettings() {
         const { ConfigurationError } = require('./Errors.js');
         const settings = this._configData.regenerateArticleShapesSettings;
         const tip = "Please check your 'config/config.js' and your 'config/config-local.js' files.";
@@ -67,21 +68,21 @@ function Settings(defaultConfig, localConfig) {
     /**
      * @returns {Object}
      */
-    this.getLoggerConfig = function() {
+    getLoggerConfig() {
         return this._configData.logger;
     }
 
     /**
      * @returns {boolean}
      */
-    this.getLogNetworkTraffic = function() {
+    getLogNetworkTraffic() {
         return this._configData.logger.logNetworkTraffic;
     }
     
     /**
      * @returns {String}
      */
-    this.getMinimumRequiredInDesignVersion = function() {
+    getMinimumRequiredInDesignVersion() {
         return this._configData.minimumRequiredInDesignVersion;
     }
 }

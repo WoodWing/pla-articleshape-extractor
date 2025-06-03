@@ -1,11 +1,17 @@
-function PreferencesManager(appPreferences) {
-    this._appPreferences = appPreferences;
+class PreferencesManager {
 
     /**
-     * @param {object} updates Preferences to adjust.
-     * @returns {object} Original preferences.
+     * @param {Object} appPreferences 
      */
-    this.overridePreferences = function (updates) {
+    constructor(appPreferences) {
+        this._appPreferences = appPreferences;
+    }
+
+    /**
+     * @param {Object} updates Preferences to adjust.
+     * @returns {Object} Original preferences.
+     */
+    overridePreferences(updates) {
         originalPreferences = {};
         for (const key in updates) {
             originalPreferences[key] =  this._appPreferences[key];
@@ -15,9 +21,9 @@ function PreferencesManager(appPreferences) {
     };
 
     /**
-     * @param {object} originalPreferences
+     * @param {Object} originalPreferences
      */
-    this.restoreOriginalPreferences = function (originalPreferences) {
+    restoreOriginalPreferences(originalPreferences) {
         for (const key in originalPreferences) {
             this._appPreferences[key] = originalPreferences[key];
         }

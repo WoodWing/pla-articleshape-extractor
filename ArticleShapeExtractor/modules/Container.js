@@ -77,8 +77,7 @@ const Container = {
         if (!obj || !obj.constructor) {
             return "Unknown";
         }
-        const match = obj.constructor.toString().match(/function\s+([^\s(]+)/);
-        return match ? match[1] : "Anonymous";
+        return obj.constructor.name;
     },
 };
 

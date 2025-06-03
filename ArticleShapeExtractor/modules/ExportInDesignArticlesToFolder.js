@@ -2,32 +2,37 @@ const { app } = require("indesign");
 const idd = require("indesign");
 
 /**
- * @constructor
- * @param {Logger} logger
- * @param {InDesignArticleService} inDesignArticleService
- * @param {PageLayoutSettings} pageLayoutSettings
- * @param {Object} fallbackBrand
- * @param {Object} fallbackCategory
+ * Understands how to extract article shapes from InDesign Articles.
  */
-function ExportInDesignArticlesToFolder(
-    logger,
-    inDesignArticleService, 
-    pageLayoutSettings,
-    fallbackBrand, 
-    fallbackCategory,
-) {
-    this._logger = logger;
-    this._inDesignArticleService = inDesignArticleService;
-    this._pageLayoutSettings = pageLayoutSettings;
-    this._fallbackBrand = fallbackBrand;
-    this._fallbackCategory = fallbackCategory;
+class ExportInDesignArticlesToFolder {
+
+    /**
+     * @param {Logger} logger
+     * @param {InDesignArticleService} inDesignArticleService
+     * @param {PageLayoutSettings} pageLayoutSettings
+     * @param {Object} fallbackBrand
+     * @param {Object} fallbackCategory
+     */    
+    constructor(
+        logger,
+        inDesignArticleService, 
+        pageLayoutSettings,
+        fallbackBrand, 
+        fallbackCategory,
+    ) {
+        this._logger = logger;
+        this._inDesignArticleService = inDesignArticleService;
+        this._pageLayoutSettings = pageLayoutSettings;
+        this._fallbackBrand = fallbackBrand;
+        this._fallbackCategory = fallbackCategory;
+    }
 
     /**
      * @param {Document} doc 
      * @param {Folder} folder
      * @returns {Number} Count of exported article shapes.
      */
-    this.run = async function(doc, folder) {
+    async run(doc, folder) {
         if (!(await this._pageLayoutSettings.exportSettings(doc, folder))) {
             return 0;
         }
@@ -126,7 +131,7 @@ function ExportInDesignArticlesToFolder(
      * @param {String} articleName 
      * @returns {Object|null}
      */
-    this._resolveShapeTypeFromArticleName = function(articleName) {
+    _resolveShapeTypeFromArticleName(articleName) {
         let shapeType = { id: null, name: null };
         articleName = articleName.toLowerCase();
         if (articleName.indexOf("lead") != -1) {
@@ -156,7 +161,7 @@ function ExportInDesignArticlesToFolder(
      * @param {Number} articleIndex 
      * @returns {String}
      */
-    this._getFileBaseName = async function(doc, folder, shapeTypeName, articleIndex) {
+    async _getFileBaseName(doc, folder, shapeTypeName, articleIndex) {
         let fileName = doc.name + ' ' + shapeTypeName + ' ' + (articleIndex + 1);
         try {
             // Get workflow object ID and Version from Studio.
@@ -181,7 +186,7 @@ function ExportInDesignArticlesToFolder(
      * @param {PageItem} pageItem - TextFrame, Rectangle, etc
      * @returns {Object}
      */
-    this._composeGeometricBounds = function(topLeftX, topLeftY, pageItem) {
+    _composeGeometricBounds(topLeftX, topLeftY, pageItem) {
         return {
             "x": this._roundTo3Decimals(pageItem.geometricBounds[1] - topLeftX),
             "y": this._roundTo3Decimals(pageItem.geometricBounds[0] - topLeftY),
@@ -195,7 +200,7 @@ function ExportInDesignArticlesToFolder(
      * @param {Number} precisionNumber 
      * @returns {Number}
      */
-    this._roundTo3Decimals = function(precisionNumber) {
+    _roundTo3Decimals(precisionNumber) {
         return Math.round(precisionNumber * 1000) / 1000;
     }
 
@@ -206,7 +211,7 @@ function ExportInDesignArticlesToFolder(
      * @param {Object} outerBounds
      * @returns {Object|null}
      */
-    this._composeArticleShapeJson = function(doc, articleName, outerBounds) {
+    _composeArticleShapeJson(doc, articleName, outerBounds) {
 
         // Resolve Brand/Category. Fallback to defaults when no Studio session.
         let brand = null;
@@ -269,7 +274,7 @@ function ExportInDesignArticlesToFolder(
      * @param {Array} pageItems 
      * @returns 
      */
-    this._arePageItemsOnSameSpread = function(pageItems) {
+    _arePageItemsOnSameSpread(pageItems) {
         if (pageItems.length === 0) {
             return true;
         }
@@ -290,7 +295,7 @@ function ExportInDesignArticlesToFolder(
      * @param {Array} pageItems
      * @param {Object} articleShapeJson
      */
-    this._exportArticlePageItems = async function(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
+    async _exportArticlePageItems(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
         const lfs = require('uxp').storage.localFileSystem;
 
         const baseFileName = await this._getFileBaseName(doc, folder, shapeTypeName, articleIndex);
@@ -350,7 +355,7 @@ function ExportInDesignArticlesToFolder(
      * @param {Object} jsonData - The JSON object to save.
      * @param {File} file
      */
-    this._saveJsonToDisk = function(jsonData, file) {
+    _saveJsonToDisk(jsonData, file) {
         try {
             // Convert JSON object to a string
             const jsonString = JSON.stringify(jsonData, null, 4);
@@ -369,7 +374,7 @@ function ExportInDesignArticlesToFolder(
      * @param {TextFrame} textFrame - The text frame to analyze.
      * @returns {Object} - An object containing word count, character count and text without overset.
      */
-    this._getTextStatisticsWithoutOverset = function(textFrame) {
+    _getTextStatisticsWithoutOverset(textFrame) {
 
         // Extract only the visible text (not overset)
         const visibleText = textFrame.lines;
@@ -409,7 +414,7 @@ function ExportInDesignArticlesToFolder(
      *                         bottomRightY: {Number} - The largest Y coordinate of the bounding box's bottom-right corner.
      *                     }
      */
-    this._getOuterboundOfArticleShape = function(elements) {
+    _getOuterboundOfArticleShape(elements) {
         let topLeftX = 0;
         let topLeftY = 0;
         let bottomRightX = 0;
@@ -460,7 +465,7 @@ function ExportInDesignArticlesToFolder(
      * @param {TextFrame} textFrame - The starting text frame.
      * @returns {Array} - An array of all threaded text frames, including the starting frame.
      */
-    this._getThreadedFrames = function(textFrame) {
+    _getThreadedFrames(textFrame) {
         let threadedFrames = [];
         let currentFrame = textFrame;
 
@@ -485,7 +490,7 @@ function ExportInDesignArticlesToFolder(
      * @param {PageItem|null} frame - The InDesign frame object (e.g., TextFrame, GraphicFrame).
      * @returns {String} - Name of the text wrap mode
      */
-    this._getTextWrapMode = function(frame) {
+    _getTextWrapMode(frame) {
         if (!this._inDesignArticleService.isValidArticleComponentFrame(frame)) {
             alert("Invalid frame.");
             return null;
@@ -513,7 +518,7 @@ function ExportInDesignArticlesToFolder(
      * @param {Line} line
      * @returns {Number}
      */
-    this._getLineHeight = function(line) {
+    _getLineHeight(line) {
         if (line.characters.length === 0) {
             return 0;
         }
@@ -536,7 +541,7 @@ function ExportInDesignArticlesToFolder(
      * @param {Array<PageItem>} pageItems 
      * @returns {ManagedArticle|null}
      */
-    this._getManagedArticleFromPageItems = function(pageItems) {
+    _getManagedArticleFromPageItems(pageItems) {
         for (let i = 0; i < pageItems.length; i++) {
             const pageItem = pageItems[i];
             try {
@@ -552,7 +557,7 @@ function ExportInDesignArticlesToFolder(
      * @param {ManagedArticle} managedArticle 
      * @return {String|null}
      */
-    this._resolveGenreFromManagedArticle = function(managedArticle) {
+    _resolveGenreFromManagedArticle(managedArticle) {
         if (!managedArticle.entMetaData.constructorName === "EntMetaData") {
             return null;
         }
