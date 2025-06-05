@@ -8,13 +8,19 @@ import { ColoredLogger } from './ColoredLogger.mjs';
  */
 export class JsonValidator {
 
+    /** @type {Ajv} */
     #ajv = new Ajv();
+
+    /** @type {Map} */
     #cache = new Map();
+
+    /** @type {ColoredLogger} */
     #logger;
+
+    /** @type {string} */
     #workFolder;
 
     /**
-     * @constructor
      * @param {ColoredLogger} logger 
      * @param {string} workFolder 
      */

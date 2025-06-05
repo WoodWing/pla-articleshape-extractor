@@ -2,7 +2,7 @@ await (async function main() {
     const { app } = require("indesign");
     const idd = require("indesign");
     const initBootstrap = require('../bootstrap.js');
-    const Container = require("../modules/Container.js");
+    const Container = require("../modules/Container.mjs");
     try {
         initBootstrap();
 
@@ -12,7 +12,7 @@ await (async function main() {
         const domains = require('uxp').storage.domains;
         const folder = await lfs.getFolder({initialDomain: domains.userDocuments});
         if (!folder || !folder.isFolder) {
-            const { NoFolderSelectedError } = require('../modules/Errors.js');
+            const { NoFolderSelectedError } = require('../modules/Errors.mjs');
             throw new NoFolderSelectedError();
         }
 
@@ -21,8 +21,12 @@ await (async function main() {
         
         // Export article shapes to disk.
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
-        await Container.resolve("RegenerateArticleShapesService").run(folder);
+        const report = await Container.resolve("RegenerateArticleShapesService").run(folder);
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
+        const completedMessage = "Article Shapes are regenerated.";
+        const reportMessage = `Extracted: ${report.extracted}, Skipped: ${report.skipped}, Failed: ${report.failed}.`;
+        Container.resolve("Logger").info(`${completedMessage} => ${reportMessage}`);
+        alert(`${completedMessage}\n${reportMessage}`, "Completed");
 
     } catch(error) {
         // First enable the user interaction again to able to show the alert.

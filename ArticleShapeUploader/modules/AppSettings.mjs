@@ -4,10 +4,10 @@
  */
 export class AppSettings {
 
+    /** @type {Object} */
     #configData;
     
     /**
-     * @constructor
      * @param {Object} defaultConfig Factory default settings.
      * @param {Object} localConfig Local override settings.
      */
@@ -15,6 +15,12 @@ export class AppSettings {
         this.#configData = this.#deepMerge(defaultConfig, localConfig);
     }
 
+    /**
+     * Recursively merge two structural settings objects.
+     * @param {Object} defaultData Default values.
+     * @param {Object} localData Override values.
+     * @returns {Object} Merged settings.
+     */
     #deepMerge(defaultData, localData) {
         let merged = {};
         for (let key in defaultData) {
@@ -34,8 +40,24 @@ export class AppSettings {
         return merged;
     }
 
-    getPlaServiceUrl() { return this.#configData.plaServiceUrl; }
-    getDestination() { return this.#configData.destination; }
-    getLogNetworkTraffic() { return this.#configData.logNetworkTraffic; }
-    getLogLevel() { return this.#configData.logLevel; }
+    /**
+     * @returns {string}
+     */
+    getPlaServiceUrl() { 
+        return this.#configData.plaServiceUrl; 
+    }
+
+    /**
+     * @returns {boolean}
+     */
+    getLogNetworkTraffic() {
+        return this.#configData.logNetworkTraffic; 
+    }
+
+    /**
+     * @returns {string}
+     */
+    getLogLevel() {
+        return this.#configData.logLevel;
+    }
 }

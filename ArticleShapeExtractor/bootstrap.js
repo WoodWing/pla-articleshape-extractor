@@ -1,10 +1,10 @@
 require("./extensions/String.js");
 require("./extensions/globals.js");
-require("./modules/Errors.js");
-const Container = require("./modules/Container.js");
+require("./modules/Errors.mjs");
+const Container = require("./modules/Container.mjs");
 
 Container.registerSingleton("Settings", function() {
-    const Settings = require("./modules/Settings.js");
+    const Settings = require("./modules/Settings.mjs");
     const plaDefaultConfig = require("./config/config.js");
     let plaLocalConfig = {}
     try {
@@ -15,7 +15,7 @@ Container.registerSingleton("Settings", function() {
 });
 
 Container.registerSingleton("Logger", function() {
-    const Logger = require("./modules/Logger.js");
+    const Logger = require("./modules/Logger.mjs");
     const config = Container.resolve("Settings").getLoggerConfig();
     try {
         return new Logger(config.folder, config.filename, config.level, config.wipe);
@@ -25,7 +25,7 @@ Container.registerSingleton("Logger", function() {
 });
 
 Container.registerSingleton("VersionUtils", function() {
-    const VersionUtils = require("./modules/VersionUtils.js");
+    const VersionUtils = require("./modules/VersionUtils.mjs");
     return new VersionUtils();
 });
 
@@ -49,17 +49,25 @@ function validateHost() {
 };
 
 Container.registerFactory("InDesignArticleService", function() {
-    const InDesignArticleService = require("./modules/InDesignArticleService.js");
+    const InDesignArticleService = require("./modules/InDesignArticleService.mjs");
     return new InDesignArticleService();
 });
 
+Container.registerFactory("FileUtils", function() {
+    const FileUtils = require("./modules/FileUtils.mjs");
+    return new FileUtils();
+});
+
 Container.registerFactory("PageLayoutSettings", function() {
-    const PageLayoutSettings = require("./modules/PageLayoutSettings.js");
-    return new PageLayoutSettings(Container.resolve("Logger"));
+    const PageLayoutSettings = require("./modules/PageLayoutSettings.mjs");
+    return new PageLayoutSettings(
+        Container.resolve("Logger"),
+        Container.resolve("FileUtils"),
+    );
 });
 
 Container.registerFactory("ExportInDesignArticlesToFolder", function() {
-    const ExportInDesignArticlesToFolder = require("./modules/ExportInDesignArticlesToFolder.js");
+    const ExportInDesignArticlesToFolder = require("./modules/ExportInDesignArticlesToFolder.mjs");
     const settings = Container.resolve("Settings");
     return new ExportInDesignArticlesToFolder(
         Container.resolve("Logger"), 
@@ -70,17 +78,35 @@ Container.registerFactory("ExportInDesignArticlesToFolder", function() {
     );
 });
 
+Container.registerFactory("StudioJsonRpcClient", function() {
+    const { app } = require("indesign");
+    const StudioJsonRpcClient = require("./modules/StudioJsonRpcClient.mjs");
+    return new StudioJsonRpcClient(
+        Container.resolve("Logger"),
+        Container.resolve("Settings").getLogNetworkTraffic(),
+        app.entSession?.activeUrl, 
+        app.entSession?.activeTicket,
+    );
+});
+
 Container.registerFactory("RegenerateArticleShapesService", function() {
-    const RegenerateArticleShapesService = require("./modules/RegenerateArticleShapesService.js");
+    const RegenerateArticleShapesService = require("./modules/RegenerateArticleShapesService.mjs");
     return new RegenerateArticleShapesService(
-        Container.resolve("Settings").getRegenerateArticleShapesQueryName(),
+        Container.resolve("Logger"), 
+        Container.resolve("VersionUtils"),
+        Container.resolve("Settings").getRegenerateArticleShapesSettings(),
         Container.resolve("ExportInDesignArticlesToFolder"),
+        Container.resolve("StudioJsonRpcClient"),
     );
 });
 
 Container.registerFactory("BrandSectionMapResolver", function() {
-    const BrandSectionMapResolver = require("./modules/BrandSectionMapResolver.js");
-    return new BrandSectionMapResolver(Container.resolve("Logger"));
+    const BrandSectionMapResolver = require("./modules/BrandSectionMapResolver.mjs");
+    return new BrandSectionMapResolver(
+        Container.resolve("Logger"),
+        Container.resolve("StudioJsonRpcClient"),
+        Container.resolve("FileUtils"),
+    );
 });
 
 function initBootstrap() {

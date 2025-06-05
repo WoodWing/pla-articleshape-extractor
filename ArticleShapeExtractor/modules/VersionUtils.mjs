@@ -1,9 +1,7 @@
 /**
  * Understands the syntax of a version string.
- * 
- * @constructor
  */
-function VersionUtils() {
+class VersionUtils {
 
     /**
      * Compare two versions.
@@ -11,7 +9,7 @@ function VersionUtils() {
      * @param {String} versionRhs Right Hand Side.
      * @returns {Number} Zero when equal, or -1 when versionLhs is smaller or 1 when bigger.
      */
-    this.versionCompare = function(versionLhs, versionRhs) {
+    versionCompare(versionLhs, versionRhs) {
         const digitsLhs = versionLhs.split('.').map(Number);
         const digitsRhs = versionRhs.split('.').map(Number);
         const length = Math.max(digitsLhs.length, digitsRhs.length);

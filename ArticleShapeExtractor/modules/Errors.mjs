@@ -1,6 +1,6 @@
 class ArgumentError extends Error {
-    constructor(argument) {
-        super(`Bad argument '${argument}' provided.`);
+    constructor(message) {
+        super(`Bad argument provided. ${message}`);
         this.name = this.constructor.name;
     }
 }
@@ -15,6 +15,13 @@ class ConfigurationError extends Error {
 class NoStudioSessionError extends Error {
     constructor() {
         super("Not logged in to WoodWing Studio.");
+        this.name = this.constructor.name;
+    }
+}
+
+class StudioServerCommunicationError extends Error {
+    constructor() {
+        super("Communication error with WoodWing Studio Server.");
         this.name = this.constructor.name;
     }
 }
@@ -79,6 +86,7 @@ module.exports = {
     ArgumentError,
     ConfigurationError,
     NoStudioSessionError,
+    StudioServerCommunicationError,
     NoDocumentOpenedError,
     NoDocumentPagesError,
     NoFramesSelectedError,

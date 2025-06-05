@@ -4,10 +4,11 @@ import minimist from 'minimist';
 
 export class CliParams {
 
+    /** @type {ColoredLogger} */
     #logger;
 
     /**
-     * @param {Logger} logger 
+     * @param {ColoredLogger} logger 
      */
     constructor(logger) {
         this.#logger = logger;

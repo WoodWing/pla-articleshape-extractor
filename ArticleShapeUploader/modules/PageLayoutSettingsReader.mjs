@@ -3,13 +3,21 @@ import path from 'path';
 
 
 export class PageLayoutSettingsReader {
+
+    /** @type {ColoredLogger} */
     #logger;
+
+    /** @type {JsonValidator} */
     #jsonValidator;
+
+    /** @type {{columnCount: number, rowCount: number}|null} */
     #pageGrid;
+
+    /** @type {Object|null} */
     #settings;
     
     /**
-     * @param {Logger} logger 
+     * @param {ColoredLogger} logger 
      * @param {JsonValidator} jsonValidator
      */
     constructor(logger, jsonValidator) {

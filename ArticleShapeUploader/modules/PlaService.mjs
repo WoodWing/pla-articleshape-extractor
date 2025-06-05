@@ -7,8 +7,13 @@ import { StatusCodes } from 'http-status-codes';
  */
 export class PlaService {
 
+    /** @type {string} */
     #plaServiceUrl;
+
+    /** @type {boolean} */
     #logNetworkTraffic;
+
+    /** @type {ColoredLogger} */
     #logger;
 
     /**
@@ -32,7 +37,7 @@ export class PlaService {
     async getSheetDimensions(accessToken, brandId) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/sheet-dimensions`;
         try {
-            const request = new Request(url, this._requestInitForPlaService(accessToken, 'GET'));
+            const request = new Request(url, this.#requestInitForPlaService(accessToken, 'GET'));
             const response = await fetch(request);
             const responseJson = await response.json();
             this.#logHttpTraffic(request, null, response, responseJson);
@@ -62,7 +67,7 @@ export class PlaService {
     async validateBrandConfiguration(accessToken, brandId) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/validate`;
         try {
-            const request = new Request(url, this._requestInitForPlaService(accessToken, 'GET'));
+            const request = new Request(url, this.#requestInitForPlaService(accessToken, 'GET'));
             const response = await fetch(request);
             const responseJson = await response.json();
             this.#logHttpTraffic(request, null, response, responseJson);
@@ -87,7 +92,7 @@ export class PlaService {
     async getPageLayoutSettings(accessToken, brandId) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/setting/page-layout`;
         try {
-            const request = new Request(url, this._requestInitForPlaService(accessToken, 'GET'));
+            const request = new Request(url, this.#requestInitForPlaService(accessToken, 'GET'));
             const response = await fetch(request);
             const pageSettings = await response.json();
             this.#logHttpTraffic(request, null, response, pageSettings);
@@ -117,7 +122,7 @@ export class PlaService {
     async getElementLabelMapping(accessToken, brandId) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/setting/element-labels`;
         try {
-            const request = new Request(url, this._requestInitForPlaService(accessToken, 'GET'));
+            const request = new Request(url, this.#requestInitForPlaService(accessToken, 'GET'));
             const response = await fetch(request);
             const elementMapping = await response.json();
             this.#logHttpTraffic(request, null, response, elementMapping);
@@ -143,7 +148,7 @@ export class PlaService {
      * @param {String|null} body 
      * @returns {RequestInit}
      */
-    _requestInitForPlaService(accessToken, method, body=null) {
+    #requestInitForPlaService(accessToken, method, body=null) {
         return {
             mode: 'cors',
             withCredentials: false,
@@ -164,7 +169,7 @@ export class PlaService {
     async deleteArticleShapes(accessToken, brandId) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/article-shapes`;
         try {
-            const request = new Request(url, this._requestInitForPlaService(accessToken, 'DELETE'));
+            const request = new Request(url, this.#requestInitForPlaService(accessToken, 'DELETE'));
             const response = await fetch(request);
             this.#logHttpTraffic(request, null, response, null);
             if (!response.ok) {
@@ -188,7 +193,7 @@ export class PlaService {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/article-shape/${articleShapeName}`;
         try {
             const requestBody = JSON.stringify(articleShapeWithRenditionsDto);
-            const request = new Request(url, this._requestInitForPlaService(accessToken, 'POST', requestBody));
+            const request = new Request(url, this.#requestInitForPlaService(accessToken, 'POST', requestBody));
             const response = await fetch(request);
             const responseJson = await response.json();
             this.#logHttpTraffic(request, articleShapeWithRenditionsDto, response, responseJson);

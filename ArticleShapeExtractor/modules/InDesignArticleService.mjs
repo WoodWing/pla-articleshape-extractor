@@ -1,6 +1,6 @@
 const { app } = require("indesign");
 
-function InDesignArticleService() {
+class InDesignArticleService {
 
     /**
      * Create a new InDesign Article for the currently selected frames. Or, when the frames are
@@ -12,28 +12,28 @@ function InDesignArticleService() {
      * 
      * @param {String} articleName 
      */
-    this.addOrRenameInDesignArticle = function(articleName) {
+    addOrRenameInDesignArticle(articleName) {
         if (app.documents.length === 0) {
-            const { NoDocumentOpenedError } = require('./Errors.js');
+            const { NoDocumentOpenedError } = require('./Errors.mjs');
             throw new NoDocumentOpenedError();
         }
 
         if (app.selection.length === 0) {
-            const { NoFramesSelectedError } = require('./Errors.js');
+            const { NoFramesSelectedError } = require('./Errors.mjs');
             throw new NoFramesSelectedError();
         }
 
         const frame = app.selection[0];
         if (!this.isValidArticleComponentFrame(frame)) {
-            const { NoTextOrGraphicalFramesSelectedError } = require('./Errors.js');
+            const { NoTextOrGraphicalFramesSelectedError } = require('./Errors.mjs');
             throw new NoTextOrGraphicalFramesSelectedError();
         }
 
         // Add new InDesign Articles.
         const doc = app.activeDocument;
-        const articles = this._getInDesignArticles(doc, frame);
+        const articles = this.#getInDesignArticles(doc, frame);
         if (articles.length == 0) {
-            this._createNewInDesignArticleWithSelectedFrames(doc, articleName);
+            this.#createNewInDesignArticleWithSelectedFrames(doc, articleName);
             alert("A new article '" + articleName + "' has been created, and selected frames have been added.");
             return;
         }
@@ -47,8 +47,8 @@ function InDesignArticleService() {
             const storyTypeNames = ["Lead", "Secondary", "Third", "Filler"];
             for (let storyTypeIndex = 0; storyTypeIndex < storyTypeNames.length; storyTypeIndex++) {
                 const storyTypeName = storyTypeNames[storyTypeIndex];
-                newName = this._replaceTextCaseInsensitive(newName, storyTypeName, articleName);
-                newName = this._cleanWhitespaces(newName)
+                newName = this.#replaceTextCaseInsensitive(newName, storyTypeName, articleName);
+                newName = this.#cleanWhitespaces(newName)
             };
             if (newName != oldName) {
                 article.name = newName;
@@ -62,7 +62,7 @@ function InDesignArticleService() {
      * @param {PageItem} Valid text/graphic frame.
      * @returns {Array<Article>}
      */
-    this._getInDesignArticles = function(doc, frame) {
+    #getInDesignArticles(doc, frame) {
         const docArticles = doc.articles;
         let frameArticles = [];
 
@@ -71,7 +71,7 @@ function InDesignArticleService() {
             const docArticle = docArticles.item(i);
 
             // Check if the frame is in the article's members
-            if (this._isFrameMemberOfInDesignArticle(docArticle, frame)) {
+            if (this.#isFrameMemberOfInDesignArticle(docArticle, frame)) {
                 frameArticles.push(docArticle);
             }
         }
@@ -84,7 +84,7 @@ function InDesignArticleService() {
      * @param {PageItem} frame - The frame to check for membership.
      * @returns {Boolean} - True if the frame is already a member of the article, false otherwise.
      */
-    this._isFrameMemberOfInDesignArticle = function(article, frame) {
+    #isFrameMemberOfInDesignArticle(article, frame) {
         const articleMembers = article.articleMembers.everyItem().getElements(); // Get all members as an array
         for (let i = 0; i < articleMembers.length; i++) {
             if (articleMembers[i].itemRef.equals(frame)) {
@@ -98,7 +98,7 @@ function InDesignArticleService() {
      * Create a new InDesign Article with the given name. Add the selected frames to the article.
      * @param {String} articleName
      */
-    this._createNewInDesignArticleWithSelectedFrames = function(doc, articleName) {
+    #createNewInDesignArticleWithSelectedFrames(doc, articleName) {
 
         // Create a new InDesign Article (even if an article with the same name already exists).
         const article = doc.articles.add();
@@ -123,7 +123,7 @@ function InDesignArticleService() {
      * @param {String} replacement 
      * @returns {String} Text with substitutes.
      */
-    this._replaceTextCaseInsensitive = function(text, search, replacement) {
+    #replaceTextCaseInsensitive(text, search, replacement) {
         const regex = new RegExp(search, "gi"); // "g" = global, "i" = case insensitive
         return text.replace(regex, replacement);
     };
@@ -133,7 +133,7 @@ function InDesignArticleService() {
      * @param {String} text 
      * @returns {String} Cleaned text.
      */
-    this._cleanWhitespaces = function(text) {
+    #cleanWhitespaces(text) {
         return text.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
     };
 
@@ -142,7 +142,7 @@ function InDesignArticleService() {
      * @param {pageItem|null} object
      * @returns {Boolean}
      */
-    this.isValidArticleTextFrame = function(pageItem) {
+    isValidArticleTextFrame(pageItem) {
         return pageItem && pageItem.constructorName === "TextFrame" && pageItem.isValid
     };
 
@@ -152,7 +152,7 @@ function InDesignArticleService() {
      * @param {pageItem|null} object
      * @returns {Boolean}
      */
-    this.isValidArticleGraphicFrame = function(pageItem) {
+    isValidArticleGraphicFrame(pageItem) {
         const graphicClasses = ["Rectangle", "Oval", "Polygon"];
         return pageItem && graphicClasses.includes(pageItem.constructorName) && pageItem.isValid;
     };
@@ -162,7 +162,7 @@ function InDesignArticleService() {
      * @param {pageItem|null} object
      * @returns {Boolean}
      */
-    this.isValidArticleComponentFrame = function(pageItem) {
+    isValidArticleComponentFrame(pageItem) {
         return this.isValidArticleTextFrame(pageItem) || this.isValidArticleGraphicFrame(pageItem)
     }
 }
