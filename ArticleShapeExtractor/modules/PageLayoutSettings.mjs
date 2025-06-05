@@ -126,7 +126,7 @@ class PageLayoutSettings{
             }
         }
         return {
-            inside: outside,
+            inside: inside,
             outside: outside
         }
     }
