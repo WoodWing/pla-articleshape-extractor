@@ -41,9 +41,12 @@ class PageLayoutSettings{
                 const { NoDocumentPagesError } = require('./Errors.mjs');
                 throw new NoDocumentPagesError();
             }
-            const page = doc.pages.item(0);
-            const { inside, outside } = this.#getInsideOutsideMargins(doc, page);
-            const settings = this.#composeSettings(doc, page, inside, outside);
+            for (let i = 0; i < doc.pages.length; i++) {
+                const pag = doc.pages.item(i);
+                const side = pag.side.equals(idd.PageSideOptions.LEFT_HAND) ? "left" : "right";
+                this.#logger.debug(`Page: id=${pag.id}, index=${pag.index}, name=${pag.name}, side=${side}`);
+            }
+            const settings = this.#composeSettings(doc);
             await this.#saveOrComparePageLayoutSettings(settings, folder);
             exportedSuccessfully = true;
         } catch(error) {
@@ -62,25 +65,22 @@ class PageLayoutSettings{
 
     /**
      * @param {Document} doc 
-     * @param {Page} page 
-     * @param {Number} inside 
-     * @param {Number} outside 
      * @returns {dimensions: {width: Number, height: Number}, margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}
      */
-    #composeSettings(doc, page, inside, outside) {
+    #composeSettings(doc) {
         return {
             dimensions: {
                 width: this.#roundTo3Decimals(doc.documentPreferences.pageWidth),
                 height: this.#roundTo3Decimals(doc.documentPreferences.pageHeight)
             },
             margins: {
-                top: this.#roundTo3Decimals(page.marginPreferences.top), 
-                bottom: this.#roundTo3Decimals(page.marginPreferences.bottom), 
-                inside: this.#roundTo3Decimals(inside), 
-                outside: this.#roundTo3Decimals(outside)
+                top: this.#roundTo3Decimals(doc.marginPreferences.top), 
+                bottom: this.#roundTo3Decimals(doc.marginPreferences.bottom), 
+                inside: this.#roundTo3Decimals(doc.marginPreferences.left), 
+                outside: this.#roundTo3Decimals(doc.marginPreferences.right)
             }, 
             columns: {
-                gutter: this.#roundTo3Decimals(page.marginPreferences.columnGutter)
+                gutter: this.#roundTo3Decimals(doc.marginPreferences.columnGutter)
             }
         };        
     }
@@ -93,43 +93,6 @@ class PageLayoutSettings{
     #roundTo3Decimals(precisionNumber) {
         return Math.round(precisionNumber * 1000) / 1000;
     }    
-
-    /**
-     * Retrieve the Inside and Outside fields.
-     * @param {Document} doc 
-     * @param {Page} page 
-     * @returns {inside: Number, outside: Number}
-     */
-    #getInsideOutsideMargins(doc, page) {
-        let inside = null;
-        let outside = null;
-        if (doc.documentPreferences.facingPages) { // spread setup
-            if (page.side.equals(idd.PageSideOptions.LEFT_HAND)) {
-                inside = page.marginPreferences.right;
-                outside = page.marginPreferences.left;
-            } else if (page.side.equals(idd.PageSideOptions.RIGHT_HAND)) {
-                inside = page.marginPreferences.left;
-                outside = page.marginPreferences.right;
-            } else {
-                const { UnexpectedPageSetupError } = require('./Errors.mjs');
-                const message = `Facing pages is enabled but page side ${page.side} is neither left or right.`;
-                throw new UnexpectedPageSetupError(message);
-            }
-        } else { // single page setup
-            if (page.side.equals(idd.PageSideOptions.SINGLE_SIDED)) {
-                inside = page.marginPreferences.left;
-                outside = page.marginPreferences.right;
-            } else {
-                const { UnexpectedPageSetupError } = require('./Errors.mjs');
-                const message = `Facing pages is disabled but page side ${page.side} is not single.`;
-                throw new UnexpectedPageSetupError(message);
-            }
-        }
-        return {
-            inside: inside,
-            outside: outside
-        }
-    }
 
     /**
      * Save a settings object to the "_manifest/page-layout-settings.json" file in a provided export folder.
@@ -153,12 +116,17 @@ class PageLayoutSettings{
         } else {
             const settingsOfPrecedingLayout = JSON.parse(await settingsFile.read({format: formats.utf8}));
             if (!this.#isDeepEqual(settings, settingsOfPrecedingLayout)) {
+                this.#logger.error("Detected differences in settings:\n"
+                    + `1) current layout: ${JSON.stringify(settings, null, 4)}\n`
+                    + `2) page-layout-settings.json:\n${JSON.stringify(settingsOfPrecedingLayout, null, 4)}\n`
+                );
                 const { ConfigurationError } = require('./Errors.mjs');
                 const message = "\n" 
                     + "Page layout settings of current layout differ with preceding layout, processed just before.\n"
                     + `Note that setting of preceding layout were saved in "${manifestFoldername}/${settingsFilename}".\n`
                     + "For both layouts, check settings for menu items 'Document Setup' and 'Margins and Columns'.\n"
-                    + "After adjusting the settings for any of the two layouts, remove the file and try both again.";
+                    + "After adjusting the settings for any of the two layouts, remove the file and try both again.\n"
+                    + "See also logging for the differences found.";
                 throw new ConfigurationError(message);
             }
         }
