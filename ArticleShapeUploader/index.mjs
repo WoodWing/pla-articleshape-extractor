@@ -239,12 +239,11 @@ async function scanDirForArticleShapeJson(folderPath, callback) {
  * @returns {Object} The valid article shape JSON.
  */
 function validateArticleShapeJson(jsonFilePath) {
-    const basename = path.basename(jsonFilePath);
     let jsonData = null;
     try {
         jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf-8'));
     } catch(error) {
-        throw new Error(`The file "${basename}" is not valid JSON - ${error.message}`);
+        throw new Error(`The file "${jsonFilePath}" is not valid JSON - ${error.message}`);
     }
     jsonValidator.validate('article-shape',jsonData);
     return jsonData;
