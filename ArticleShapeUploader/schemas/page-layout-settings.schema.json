@@ -1,12 +1,13 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "https://www.woodwing.com/pla/page-layout-settings.schema.json",
-    "title": "Layout document settings, including page margins and column gutter",
+    "title": "Layout document settings and baseline grid settings",
     "type": "object",
     "required": [
         "dimensions",
         "margins",
-        "columns"
+        "columns",
+        "baseline-grid"
     ],
     "properties": {
         "dimensions": {
@@ -56,6 +57,22 @@
             ],
             "properties": {
                 "gutter": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": false
+        },
+        "baseline-grid": {
+            "type": "object",
+            "required": [
+                "start",
+                "increment"
+            ],
+            "properties": {
+                "start": {
+                    "type": "number"
+                },
+                "increment": {
                     "type": "number"
                 }
             },

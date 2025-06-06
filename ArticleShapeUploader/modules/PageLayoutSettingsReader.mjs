@@ -136,12 +136,16 @@ export class PageLayoutSettingsReader {
     }
 
     /**
-     * The height of the usable space within the page borders, in points.
+     * The height of the usable space in points. Usable space is the page area where content can be placed.
+     * The height of this area is the space between the "top of baseline grid" and the page bottom margin.
+     * The "top of the baseline grid" is the start of the baseline grid minus the line height (one increment).
      * @returns {number}
      */
     #getUsablePageHeight() {
-        const pageHeight = this.#getSettings().dimensions.height;
-        const margins = this.#getSettings().margins;
-        return pageHeight - margins.top - margins.bottom;
+        const settings = this.#getSettings();
+        const pageHeight = settings.dimensions.height;
+        const unusableTop = settings["baseline-grid"].start - settings["baseline-grid"].increment;
+        const unusableBottom = settings.margins.bottom;
+        return pageHeight - unusableTop - unusableBottom;
     }  
 }
