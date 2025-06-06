@@ -96,7 +96,7 @@ class RegenerateArticleShapesService {
                 skippedLayoutIds.push(wflObject.ID);
             } else {
                 // If query has newer layout version, remove files of old version from disk.
-                if (mapItem) for (const oldFile of mapItem.files) {
+                if (mapItem) for (const oldFile of mapItem.shapeFiles) {
                     await this.#deleteFile(oldFile);
                 }
                 const theOpenDoc = app.openObject(wflObject.ID, false); // false: no checkout
