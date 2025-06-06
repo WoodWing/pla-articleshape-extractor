@@ -136,8 +136,12 @@ async function assureTallyPageLayoutSettings(accessToken, brandId, inputPageLayo
     }
     jsonValidator.validate('page-layout-settings', plaPageLayoutSettings);
     if (diff(plaPageLayoutSettings, inputPageLayoutSettings)) {
-        logger.error("The page layout settings retrieved from PLA service differ from the ones "
-            + "read from input folder. ", plaPageLayoutSettings, inputPageLayoutSettings);
+        logger.error( "Page layout settings differ:",
+            "\n1) retrieved from PLA service:\n", plaPageLayoutSettings,
+            "\n2) read from input folder:\n", inputPageLayoutSettings);
+        throw new Error(
+            "The page layout settings retrieved from PLA service "
+            + "differ from the ones read from input folder.");
     }
 }
 
