@@ -46,7 +46,9 @@ class PageLayoutSettings{
                 const side = pag.side.equals(idd.PageSideOptions.LEFT_HAND) ? "left" : "right";
                 this.#logger.debug(`Page: id=${pag.id}, index=${pag.index}, name=${pag.name}, side=${side}`);
             }
-            const settings = this.#composeSettings(doc);
+            const page = doc.pages.item(0);
+            const baselineStart = this.#getBaselineStart(doc, page);
+            const settings = this.#composeSettings(doc, baselineStart);
             await this.#saveOrComparePageLayoutSettings(settings, folder);
             exportedSuccessfully = true;
         } catch(error) {
@@ -65,9 +67,10 @@ class PageLayoutSettings{
 
     /**
      * @param {Document} doc 
+     * @param {Number} baselineStart 
      * @returns {dimensions: {width: Number, height: Number}, margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}
      */
-    #composeSettings(doc) {
+    #composeSettings(doc, baselineStart) {
         return {
             dimensions: {
                 width: this.#roundTo3Decimals(doc.documentPreferences.pageWidth),
@@ -81,6 +84,10 @@ class PageLayoutSettings{
             }, 
             columns: {
                 gutter: this.#roundTo3Decimals(doc.marginPreferences.columnGutter)
+            },
+            "baseline-grid": {
+                start: this.#roundTo3Decimals(baselineStart),
+                increment: this.#roundTo3Decimals(doc.gridPreferences.baselineDivision)
             }
         };        
     }
@@ -93,6 +100,29 @@ class PageLayoutSettings{
     #roundTo3Decimals(precisionNumber) {
         return Math.round(precisionNumber * 1000) / 1000;
     }    
+
+    /**
+     * Retrieve the baseline start field when set relative to top of page. 
+     * When set relative to top of margin, the returned value is normalized to top of page.
+     * @param {Document} doc 
+     * @param {Page} page 
+     * @returns number Baseline start (always relative to top of page).
+     */    
+    #getBaselineStart(doc, page) {
+        const baselineStart = doc.gridPreferences.baselineStart;
+        const isGridRelativeToPageMargins = doc.gridPreferences.baselineGridRelativeOption.equals(
+            idd.BaselineGridRelativeOption.TOP_OF_MARGIN_OF_BASELINE_GRID_RELATIVE_OPTION);
+        if (isGridRelativeToPageMargins) {
+            baselineStart += page.marginPreferences.top;
+            this.#logger.debug(
+                `Baseline start is configured as relative to top margin, but exported as relative to top of page: `
+                + `${doc.gridPreferences.baselineStart} (=start) + ${page.marginPreferences.top} (=top margin) = ${baselineStart}`
+            );
+        } else {
+            this.#logger.debug(`Baseline start is configured and exported as relative to top of page: ${baselineStart}`);
+        }
+        return baselineStart;
+    }
 
     /**
      * Save a settings object to the "_manifest/page-layout-settings.json" file in a provided export folder.
