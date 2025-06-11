@@ -46,6 +46,7 @@ class PageLayoutSettings{
                 const side = pag.side.equals(idd.PageSideOptions.LEFT_HAND) ? "left" : "right";
                 this.#logger.debug(`Page: id=${pag.id}, index=${pag.index}, name=${pag.name}, side=${side}`);
             }
+            const page = doc.pages.item(0);
             const baselineStart = this.#getBaselineStart(doc, page);
             const settings = this.#composeSettings(doc, baselineStart);
             await this.#saveOrComparePageLayoutSettings(settings, folder);
