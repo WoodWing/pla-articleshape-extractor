@@ -136,8 +136,12 @@ async function assureTallyPageLayoutSettings(accessToken, brandId, inputPageLayo
     }
     jsonValidator.validate('page-layout-settings', plaPageLayoutSettings);
     if (diff(plaPageLayoutSettings, inputPageLayoutSettings)) {
-        logger.error("The page layout settings retrieved from PLA service differ from the ones "
-            + "read from input folder. ", plaPageLayoutSettings, inputPageLayoutSettings);
+        logger.error( "Page layout settings differ:",
+            "\n1) retrieved from PLA service:\n", plaPageLayoutSettings,
+            "\n2) read from input folder:\n", inputPageLayoutSettings);
+        throw new Error(
+            "The page layout settings retrieved from PLA service "
+            + "differ from the ones read from input folder.");
     }
 }
 
@@ -235,12 +239,11 @@ async function scanDirForArticleShapeJson(folderPath, callback) {
  * @returns {Object} The valid article shape JSON.
  */
 function validateArticleShapeJson(jsonFilePath) {
-    const basename = path.basename(jsonFilePath);
     let jsonData = null;
     try {
         jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf-8'));
     } catch(error) {
-        throw new Error(`The file "${basename}" is not valid JSON - ${error.message}`);
+        throw new Error(`The file "${jsonFilePath}" is not valid JSON - ${error.message}`);
     }
     jsonValidator.validate('article-shape',jsonData);
     return jsonData;
