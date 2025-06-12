@@ -49,11 +49,12 @@ async function main() {
         const pageLayoutSettings = pageLayoutSettingsReader.readSettings(inputPath);
         const accessToken = resolveAccessToken();
 
-        const articleShapeJson = await takeFirstArticleShapeJson(inputPath);
-        const targetBrandName = cliParams.getTargetBrandName();
-        const { brandId, sectionMap } = targetBrandName 
-            ? brandSectionMapReader.readMapAndResolveBrandId(inputPath, targetBrandName) 
-            : { brandId: articleShapeJson.brandId, sectionMap: null };
+        let targetBrandName = cliParams.getTargetBrandName();
+        if (!targetBrandName) {
+            const articleShapeJson = await takeFirstArticleShapeJson(inputPath);
+            targetBrandName = articleShapeJson.brandName;
+        }
+        const brandId = brandSectionMapReader.readMapAndResolveBrandId(inputPath, targetBrandName);
 
         const pageGrid = await assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId);
         pageLayoutSettingsReader.setPageGrid(pageGrid);
@@ -62,7 +63,7 @@ async function main() {
         if (await cliParams.shouldDeletePreviouslyConfiguredArticleShapes()) {
              await plaService.deleteArticleShapes(accessToken, brandId);
         }
-        await scanDirAndUploadFiles(inputPath, accessToken, brandId, sectionMap);
+        await scanDirAndUploadFiles(inputPath, accessToken, brandId);
         await validateBrandConfiguration(accessToken, brandId);
     } catch(error) {
         logger.error(error.message);
@@ -171,9 +172,8 @@ async function takeFirstArticleShapeJson(folderPath) {
  * @param {string} folderPath 
  * @param {string} accessToken 
  * @param {string} brandId 
- * @param {Array<string, string>} sectionMap 
  */
-async function scanDirAndUploadFiles(folderPath, accessToken, brandId, sectionMap) {
+async function scanDirAndUploadFiles(folderPath, accessToken, brandId) {
     await scanDirForArticleShapeJson(folderPath, async (baseName) => {
         const jsonFilePath = composePathAndAssertExists(folderPath, baseName, 'json');
         const articleShapeJson = validateArticleShapeJson(jsonFilePath);
@@ -188,27 +188,11 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId, sectionMa
             composeFileRenditionDto('snapshot', 'image/jpeg', 'jpg'),
             composeFileRenditionDto('definition', 'application/xml', 'idms'),
         ] : [];
-        const sectionId = resolveSectionId(articleShapeJson, sectionMap);
+        const sectionId = brandSectionMapReader.resolveSectionId(articleShapeJson.sectionName);
         await uploadArticleShapeWithFiles(
             accessToken, brandId, sectionId, baseName, articleShapeJson, localFiles, fileRenditions);        
         return true;
     });
-}
-
-/**
- * @param {Object} articleShapeJson 
- * @param {Array<string,string>} sectionMap 
- * @returns {string}
- */
-function resolveSectionId(articleShapeJson, sectionMap) {
-    if (!sectionMap) {
-        return articleShapeJson.sectionId;
-    }
-    const sectionId = sectionMap[articleShapeJson.sectionName];
-    if (!sectionId) {
-        throw new Error(`The edition "${articleShapeJson.sectionName}" was not found.`);
-    }
-    return sectionId;
 }
 
 /**
