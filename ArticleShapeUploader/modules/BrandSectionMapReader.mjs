@@ -9,6 +9,9 @@ export class BrandSectionMapReader {
     /** @type {JsonValidator} */
     #jsonValidator;
 
+    /** @type {string|null} */
+    #brandName;
+    
     /** @type {Object|null} */
     #brandSections;
     
@@ -32,6 +35,7 @@ export class BrandSectionMapReader {
         const brandSetup = this.#lookupBrandSetup(brandSectionMap, brandName);
         const sectionCount = Object.keys(brandSetup.sections).length;
         this.#logger.info(`Resolved brand id "${brandSetup.id}" and ${sectionCount} sections for brand "${brandName}".`);
+        this.#brandName = brandName;
         this.#brandSections = brandSetup.sections;
         return brandSetup.id;
     }
@@ -85,12 +89,18 @@ export class BrandSectionMapReader {
     }
 
     /**
+     * @param {string} brandName 
      * @param {string} sectionName 
      * @returns {string} Section id.
      */
-    resolveSectionId(sectionName) {
+    resolveSectionId(brandName, sectionName) {
         if (!this.#brandSections) {
             throw new Error(`The brand sections were not resolved yet.`);
+        }
+        if (brandName !== this.#brandName) {
+            throw new Error(`The given brand "${brandName}" is not the same as brand "${this.#brandName}" being handled. ` +
+                'Mixed brand or brand switches are not supported.'
+            );
         }
         const sectionId = this.#brandSections[sectionName];
         if (!sectionId) {

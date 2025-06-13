@@ -188,7 +188,8 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId) {
             composeFileRenditionDto('snapshot', 'image/jpeg', 'jpg'),
             composeFileRenditionDto('definition', 'application/xml', 'idms'),
         ] : [];
-        const sectionId = brandSectionMapReader.resolveSectionId(articleShapeJson.sectionName);
+        const sectionId = brandSectionMapReader.resolveSectionId(
+            articleShapeJson.brandName, articleShapeJson.sectionName);
         await uploadArticleShapeWithFiles(
             accessToken, brandId, sectionId, baseName, articleShapeJson, localFiles, fileRenditions);        
         return true;
