@@ -72,7 +72,7 @@ export class PlaService {
             const responseJson = await response.json();
             this.#logHttpTraffic(request, null, response, responseJson);
             if (response.ok) {
-                this.#logger.debug(`Validated brand setup. Found ${responseJson.length} issues.`);
+                this.#logger.debug(`Validated brand setup. Found ${responseJson.length} problems.`);
                 return responseJson;
             }
             throw new Error(`HTTP ${response.status} ${response.statusText}`);

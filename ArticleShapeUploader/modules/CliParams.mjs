@@ -69,7 +69,7 @@ export class CliParams {
             + "Options:\n"
             + "  --input-path=...          Path of folder that contains article shapes to upload.\n"
             + "  --old-shapes=...          How to handle the previously configured shapes. Options: 'keep' or 'delete'.\n"
-            + "  --target-brand=...        Optional. Name of the brand to upload to. Overrides the brand provided by the shapes. Requires a _manifest/brand-section-map.json file.\n"
+            + "  --target-brand=...        Optional. Name of the brand to upload to. Overrides the brand provided by the shapes.\n"
             + "  --no-uploads              Optional. Skip uploading files for the article shapes. Don't use for production."
         ;
         console.log(usage);
