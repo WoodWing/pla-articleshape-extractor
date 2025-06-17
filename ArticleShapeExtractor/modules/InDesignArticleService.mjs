@@ -50,6 +50,16 @@ class InDesignArticleService {
                 newName = this.#replaceTextCaseInsensitive(newName, storyTypeName, articleName);
                 newName = this.#cleanWhitespaces(newName)
             };
+
+            //Check if new name contains one of the article types
+            if (newName.toLowerCase().indexOf("lead") == -1 && 
+                newName.toLowerCase().indexOf("secondary") == -1 && 
+                newName.toLowerCase().indexOf("third") == -1 && 
+                newName.toLowerCase().indexOf("filler") == -1  
+            ) {
+                newName =  articleName + " " + newName;
+            }
+
             if (newName != oldName) {
                 article.name = newName;
                 alert("Article \"" + oldName + "\" has been renamed to \"" + newName + "\"");
@@ -112,6 +122,9 @@ class InDesignArticleService {
                     article.articleMembers.add(frame);
                 } catch (error) {
                 }
+            } else {
+                alert ("Not valid");
+                alert (frame.constructorName)
             }
         }
     };

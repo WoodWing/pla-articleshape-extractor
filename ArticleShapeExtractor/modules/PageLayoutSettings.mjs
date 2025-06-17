@@ -109,7 +109,7 @@ class PageLayoutSettings{
      * @returns number Baseline start (always relative to top of page).
      */    
     #getBaselineStart(doc, page) {
-        const baselineStart = doc.gridPreferences.baselineStart;
+        let baselineStart = doc.gridPreferences.baselineStart;
         const isGridRelativeToPageMargins = doc.gridPreferences.baselineGridRelativeOption.equals(
             idd.BaselineGridRelativeOption.TOP_OF_MARGIN_OF_BASELINE_GRID_RELATIVE_OPTION);
         if (isGridRelativeToPageMargins) {
