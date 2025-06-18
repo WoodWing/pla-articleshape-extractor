@@ -48,7 +48,7 @@ class PageLayoutSettings{
             }
             const page = doc.pages.item(0);
             const baselineStart = this.#getBaselineStart(doc, page);
-            const settings = this.#composeSettings(doc, baselineStart);
+            const settings = this.#composeSettings(doc, page, baselineStart);
             await this.#saveOrComparePageLayoutSettings(settings, folder);
             exportedSuccessfully = true;
         } catch(error) {
@@ -67,23 +67,24 @@ class PageLayoutSettings{
 
     /**
      * @param {Document} doc 
+     * @param {Page} page 
      * @param {Number} baselineStart 
      * @returns {dimensions: {width: Number, height: Number}, margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}
      */
-    #composeSettings(doc, baselineStart) {
+    #composeSettings(doc, page, baselineStart) {
         return {
             dimensions: {
                 width: this.#roundTo3Decimals(doc.documentPreferences.pageWidth),
                 height: this.#roundTo3Decimals(doc.documentPreferences.pageHeight)
             },
             margins: {
-                top: this.#roundTo3Decimals(doc.marginPreferences.top), 
-                bottom: this.#roundTo3Decimals(doc.marginPreferences.bottom), 
-                inside: this.#roundTo3Decimals(doc.marginPreferences.left), 
-                outside: this.#roundTo3Decimals(doc.marginPreferences.right)
+                top: this.#roundTo3Decimals(page.marginPreferences.top), 
+                bottom: this.#roundTo3Decimals(page.marginPreferences.bottom), 
+                inside: this.#roundTo3Decimals(page.marginPreferences.left), 
+                outside: this.#roundTo3Decimals(page.marginPreferences.right)
             }, 
             columns: {
-                gutter: this.#roundTo3Decimals(doc.marginPreferences.columnGutter)
+                gutter: this.#roundTo3Decimals(page.marginPreferences.columnGutter)
             },
             "baseline-grid": {
                 start: this.#roundTo3Decimals(baselineStart),
