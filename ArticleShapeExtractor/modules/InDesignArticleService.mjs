@@ -43,22 +43,20 @@ class InDesignArticleService {
             const article = articles[articleIndex];
             let newName = article.name;
             let oldName = article.name;
-
             const storyTypeNames = ["Lead", "Secondary", "Third", "Filler"];
+
+            // Rename article that was previousy tagged with a story type
             for (let storyTypeIndex = 0; storyTypeIndex < storyTypeNames.length; storyTypeIndex++) {
                 const storyTypeName = storyTypeNames[storyTypeIndex];
-                newName = this.#replaceTextCaseInsensitive(newName, storyTypeName, articleName);
-                newName = this.#cleanWhitespaces(newName)
+                newName = this.#replaceTextCaseInsensitive(newName, storyTypeName, articleName);                
             };
 
-            //Check if new name contains one of the article types
-            if (newName.toLowerCase().indexOf("lead") == -1 && 
-                newName.toLowerCase().indexOf("secondary") == -1 && 
-                newName.toLowerCase().indexOf("third") == -1 && 
-                newName.toLowerCase().indexOf("filler") == -1  
-            ) {
-                newName =  articleName + " " + newName;
+            // Rename article when it does NOT contain any of the story types.
+            if (!this.#containsCaseInsensitive(newName, storyTypeNames)) {
+                newName = articleName + " " + newName;
             }
+
+            newName = this.#cleanWhitespaces(newName)
 
             if (newName != oldName) {
                 article.name = newName;
@@ -66,6 +64,16 @@ class InDesignArticleService {
             }
         }
     };
+
+    #containsCaseInsensitive(stringValue, listOfStringValues) {
+        for (let storyTypeIndex = 0; storyTypeIndex < listOfStringValues.length; storyTypeIndex++) {
+            if (stringValue.toLowerCase().includes (listOfStringValues[storyTypeIndex].toLowerCase())) {
+                return true;
+            }
+        }    
+
+        return false;
+    }
 
     /**
      * Collect articles the provided frame is part of.
@@ -122,7 +130,7 @@ class InDesignArticleService {
                     article.articleMembers.add(frame);
                 } catch (error) {
                 }
-            } 
+            }
         }
     };
 
