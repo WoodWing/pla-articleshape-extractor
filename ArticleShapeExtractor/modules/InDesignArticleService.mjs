@@ -122,10 +122,7 @@ class InDesignArticleService {
                     article.articleMembers.add(frame);
                 } catch (error) {
                 }
-            } else {
-                alert ("Not valid");
-                alert (frame.constructorName)
-            }
+            } 
         }
     };
 

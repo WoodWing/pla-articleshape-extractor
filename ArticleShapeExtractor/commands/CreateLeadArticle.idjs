@@ -1,5 +1,4 @@
 await (async function main() {
-    const { app } = require("indesign");
     const initBootstrap = require('../bootstrap.js');
     const Container = require("../modules/Container.mjs");
 
