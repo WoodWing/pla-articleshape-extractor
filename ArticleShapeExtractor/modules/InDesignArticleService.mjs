@@ -43,19 +43,37 @@ class InDesignArticleService {
             const article = articles[articleIndex];
             let newName = article.name;
             let oldName = article.name;
-
             const storyTypeNames = ["Lead", "Secondary", "Third", "Filler"];
+
+            // Rename article that was previousy tagged with a story type
             for (let storyTypeIndex = 0; storyTypeIndex < storyTypeNames.length; storyTypeIndex++) {
                 const storyTypeName = storyTypeNames[storyTypeIndex];
-                newName = this.#replaceTextCaseInsensitive(newName, storyTypeName, articleName);
-                newName = this.#cleanWhitespaces(newName)
+                newName = this.#replaceTextCaseInsensitive(newName, storyTypeName, articleName);                
             };
+
+            // Rename article when it does NOT contain any of the story types.
+            if (!this.#containsCaseInsensitive(newName, storyTypeNames)) {
+                newName = articleName + " " + newName;
+            }
+
+            newName = this.#cleanWhitespaces(newName)
+
             if (newName != oldName) {
                 article.name = newName;
                 alert("Article \"" + oldName + "\" has been renamed to \"" + newName + "\"");
             }
         }
     };
+
+    #containsCaseInsensitive(stringValue, listOfStringValues) {
+        for (let storyTypeIndex = 0; storyTypeIndex < listOfStringValues.length; storyTypeIndex++) {
+            if (stringValue.toLowerCase().includes (listOfStringValues[storyTypeIndex].toLowerCase())) {
+                return true;
+            }
+        }    
+
+        return false;
+    }
 
     /**
      * Collect articles the provided frame is part of.

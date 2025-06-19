@@ -1,6 +1,7 @@
-(async function main() {
+await (async function main() {
     const initBootstrap = require('../bootstrap.js');
-    const Container = require("../modules/Container.js");
+    const Container = require("../modules/Container.mjs");
+
     try {
         initBootstrap();
         Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Filler");
