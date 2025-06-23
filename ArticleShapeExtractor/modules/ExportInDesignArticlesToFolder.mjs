@@ -8,16 +8,16 @@ class ExportInDesignArticlesToFolder {
 
     /** @type {Logger} */
     #logger;
-    
+
     /** @type {InDesignArticleService} */
     #inDesignArticleService;
-    
+
     /** @type {PageLayoutSettings} */
     #pageLayoutSettings;
-    
+
     /** @type {Object} */
     #fallbackBrand;
-    
+
     /** @type {Object} */
     #fallbackCategory;
 
@@ -27,12 +27,12 @@ class ExportInDesignArticlesToFolder {
      * @param {PageLayoutSettings} pageLayoutSettings
      * @param {Object} fallbackBrand
      * @param {Object} fallbackCategory
-     */    
+     */
     constructor(
         logger,
-        inDesignArticleService, 
+        inDesignArticleService,
         pageLayoutSettings,
-        fallbackBrand, 
+        fallbackBrand,
         fallbackCategory,
     ) {
         this.#logger = logger;
@@ -106,16 +106,25 @@ class ExportInDesignArticlesToFolder {
                     }
                     articleShapeJson.textComponents.push(textComponent);
                 } else if (this.#inDesignArticleService.isValidArticleGraphicFrame(element.itemRef)) {
-                    pageItems.push(element.itemRef);
-                    articleShapeJson.imageComponents.push({
-                        "geometricBounds": this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef),
-                        "textWrapMode": this.#getTextWrapMode(element.itemRef)
-                    });
+                    const geometricBounds = this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef)
+                    if (geometricBounds.height > 10 && geometricBounds.width > 10) {
+                        pageItems.push(element.itemRef);
+                        articleShapeJson.imageComponents.push({
+                            "geometricBounds": geometricBounds,
+                            "textWrapMode": this.#getTextWrapMode(element.itemRef)
+                        });
+                    } else {
+                        this.#logger.info("Article '{}' has a graphic frame item '{}' placed at ({},{},{},{}). "
+                            + "The graphic from is to small, it is most likely a line "
+                            + "Hence the item is excluded from the article export operation.",
+                            article.name, element.itemRef.constructorName,
+                            element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);
+                    }
                 } else {
-                    this.#logger.info("Article '{}' has a page item '{}' placed at ({},{}). " 
+                    this.#logger.info("Article '{}' has a page item '{}' placed at ({},{}). "
                         + "The page item is either not valid or not a text/graphic frame. "
                         + "Hence the item is excluded from the article export operation.",
-                        article.name, element.itemRef.constructorName, 
+                        article.name, element.itemRef.constructorName,
                         element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0]);
                 }
             }
@@ -184,7 +193,7 @@ class ExportInDesignArticlesToFolder {
         } catch (error) {
             // Use path of layout to make file name unique.
             if (doc.saved) {
-                const docFile  = await doc.fullName;
+                const docFile = await doc.fullName;
                 let suffix = window.path.dirname(docFile);
                 suffix = suffix.ltrim(window.path.sep).rtrim(window.path.sep);
                 suffix = suffix.replaceAll(window.path.sep, "-");
@@ -236,20 +245,20 @@ class ExportInDesignArticlesToFolder {
                 doc.entMetaData.get("Core_Publication")
             );
             category = app.entSession.getCategory(
-                doc.entMetaData.get("Core_Publication"), 
-                doc.entMetaData.get("Core_Section"), 
+                doc.entMetaData.get("Core_Publication"),
+                doc.entMetaData.get("Core_Section"),
                 doc.entMetaData.get("Core_Issue")
             );
         } catch (error) {
             brand = this.#fallbackBrand;
             category = this.#fallbackCategory;
         }
-        this.#logger.info("Resolved brand '{}' (id={}) and category '{}' (id={}).", 
+        this.#logger.info("Resolved brand '{}' (id={}) and category '{}' (id={}).",
             brand.name, brand.id, category.name, category.id);
 
         // Resolve the shape type. Bail out when article has bad naming convention.
         const shapeType = this.#resolveShapeTypeFromArticleName(articleName)
-        if(shapeType === null) {
+        if (shapeType === null) {
             return null;
         }
 
@@ -274,8 +283,8 @@ class ExportInDesignArticlesToFolder {
         }
         // Set the foldLine property when the article shape does crossover the fold line of the spread.
         const geometricBoundsRight = articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
-        const crossoverFoldLine = 
-            articleShapeJson.geometricBounds.x < doc.documentPreferences.pageWidth 
+        const crossoverFoldLine =
+            articleShapeJson.geometricBounds.x < doc.documentPreferences.pageWidth
             && doc.documentPreferences.pageWidth < geometricBoundsRight;
         if (crossoverFoldLine) {
             articleShapeJson.foldLine = doc.documentPreferences.pageWidth - articleShapeJson.geometricBounds.x;
@@ -377,7 +386,7 @@ class ExportInDesignArticlesToFolder {
 
             // Write the JSON string to the file
             const formats = require('uxp').storage.formats;
-            file.write(jsonString, {format: formats.utf8}); 
+            file.write(jsonString, { format: formats.utf8 });
         } catch (error) {
             this.#logger.logError(error);
             alert("An error occurred: " + error.message);
@@ -407,11 +416,11 @@ class ExportInDesignArticlesToFolder {
             totalLineHeight += this.#getLineHeight(visibleTextItem);
         }
 
-        return { 
-            wordCount: wordCount, 
-            charCount: charCount, 
-            text: text, 
-            totalLineHeight: this.#roundTo3Decimals(totalLineHeight) 
+        return {
+            wordCount: wordCount,
+            charCount: charCount,
+            text: text,
+            totalLineHeight: this.#roundTo3Decimals(totalLineHeight)
         };
     }
 
@@ -563,7 +572,7 @@ class ExportInDesignArticlesToFolder {
                 if (pageItem.managedArticle.constructorName === "ManagedArticle") {
                     return pageItem.managedArticle;
                 }
-            } catch (error) {}
+            } catch (error) { }
         }
         return null;
     }
