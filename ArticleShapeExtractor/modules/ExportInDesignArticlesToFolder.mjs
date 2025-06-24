@@ -71,7 +71,8 @@ class ExportInDesignArticlesToFolder {
 
             for (let elementIndex = 0; elementIndex < elements.length; elementIndex++) {
                 const element = elements[elementIndex];
-                if (this.#inDesignArticleService.isValidArticleTextFrame(element.itemRef)) {
+                const geometricBounds = this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef)
+                if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
                     const threadedFrames = this.#getThreadedFrames(element.itemRef);
                     let textComponent = {
                         "type": element.itemRef.elementLabel,
@@ -89,7 +90,7 @@ class ExportInDesignArticlesToFolder {
                     for (let frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
                         const frame = threadedFrames[frameIndex];
                         pageItems.push(frame);
-                        if (this.#inDesignArticleService.isValidArticleTextFrame(frame)) {
+                        if (this.#inDesignArticleService.isValidTextFrame(frame)) {
                             const textStats = this.#getTextStatisticsWithoutOverset(frame);
                             textComponent.frames.push({
                                 "geometricBounds": this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
@@ -105,21 +106,19 @@ class ExportInDesignArticlesToFolder {
                         }
                     }
                     articleShapeJson.textComponents.push(textComponent);
-                } else if (this.#inDesignArticleService.isValidArticleGraphicFrame(element.itemRef)) {
-                    const geometricBounds = this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef)
-                    if (geometricBounds.height > 10 && geometricBounds.width > 10) {
-                        pageItems.push(element.itemRef);
-                        articleShapeJson.imageComponents.push({
-                            "geometricBounds": geometricBounds,
-                            "textWrapMode": this.#getTextWrapMode(element.itemRef)
-                        });
-                    } else {
-                        this.#logger.info("Article '{}' has a graphic frame item '{}' placed at ({},{},{},{}). "
-                            + "The graphic from is to small, it is most likely a line "
-                            + "Hence the item is excluded from the article export operation.",
-                            article.name, element.itemRef.constructorName,
-                            element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);
-                    }
+                } else if (this.#inDesignArticleService.isValid2DGraphicFrame(element.itemRef)) {
+                    pageItems.push(element.itemRef);
+                    articleShapeJson.imageComponents.push({
+                        "geometricBounds": geometricBounds,
+                        "textWrapMode": this.#getTextWrapMode(element.itemRef)
+                    });
+                } else if (this.#inDesignArticleService.isValid1DGraphicFrame(element.itemRef)) {
+                    pageItems.push(element.itemRef);
+                    this.#logger.info("Article '{}' has a graphic frame item '{}' placed at ({},{},{},{}). "
+                        + "The graphic is too slim. It is either a line or a very slim rectangle. "
+                        + "Hence the item is excluded from the article composition (JSON file).",
+                        article.name, element.itemRef.constructorName,
+                        element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);
                 } else {
                     this.#logger.info("Article '{}' has a page item '{}' placed at ({},{}). "
                         + "The page item is either not valid or not a text/graphic frame. "
@@ -456,7 +455,7 @@ class ExportInDesignArticlesToFolder {
             }
 
             //Create an array with all thread frames (images dont have threaded frames)
-            if (this.#inDesignArticleService.isValidArticleTextFrame(element.itemRef)) {
+            if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
                 threadedFrames = this.#getThreadedFrames(element.itemRef);
             } else {
                 threadedFrames = [element.itemRef];
