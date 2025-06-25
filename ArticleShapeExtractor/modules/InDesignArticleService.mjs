@@ -45,7 +45,7 @@ class InDesignArticleService {
             let oldName = article.name;
             const storyTypeNames = ["Lead", "Secondary", "Third", "Filler"];
 
-            // Rename article that was previousy tagged with a story type
+            // Rename article that was previously tagged with a story type
             for (let storyTypeIndex = 0; storyTypeIndex < storyTypeNames.length; storyTypeIndex++) {
                 const storyTypeName = storyTypeNames[storyTypeIndex];
                 newName = this.#replaceTextCaseInsensitive(newName, storyTypeName, articleName);                
@@ -63,7 +63,7 @@ class InDesignArticleService {
                 alert("Article \"" + oldName + "\" has been renamed to \"" + newName + "\"");
             }
         }
-    };
+    }
 
     #containsCaseInsensitive(stringValue, listOfStringValues) {
         for (let storyTypeIndex = 0; storyTypeIndex < listOfStringValues.length; storyTypeIndex++) {
@@ -94,7 +94,7 @@ class InDesignArticleService {
             }
         }
         return frameArticles;
-    };
+    }
 
     /**
      * Tell whether a given page item is member of a the given InDesign Article.
@@ -110,7 +110,7 @@ class InDesignArticleService {
             }
         }
         return false; // Frame not found in the article
-    };
+    }
 
     /**
      * Create a new InDesign Article with the given name. Add the selected frames to the article.
@@ -132,7 +132,7 @@ class InDesignArticleService {
                 }
             }
         }
-    };
+    }
 
     /**
      * Search for a text fragment (case insensitive) and substitute any found match with a replacement.
@@ -144,7 +144,7 @@ class InDesignArticleService {
     #replaceTextCaseInsensitive(text, search, replacement) {
         const regex = new RegExp(search, "gi"); // "g" = global, "i" = case insensitive
         return text.replace(regex, replacement);
-    };
+    }
 
     /**
      * Remove any leading or trailing whitespaces. Replace multiple inner whitespaces with a single space.
@@ -153,35 +153,91 @@ class InDesignArticleService {
      */
     #cleanWhitespaces(text) {
         return text.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+    }
+
+    /**
+     * Tells whether the given page item is a valid frame and has any of the provided frame types.
+     * @param {Object|null} pageItem
+     * @param {Array<String>} frameTypes
+     * @returns {Boolean}
+     */
+    #isValidFrameOfType(pageItem, frameTypes) {
+        return pageItem 
+            && pageItem.isValid 
+            && frameTypes.includes(pageItem.constructorName);
     };
 
     /**
      * Tells whether the given page item is a valid text frame (to be part of an article).
-     * @param {pageItem|null} object
+     * @param {Object|null} pageItem
      * @returns {Boolean}
      */
-    isValidArticleTextFrame(pageItem) {
-        return pageItem && pageItem.constructorName === "TextFrame" && pageItem.isValid
-    };
+    isValidTextFrame(pageItem) {
+        return this.#isValidFrameOfType(pageItem, ["TextFrame"]);
+    }
 
     /**
      * Tells whether the given page item is a valid graphic frame (to be part of an article).
-     * A graphic frame is any SplineItem, except GraphicLine; So only Rectangle, Oval and Polygon.
-     * @param {pageItem|null} object
+     * @param {Object|null} pageItem
      * @returns {Boolean}
      */
-    isValidArticleGraphicFrame(pageItem) {
-        const graphicClasses = ["Rectangle", "Oval", "Polygon"];
-        return pageItem && graphicClasses.includes(pageItem.constructorName) && pageItem.isValid;
-    };
+    isValidGraphicFrame(pageItem) {
+        return this.#isValidFrameOfType(pageItem, ["Oval", "Polygon", "Rectangle", "GraphicLine"]);
+    }
 
     /**
-     * Tells whether the given page item is a valid text- or graphic frame (to be part of an article).
-     * @param {pageItem|null} object
+     * Tells whether the given page item is a Rectangle graphic frame, but very slim, hence 
+     * should be interpreted as a work-around of the layouter to compose a line (GraphicLine).
+     * @param {Object|null} pageItem
+     * @returns {Boolean}
+     */
+    #isValid1DRectangleFrame(pageItem) {
+        if (!this.#isValidFrameOfType(pageItem, ["Rectangle"])) {
+            return false;
+        }
+        const width = pageItem.geometricBounds[3] - pageItem.geometricBounds[1];
+        const height = pageItem.geometricBounds[2] - pageItem.geometricBounds[0];
+        const isVerySimilarToGraphicLine = height <= 10 || width <= 10;
+        return isVerySimilarToGraphicLine;
+    }
+
+    /**
+     * Tells whether the given page item is a valid 1 dimensional graphic frame.
+     * This is either a frame of type GraphicLine or a very slim Rectangle.
+     * These frames are included in "article definition" files (IDMS) but they
+     * are excluded from "article composition" (JSON) files.
+     * @param {Object|null} pageItem
+     * @returns {Boolean}
+     */
+    isValid1DGraphicFrame(pageItem) {
+        return this.#isValidFrameOfType(pageItem, ["GraphicLine"]) 
+            || this.#isValid1DRectangleFrame(pageItem);
+    }
+
+    /**
+     * Tells whether the given page item is a valid 2 dimensional graphic frame.
+     * This includes Oval and Polygon frames, and Rectangle frames when not too slim.
+     * This excludes TextFrame, GraphicLine and very slim Rectangle frames.
+     * @param {Object|null} pageItem
+     * @returns {Boolean}
+     */
+    isValid2DGraphicFrame(pageItem) {
+        if (this.#isValidFrameOfType(pageItem, ["Oval", "Polygon"])) {
+            return true;
+        }
+        return this.#isValidFrameOfType(pageItem, ["Rectangle"]) 
+            && !this.#isValid1DRectangleFrame(pageItem);
+    }
+
+    /**
+     * Tells whether the given page item is a valid text- or graphic frame to be part 
+     * of an "article definition" file (IDMS), also called InDesign Snippet.
+     * @param {Object|null} pageItem
      * @returns {Boolean}
      */
     isValidArticleComponentFrame(pageItem) {
-        return this.isValidArticleTextFrame(pageItem) || this.isValidArticleGraphicFrame(pageItem)
+        return this.isValidTextFrame(pageItem) 
+            || this.isValidGraphicFrame(pageItem);
     }
 }
 

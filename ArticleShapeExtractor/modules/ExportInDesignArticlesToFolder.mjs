@@ -8,16 +8,16 @@ class ExportInDesignArticlesToFolder {
 
     /** @type {Logger} */
     #logger;
-    
+
     /** @type {InDesignArticleService} */
     #inDesignArticleService;
-    
+
     /** @type {PageLayoutSettings} */
     #pageLayoutSettings;
-    
+
     /** @type {Object} */
     #fallbackBrand;
-    
+
     /** @type {Object} */
     #fallbackCategory;
 
@@ -27,12 +27,12 @@ class ExportInDesignArticlesToFolder {
      * @param {PageLayoutSettings} pageLayoutSettings
      * @param {Object} fallbackBrand
      * @param {Object} fallbackCategory
-     */    
+     */
     constructor(
         logger,
-        inDesignArticleService, 
+        inDesignArticleService,
         pageLayoutSettings,
-        fallbackBrand, 
+        fallbackBrand,
         fallbackCategory,
     ) {
         this.#logger = logger;
@@ -55,91 +55,120 @@ class ExportInDesignArticlesToFolder {
         const lfs = require('uxp').storage.localFileSystem;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this.#logger.info("Extracting InDesign Articles for layout document '{}'.", docName);
-        let exportCounter = 0;
 
         app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
+        let exportCounter = 0;
         for (let articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
             const article = doc.articles.item(articleIndex);
-            let pageItems = []; // Collect all associated page items for the article.
-            const elements = article.articleMembers.everyItem().getElements();
-            const outerBounds = this.#getOuterboundOfArticleShape(elements);
-            let articleShapeJson = this.#composeArticleShapeJson(doc, article.name, outerBounds);
-            if (articleShapeJson === null) {
-                this.#logger.warning("Excluded article '{}' from export because conversion to JSON failed.", article.name);
-                continue;
-            }
-
-            for (let elementIndex = 0; elementIndex < elements.length; elementIndex++) {
-                const element = elements[elementIndex];
-                if (this.#inDesignArticleService.isValidArticleTextFrame(element.itemRef)) {
-                    const threadedFrames = this.#getThreadedFrames(element.itemRef);
-                    let textComponent = {
-                        "type": element.itemRef.elementLabel,
-                        "words": 0,
-                        "characters": 0,
-                        "firstParagraphStyle": "",
-                        "frames": []
-                    };
-
-                    // Add the name of the first paragraph style used in the chain of threaded frames.
-                    if (threadedFrames[0].paragraphs.length > 0) {
-                        textComponent.firstParagraphStyle = threadedFrames[0].paragraphs.item(0).appliedParagraphStyle.name
-                    }
-
-                    for (let frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
-                        const frame = threadedFrames[frameIndex];
-                        pageItems.push(frame);
-                        if (this.#inDesignArticleService.isValidArticleTextFrame(frame)) {
-                            const textStats = this.#getTextStatisticsWithoutOverset(frame);
-                            textComponent.frames.push({
-                                "geometricBounds": this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
-                                "columns": frame.textFramePreferences.textColumnCount,
-                                "words": textStats.wordCount,
-                                "characters": textStats.charCount,
-                                "textWrapMode": this.#getTextWrapMode(frame),
-                                "totalLineHeight": this.#roundTo3Decimals(textStats.totalLineHeight),
-                                "text": textStats.text
-                            });
-                            textComponent.words += textStats.wordCount;
-                            textComponent.characters += textStats.charCount;
-                        }
-                    }
-                    articleShapeJson.textComponents.push(textComponent);
-                } else if (this.#inDesignArticleService.isValidArticleGraphicFrame(element.itemRef)) {
-                    pageItems.push(element.itemRef);
-                    articleShapeJson.imageComponents.push({
-                        "geometricBounds": this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef),
-                        "textWrapMode": this.#getTextWrapMode(element.itemRef)
-                    });
-                } else {
-                    this.#logger.info("Article '{}' has a page item '{}' placed at ({},{}). " 
-                        + "The page item is either not valid or not a text/graphic frame. "
-                        + "Hence the item is excluded from the article export operation.",
-                        article.name, element.itemRef.constructorName, 
-                        element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0]);
-                }
-            }
-            if (pageItems.length === 0) {
-                this.#logger.warning("Excluded article '{}' from export because it has no page items.", article.name);
-                continue;
-            }
-            const managedArticle = this.#getManagedArticleFromPageItems(pageItems)
-            if (managedArticle) {
-                articleShapeJson.genreId = this.#resolveGenreFromManagedArticle(managedArticle);
-            }
-            if (!this.#arePageItemsOnSameSpread(pageItems)) {
-                const message = ("Article '{}' could not be exported because not all "
-                    + "page items are placed on the same spread.").format(article.name);
-                alert(message);
-                this.#logger.error(message);
-                continue;
-            }
-            this.#logger.info("Exporting article '{}'...", article.name);
-            await this.#exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
+            await this.#exportArticle(doc, folder, article, articleIndex);
             exportCounter++;
         }
         app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
         return exportCounter;
+    }
+
+    /**
+     * @param {Document} doc 
+     * @param {Folder} folder
+     * @param {Object} article
+     * @param {Number} articleIndex
+     */
+    async #exportArticle(doc, folder, article, articleIndex) {
+        const elements = article.articleMembers.everyItem().getElements();
+        const outerBounds = this.#getOuterboundOfArticleShape(elements);
+        let articleShapeJson = this.#composeArticleShapeJson(doc, article.name, outerBounds);
+        if (articleShapeJson === null) {
+            this.#logger.warning("Excluded article '{}' from export because conversion to JSON failed.", article.name);
+            return;
+        }
+        const pageItems = await this.#collectArticlePageItems(article, elements, outerBounds, articleShapeJson);
+        if (pageItems.length === 0) {
+            this.#logger.warning("Excluded article '{}' from export because it has no page items.", article.name);
+            return;
+        }
+        const managedArticle = this.#getManagedArticleFromPageItems(pageItems)
+        if (managedArticle) {
+            articleShapeJson.genreId = this.#resolveGenreFromManagedArticle(managedArticle);
+        }
+        if (!this.#arePageItemsOnSameSpread(pageItems)) {
+            const message = ("Article '{}' could not be exported because not all "
+                + "page items are placed on the same spread.").format(article.name);
+            alert(message);
+            this.#logger.error(message);
+            return;
+        }
+        this.#logger.info("Exporting article '{}'...", article.name);
+        await this.#exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
+    }
+
+    /**
+     * @param {Object} article
+     * @param {Array<Object>} elements
+     * @param {Object} outerBounds
+     * @param {Object} articleShapeJson
+     * @returns {Array<Object>} Page items.
+     */
+    #collectArticlePageItems(article, elements, outerBounds, articleShapeJson) {
+        let pageItems = []; // Collect all associated page items for the article.
+        for (let elementIndex = 0; elementIndex < elements.length; elementIndex++) {
+            const element = elements[elementIndex];
+            const geometricBounds = this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef)
+            if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
+                const threadedFrames = this.#getThreadedFrames(element.itemRef);
+                let textComponent = {
+                    "type": element.itemRef.elementLabel,
+                    "words": 0,
+                    "characters": 0,
+                    "firstParagraphStyle": "",
+                    "frames": []
+                };
+
+                // Add the name of the first paragraph style used in the chain of threaded frames.
+                if (threadedFrames[0].paragraphs.length > 0) {
+                    textComponent.firstParagraphStyle = threadedFrames[0].paragraphs.item(0).appliedParagraphStyle.name
+                }
+
+                for (let frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
+                    const frame = threadedFrames[frameIndex];
+                    pageItems.push(frame);
+                    if (this.#inDesignArticleService.isValidTextFrame(frame)) {
+                        const textStats = this.#getTextStatisticsWithoutOverset(frame);
+                        textComponent.frames.push({
+                            "geometricBounds": this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
+                            "columns": frame.textFramePreferences.textColumnCount,
+                            "words": textStats.wordCount,
+                            "characters": textStats.charCount,
+                            "textWrapMode": this.#getTextWrapMode(frame),
+                            "totalLineHeight": this.#roundTo3Decimals(textStats.totalLineHeight),
+                            "text": textStats.text
+                        });
+                        textComponent.words += textStats.wordCount;
+                        textComponent.characters += textStats.charCount;
+                    }
+                }
+                articleShapeJson.textComponents.push(textComponent);
+            } else if (this.#inDesignArticleService.isValid2DGraphicFrame(element.itemRef)) {
+                pageItems.push(element.itemRef);
+                articleShapeJson.imageComponents.push({
+                    "geometricBounds": geometricBounds,
+                    "textWrapMode": this.#getTextWrapMode(element.itemRef)
+                });
+            } else if (this.#inDesignArticleService.isValid1DGraphicFrame(element.itemRef)) {
+                pageItems.push(element.itemRef);
+                this.#logger.info("Article '{}' has a graphic frame item '{}' placed at ({},{},{},{}). "
+                    + "The graphic is too slim. It is either a line or a very slim rectangle. "
+                    + "Hence the item is excluded from the article composition (JSON file).",
+                    article.name, element.itemRef.constructorName,
+                    element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);
+            } else {
+                this.#logger.info("Article '{}' has a page item '{}' placed at ({},{}). "
+                    + "The page item is either not valid or not a text/graphic frame. "
+                    + "Hence the item is excluded from the article export operation.",
+                    article.name, element.itemRef.constructorName,
+                    element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0]);
+            }
+        }
+        return pageItems;
     }
 
     /**
@@ -184,7 +213,7 @@ class ExportInDesignArticlesToFolder {
         } catch (error) {
             // Use path of layout to make file name unique.
             if (doc.saved) {
-                const docFile  = await doc.fullName;
+                const docFile = await doc.fullName;
                 let suffix = window.path.dirname(docFile);
                 suffix = suffix.ltrim(window.path.sep).rtrim(window.path.sep);
                 suffix = suffix.replaceAll(window.path.sep, "-");
@@ -236,20 +265,20 @@ class ExportInDesignArticlesToFolder {
                 doc.entMetaData.get("Core_Publication")
             );
             category = app.entSession.getCategory(
-                doc.entMetaData.get("Core_Publication"), 
-                doc.entMetaData.get("Core_Section"), 
+                doc.entMetaData.get("Core_Publication"),
+                doc.entMetaData.get("Core_Section"),
                 doc.entMetaData.get("Core_Issue")
             );
         } catch (error) {
             brand = this.#fallbackBrand;
             category = this.#fallbackCategory;
         }
-        this.#logger.info("Resolved brand '{}' (id={}) and category '{}' (id={}).", 
+        this.#logger.info("Resolved brand '{}' (id={}) and category '{}' (id={}).",
             brand.name, brand.id, category.name, category.id);
 
         // Resolve the shape type. Bail out when article has bad naming convention.
         const shapeType = this.#resolveShapeTypeFromArticleName(articleName)
-        if(shapeType === null) {
+        if (shapeType === null) {
             return null;
         }
 
@@ -274,8 +303,8 @@ class ExportInDesignArticlesToFolder {
         }
         // Set the foldLine property when the article shape does crossover the fold line of the spread.
         const geometricBoundsRight = articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
-        const crossoverFoldLine = 
-            articleShapeJson.geometricBounds.x < doc.documentPreferences.pageWidth 
+        const crossoverFoldLine =
+            articleShapeJson.geometricBounds.x < doc.documentPreferences.pageWidth
             && doc.documentPreferences.pageWidth < geometricBoundsRight;
         if (crossoverFoldLine) {
             articleShapeJson.foldLine = doc.documentPreferences.pageWidth - articleShapeJson.geometricBounds.x;
@@ -377,7 +406,7 @@ class ExportInDesignArticlesToFolder {
 
             // Write the JSON string to the file
             const formats = require('uxp').storage.formats;
-            file.write(jsonString, {format: formats.utf8}); 
+            file.write(jsonString, { format: formats.utf8 });
         } catch (error) {
             this.#logger.logError(error);
             alert("An error occurred: " + error.message);
@@ -407,11 +436,11 @@ class ExportInDesignArticlesToFolder {
             totalLineHeight += this.#getLineHeight(visibleTextItem);
         }
 
-        return { 
-            wordCount: wordCount, 
-            charCount: charCount, 
-            text: text, 
-            totalLineHeight: this.#roundTo3Decimals(totalLineHeight) 
+        return {
+            wordCount: wordCount,
+            charCount: charCount,
+            text: text,
+            totalLineHeight: this.#roundTo3Decimals(totalLineHeight)
         };
     }
 
@@ -447,7 +476,7 @@ class ExportInDesignArticlesToFolder {
             }
 
             //Create an array with all thread frames (images dont have threaded frames)
-            if (this.#inDesignArticleService.isValidArticleTextFrame(element.itemRef)) {
+            if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
                 threadedFrames = this.#getThreadedFrames(element.itemRef);
             } else {
                 threadedFrames = [element.itemRef];
@@ -563,7 +592,7 @@ class ExportInDesignArticlesToFolder {
                 if (pageItem.managedArticle.constructorName === "ManagedArticle") {
                     return pageItem.managedArticle;
                 }
-            } catch (error) {}
+            } catch (error) { }
         }
         return null;
     }
