@@ -29,6 +29,11 @@ Container.registerSingleton("VersionUtils", function() {
     return new VersionUtils();
 });
 
+Container.registerSingleton("PathMatcher", function() {
+    const VersionUtils = require("./modules/PathMatcher.js");
+    return new VersionUtils();
+});
+
 // Assure this script is running on a compatible InDesign version.
 function validateHost() {
     const logger = Container.resolve("Logger");
@@ -73,6 +78,8 @@ Container.registerFactory("ExportInDesignArticlesToFolder", function() {
         Container.resolve("Logger"), 
         Container.resolve("InDesignArticleService"), 
         Container.resolve("PageLayoutSettings"), 
+        Container.resolve("PathMatcher"), 
+        settings.getParagraphsToGenres(),
         settings.getOfflineFallbackConfig().brand,
         settings.getOfflineFallbackConfig().category,
     );

@@ -15,6 +15,12 @@ class ExportInDesignArticlesToFolder {
     /** @type {PageLayoutSettings} */
     #pageLayoutSettings;
 
+    /** @type {PathMatcher} */
+    #pathMatcher;
+    
+    /** @type {Map} */
+    #paragraphsToGenres;
+    
     /** @type {Object} */
     #fallbackBrand;
 
@@ -25,6 +31,8 @@ class ExportInDesignArticlesToFolder {
      * @param {Logger} logger
      * @param {InDesignArticleService} inDesignArticleService
      * @param {PageLayoutSettings} pageLayoutSettings
+     * @param {PathMatcher} pathMatcher
+     * @param {Map} paragraphsToGenres
      * @param {Object} fallbackBrand
      * @param {Object} fallbackCategory
      */
@@ -32,12 +40,16 @@ class ExportInDesignArticlesToFolder {
         logger,
         inDesignArticleService,
         pageLayoutSettings,
+        pathMatcher,
+        paragraphsToGenres,        
         fallbackBrand,
         fallbackCategory,
     ) {
         this.#logger = logger;
         this.#inDesignArticleService = inDesignArticleService;
         this.#pageLayoutSettings = pageLayoutSettings;
+        this.#pathMatcher = pathMatcher;
+        this.#paragraphsToGenres = paragraphsToGenres;
         this.#fallbackBrand = fallbackBrand;
         this.#fallbackCategory = fallbackCategory;
     }
@@ -86,10 +98,7 @@ class ExportInDesignArticlesToFolder {
             this.#logger.warning("Excluded article '{}' from export because it has no page items.", article.name);
             return;
         }
-        const managedArticle = this.#getManagedArticleFromPageItems(pageItems)
-        if (managedArticle) {
-            articleShapeJson.genreId = this.#resolveGenreFromManagedArticle(managedArticle);
-        }
+        articleShapeJson.genreId = this.#resolveGenreFromManagedArticle(articleShapeJson.textComponents);
         if (!this.#arePageItemsOnSameSpread(pageItems)) {
             const message = ("Article '{}' could not be exported because not all "
                 + "page items are placed on the same spread.").format(article.name);
@@ -123,9 +132,12 @@ class ExportInDesignArticlesToFolder {
                     "frames": []
                 };
 
-                // Add the name of the first paragraph style used in the chain of threaded frames.
+                // Add the first paragraph style used in the chain of threaded frames.
                 if (threadedFrames[0].paragraphs.length > 0) {
-                    textComponent.firstParagraphStyle = threadedFrames[0].paragraphs.item(0).appliedParagraphStyle.name
+                    const paragraphStyle = threadedFrames[0].paragraphs.item(0).appliedParagraphStyle;
+                    if (paragraphStyle.isValid) {
+                        textComponent.firstParagraphStyle = this.#getParagraphStylePath(paragraphStyle);
+                    }
                 }
 
                 for (let frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
@@ -237,6 +249,21 @@ class ExportInDesignArticlesToFolder {
             "width": this.#roundTo3Decimals(pageItem.geometricBounds[3] - pageItem.geometricBounds[1]),
             "height": this.#roundTo3Decimals(pageItem.geometricBounds[2] - pageItem.geometricBounds[0])
         }
+    }
+
+    /**
+     * Resolve the full parental group path of a given paragraph style.
+     * @param {Object} paragraphStyle The given style must be valid.
+     * @returns {String} The group path, including the style name, for example "MainGroup/SubGroup/ParaStyle".
+     */
+    #getParagraphStylePath(paragraphStyle) {
+        let parts = [paragraphStyle.name];
+        let parent = paragraphStyle.parent;
+        while (parent && parent.constructor.name === "ParagraphStyleGroup") {
+            parts.unshift(parent.name);
+            parent = parent.parent;
+        }
+        return parts.join("/");
     }
 
     /**
@@ -582,34 +609,33 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * @param {Array<PageItem>} pageItems 
-     * @returns {ManagedArticle|null}
+     * For the given text components, it does lookup the paragraph style into the configured genre mapping.
+     * The first best component for which a configuration exists, is taken to resolve the genre id.
+     * @param {Array} textComponents
+     * @return {String|null} Genre id. Null when none found.
      */
-    #getManagedArticleFromPageItems(pageItems) {
-        for (let i = 0; i < pageItems.length; i++) {
-            const pageItem = pageItems[i];
-            try {
-                if (pageItem.managedArticle.constructorName === "ManagedArticle") {
-                    return pageItem.managedArticle;
-                }
-            } catch (error) { }
+    #resolveGenreFromManagedArticle(textComponents) {
+        let genreId = null;
+        const paragraphsToGenres = Array.from(this.#paragraphsToGenres.keys());
+        for (let i = 0; i < textComponents.length; i++) {
+            const textComponent = textComponents[i];
+            if (textComponent.firstParagraphStyle.length == 0) {
+                continue;
+            }
+            const matchedPattern = this.#pathMatcher.findBestMatch(
+                paragraphsToGenres, 
+                textComponent.firstParagraphStyle
+            );
+            genreId = matchedPattern ? this.#paragraphsToGenres.get(matchedPattern) : null;
+            if (typeof(genreId) !== "string") { // null, undefined (from get()) or bad configured type
+                genreId = null;
+            }
+            if (genreId !== null) {
+                break; // found style mapping in config
+            }
         }
-        return null;
-    }
-
-    /**
-     * @param {ManagedArticle} managedArticle 
-     * @return {String|null}
-     */
-    #resolveGenreFromManagedArticle(managedArticle) {
-        if (!managedArticle.entMetaData.constructorName === "EntMetaData") {
-            return null;
-        }
-        if (!managedArticle.entMetaData.has("C_PLA_GENRE")) {
-            return null;
-        }
-        let genreId = managedArticle.entMetaData.get("C_PLA_GENRE");
-        if (!genreId instanceof String) {
+        // At this point, genreId is either a String or null.
+        if (genreId === null) {
             return null;
         }
         genreId = genreId.trim();

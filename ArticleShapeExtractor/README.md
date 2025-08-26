@@ -130,3 +130,11 @@ Now your modifications to the scripts are directly reflected to both GitHub and 
 4. A JSX script can not invoke an IDJS script (e.g. via `app.doScript(...)`).
 5. IDJS scripts in the `Startup Scripts` folder are not recognized/executed by InDesign.
 6. Bullets 3, 4 and 5 make it impossible to add a menu item or shortcut key for a UXP/IDJS script.
+
+## How to run unit tests?
+Just the common way:
+```bash
+npm install
+npm test
+```
+At the time writing, very little is unit tested, so manual tested with InDesign is required.

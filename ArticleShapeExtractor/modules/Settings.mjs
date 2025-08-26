@@ -95,6 +95,13 @@ class Settings {
     getMinimumRequiredInDesignVersion() {
         return this.#configData.minimumRequiredInDesignVersion;
     }
+
+    /**
+     * @return {Map}
+     */
+    getParagraphsToGenres() {
+        return new Map(Object.entries(this.#configData.paragraphsToGenres));
+    }
 }
 
 module.exports = Settings;

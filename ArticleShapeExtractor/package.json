@@ -1,0 +1,21 @@
+{
+  "name": "articleshapeextractor",
+  "version": "1.0.0",
+  "description": "Article Shape Extractor tool for the Print Layout Automation (PLA) project.",
+  "license": "Copyright 2000-2025 (c) - WoodWing Software",
+  "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "<rootDir>/tests/**/*.test.cjs"
+    ]
+  }
+}
