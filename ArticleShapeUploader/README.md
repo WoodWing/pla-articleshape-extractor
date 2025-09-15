@@ -8,6 +8,7 @@ cd ArticleShapeUploader
 npm install
 echo "PLA_ACCESS_TOKEN=[your_token_here]" >> .env
 ```
+Note: node.js version 24 or higher is required
 
 # Configuration
 The [config.mjs](ArticleShapeUploader/config/config.mjs) file contains factory settings. All supported settings are listed and explained in that file. Don't edit this file directly, but first copy any setting to your [config-local.mjs](ArticleShapeUploader/config/config-local.mjs) file and make adjustments in that file instead. Make sure you also copy the surrounding/parental structure elements, if any.
