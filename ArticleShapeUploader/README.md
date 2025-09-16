@@ -3,6 +3,12 @@ Article Shape Uploader tool for the Print Layout Automation (PLA) project.
 Refer to [here](../README.md) for an overview of the available tools.
 
 # Installation
+Assure you have Node v23 or higher installed:
+```bash
+node -v
+```
+
+Install the Article Shape Uploader tool:
 ```bash
 cd ArticleShapeUploader
 npm install

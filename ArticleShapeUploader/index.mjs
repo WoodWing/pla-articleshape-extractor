@@ -2,6 +2,14 @@
  * See README.md for installation and usage of this script.
  */
 
+import semver from 'semver';
+const required_node_version = ">=23.0.0";
+
+if (!semver.satisfies(process.version, required_node_version)) {
+  console.error(`Node ${required_node_version} is required, but you’re running ${process.version}.`);
+  process.exit(1);
+}
+
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
