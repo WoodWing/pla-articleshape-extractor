@@ -38,7 +38,13 @@ const plaDefaultConfig = {
         folder: "", // Directory where to create the log file.
         wipe: true, // Whether to clean the log file before starting a new operation.
         logNetworkTraffic: false, // Log all HTTP requests/responses. Requires "DEBUG" level.
-    },    
+    },
+
+    // Map paragraph styles onto genre ids, for example: { "style X": "genre 1" }.
+    // Use the full path specification when using groups, for example: { "group A/style X": "genre 1" }.
+    // Use asterisks to match with "any" path part, for example: { "*/style X": "genre 1", "group A/*": "genre 2" }.
+    paragraphsToGenres: {
+    },
 
     // Error on attempts running scripts on older InDesign versions that are not compatible.
     minimumRequiredInDesignVersion: "19.0.0",
