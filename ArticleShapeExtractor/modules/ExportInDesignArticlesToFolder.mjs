@@ -91,8 +91,8 @@ class ExportInDesignArticlesToFolder {
             articleShapeJson.genreId = this.#resolveGenreFromManagedArticle(managedArticle);
         }
         if (!this.#arePageItemsOnSameSpread(pageItems)) {
-            const message = ("Article '{}' could not be exported because not all "
-                + "page items are placed on the same spread.").format(article.name);
+            const message = "Article '" + article.name + "' could not be exported because not all "
+                + "page items are placed on the same spread.";
             alert(message);
             this.#logger.error(message);
             return;
