@@ -2,7 +2,7 @@
 
 export const uploaderDefaultConfig = {
     // Connection URL to the PLA service.
-    plaServiceUrl: "https://service.pla-poc.woodwing.cloud/",
+    plaServiceUrl: "https://service.aila.woodwing.cloud",
 
     // Whether to log HTTP communication details (of the PLA service and S3) to the console.
     // To enable this feature is it require to set logLevel to "DEBUG".
