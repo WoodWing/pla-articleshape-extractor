@@ -428,19 +428,14 @@ function calculateArticleWidthInColumns(actualWidthInPoints, foldLineInPoints) {
 
 
 /**
- * Calculate the article height in rows, rounding up only if
+ * Calculate the article height in rows, rounding up if
  * the fractional part exceeds 10% of a full row height.
  *
- * @param {Object} articleHeightPoints
+ * @param {number} articleHeightPoints
  * @returns {number} The calculated article height in rows (minimum 1).
  */
 function calculateArticleHeightInRows(articleHeightPoints) {
   const rowHeightInPoints = pageLayoutSettingsReader.getRowHeight();
-
-  if (rowHeightInPoints <= 0) {
-    throw new Error("Row height must be greater than zero.");
-  }
-
   const rawHeightInRows = articleHeightPoints / rowHeightInPoints;
   const integerPart = Math.floor(rawHeightInRows);
   const fractionalPart = rawHeightInRows - integerPart;
