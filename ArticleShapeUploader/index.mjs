@@ -342,8 +342,13 @@ async function uploadArticleShapeWithFiles(
 function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash) {
     const actualFoldLineInPoints = sanitizeFoldLineInPoints(articleShapeJson.foldLine);
     const articleWidthInColumns = calculateArticleWidthInColumns(articleShapeJson.geometricBounds.width, actualFoldLineInPoints);
-    const rowHeightInPoints = pageLayoutSettingsReader.getRowHeight();
-    const articleHeightInRows = Math.max(1, Math.round(articleShapeJson.geometricBounds.height / rowHeightInPoints));
+    const articleHeightInRows = calculateArticleHeightInRows(articleShapeJson.geometricBounds.height);
+
+    logger.info(
+        `Article dimensions:\n` +
+        `- width x height = ${articleShapeJson.geometricBounds.width} x ${articleShapeJson.geometricBounds.height} (InDesign points)\n` +
+        `- columns x rows = ${articleWidthInColumns} x ${articleHeightInRows} (page grid)`
+    );
 
     let articleShapeDto = {
         name: articleShapeName,
@@ -419,6 +424,26 @@ function calculateArticleWidthInColumns(actualWidthInPoints, foldLineInPoints) {
         + ` - roundedWidthInColumns = ${roundedWidthInColumns}`
     );
     return roundedWidthInColumns;
+}
+
+
+/**
+ * Calculate the article height in rows, rounding up if
+ * the fractional part exceeds 10% of a full row height.
+ *
+ * @param {number} articleHeightPoints
+ * @returns {number} The calculated article height in rows (minimum 1).
+ */
+function calculateArticleHeightInRows(articleHeightPoints) {
+  const rowHeightInPoints = pageLayoutSettingsReader.getRowHeight();
+  const rawHeightInRows = articleHeightPoints / rowHeightInPoints;
+  const integerPart = Math.floor(rawHeightInRows);
+  const fractionalPart = rawHeightInRows - integerPart;
+
+  // Apply 10% rounding rule
+  const roundedRows = fractionalPart > 0.10 ? integerPart + 1 : integerPart;
+
+  return Math.max(1, roundedRows);
 }
 
 /**
