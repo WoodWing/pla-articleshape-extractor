@@ -342,15 +342,13 @@ async function uploadArticleShapeWithFiles(
 function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash) {
     const actualFoldLineInPoints = sanitizeFoldLineInPoints(articleShapeJson.foldLine);
     const articleWidthInColumns = calculateArticleWidthInColumns(articleShapeJson.geometricBounds.width, actualFoldLineInPoints);
-    const rowHeightInPoints = pageLayoutSettingsReader.getRowHeight();
-    const rawHeightInRows = articleShapeJson.geometricBounds.height / rowHeightInPoints;
+    const articleHeightInRows = calculateArticleHeightInRows(articleShapeJson.geometricBounds.height);
 
-    // Apply a 10% rule for rounding up or down
-    const integerPart = Math.floor(rawHeightInRows);
-    const fractionalPart = rawHeightInRows - integerPart;    
-    const roundedRows = fractionalPart > 0.10 ? integerPart + 1 : integerPart;
-    const articleHeightInRows = Math.max(1, roundedRows);
-    logger.debug(`articleHeightInRows: ` + articleHeightInRows);
+    logger.info(
+        `Article dimensions:\n` +
+        `- width x height = ${articleShapeJson.geometricBounds.width} x ${articleShapeJson.geometricBounds.height} (InDesign points)\n` +
+        `- columns x rows = ${articleWidthInColumns} x ${articleHeightInRows} (page grid)`
+    );
 
     let articleShapeDto = {
         name: articleShapeName,
@@ -426,6 +424,31 @@ function calculateArticleWidthInColumns(actualWidthInPoints, foldLineInPoints) {
         + ` - roundedWidthInColumns = ${roundedWidthInColumns}`
     );
     return roundedWidthInColumns;
+}
+
+
+/**
+ * Calculate the article height in rows, rounding up only if
+ * the fractional part exceeds 10% of a full row height.
+ *
+ * @param {Object} articleHeightPoints
+ * @returns {number} The calculated article height in rows (minimum 1).
+ */
+function calculateArticleHeightInRows(articleHeightPoints) {
+  const rowHeightInPoints = pageLayoutSettingsReader.getRowHeight();
+
+  if (rowHeightInPoints <= 0) {
+    throw new Error("Row height must be greater than zero.");
+  }
+
+  const rawHeightInRows = articleHeightPoints / rowHeightInPoints;
+  const integerPart = Math.floor(rawHeightInRows);
+  const fractionalPart = rawHeightInRows - integerPart;
+
+  // Apply 10% rounding rule
+  const roundedRows = fractionalPart > 0.10 ? integerPart + 1 : integerPart;
+
+  return Math.max(1, roundedRows);
 }
 
 /**
