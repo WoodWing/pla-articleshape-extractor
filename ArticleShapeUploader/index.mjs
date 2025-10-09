@@ -343,7 +343,14 @@ function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHa
     const actualFoldLineInPoints = sanitizeFoldLineInPoints(articleShapeJson.foldLine);
     const articleWidthInColumns = calculateArticleWidthInColumns(articleShapeJson.geometricBounds.width, actualFoldLineInPoints);
     const rowHeightInPoints = pageLayoutSettingsReader.getRowHeight();
-    const articleHeightInRows = Math.max(1, Math.round(articleShapeJson.geometricBounds.height / rowHeightInPoints));
+    const rawHeightInRows = articleShapeJson.geometricBounds.height / rowHeightInPoints;
+
+    // Apply a 10% rule for rounding up or down
+    const integerPart = Math.floor(rawHeightInRows);
+    const fractionalPart = rawHeightInRows - integerPart;    
+    const roundedRows = fractionalPart > 0.10 ? integerPart + 1 : integerPart;
+    const articleHeightInRows = Math.max(1, roundedRows);
+    logger.debug(`articleHeightInRows: ` + articleHeightInRows);
 
     let articleShapeDto = {
         name: articleShapeName,
