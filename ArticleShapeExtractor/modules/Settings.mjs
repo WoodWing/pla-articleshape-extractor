@@ -12,33 +12,8 @@ class Settings {
      * @param {Object} localConfig Local override settings.
      */
     constructor(defaultConfig, localConfig) {
-        this.#configData = this.#deepMerge(defaultConfig, localConfig);
+        this.#configData = _.merge({}, defaultConfig, localConfig);
     }
-
-    /**
-     * Recursively merge two structural settings objects.
-     * @param {Object} defaultData Default values.
-     * @param {Object} localData Override values.
-     * @returns {Object} Merged settings.
-     */
-    #deepMerge(defaultData, localData) {
-        let merged = {};
-        for (let key in defaultData) {
-            if (defaultData.hasOwnProperty(key)) {
-                merged[key] = defaultData[key];
-            }
-        }
-        for (let key in localData) {
-            if (localData.hasOwnProperty(key)) {
-                if (typeof localData[key] === "object" && typeof defaultData[key] === "object") {
-                    merged[key] = this.#deepMerge(defaultData[key], localData[key]);
-                } else {
-                    merged[key] = localData[key];
-                }
-            }
-        }
-        return merged;
-    };
 
     /**
      * @returns {Object}
@@ -94,6 +69,13 @@ class Settings {
      */
     getMinimumRequiredInDesignVersion() {
         return this.#configData.minimumRequiredInDesignVersion;
+    }
+    
+    /**
+     * @return {Array<String>}
+     */
+    getGenres() {
+        return this.#configData.genres;
     }
 }
 
