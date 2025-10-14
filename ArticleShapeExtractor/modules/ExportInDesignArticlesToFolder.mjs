@@ -94,13 +94,23 @@ class ExportInDesignArticlesToFolder {
             this.#logger.warning("Excluded article '{}' from export because it has no page items.", article.name);
             return false;
         }
-        articleShapeJson.genreId = this.#genreResolver.resolveGenreId(article.name);
-        if (this.#genreResolver.isFeatureEnabled() && articleShapeJson.genreId == null) {
-            const message = "Article '" + article.name + "' could not be exported because "
-                + "it's name does not contain any of the configured genres.";
-            alert(message);
-            this.#logger.error(message);
-            return false;
+        articleShapeJson.genreId = null;
+        if (this.#genreResolver.isFeatureEnabled()) {
+            const genreIds = this.#genreResolver.resolveGenreIds(article.name);
+            let message = null;
+            if (genreIds.length === 0) {
+                message = `Article '${article.name}' could not be exported because `
+                    + `it's name does not contain any of the configured genres.`;
+            } else if (genreIds.length > 1) {
+                message = `Article '${article.name}' could not be exported because `
+                    + `it's name contains multiple of the configured genres: ${genreIds}.`;
+            }
+            if (message !== null) {
+                alert(message);
+                this.#logger.error(message);
+                return false;
+            }
+            articleShapeJson.genreId = genreIds[0];
         }
         if (!this.#arePageItemsOnSameSpread(pageItems)) {
             const message = "Article '" + article.name + "' could not be exported because not all "

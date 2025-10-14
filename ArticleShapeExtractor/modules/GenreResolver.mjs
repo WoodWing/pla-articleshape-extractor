@@ -1,6 +1,6 @@
 /**
- * Understands genres; How to detect the genre in a given an article name
- * and how to export them to  the _manifest subfolder of the export folder.
+ * Understands genres; How to detect the genre in a given an article name and how
+ * to normalize and export them to the _manifest subfolder of the export folder.
  */
 class GenreResolver {
 
@@ -21,27 +21,38 @@ class GenreResolver {
     constructor(logger, fileUtils, genres) {
         this.#logger = logger;
         this.#fileUtils = fileUtils;
-        // Unlike other entities, genres are not saved in the DB. So there is no id-name mapping.
-        // Instead, genres is just a list of names. To avoid inconsistencies, those are lower-cased.
-        this.#genres = genres.map(genre => genre.toLowerCase());
+        this.#genres = this.#normalizeGenres(genres);
+    }
+
+    /**
+     * Unlike other entities, genres are not saved in the DB. So there is no id-name mapping.
+     * Instead, genres is just a list of names. To avoid inconsistencies, those are normalized;
+     * They are trimmed, lower-cased and sorted.
+     * 
+     * @param {Array<String>} genres
+     */
+    #normalizeGenres(genres) {
+        return genres
+            .map(genre => genre.trim().toLowerCase())
+            .sort();
     }
 
     /**
      * Lookup the genre in the article name (case insensitive).
+     * When multiple matches found, they are all returned.
      * 
      * @param {String} articleName 
-     * @returns {String|null}
+     * @returns {Array<String>}
      */
-    resolveGenreId(articleName) {
-        let genreId = null;
+    resolveGenreIds(articleName) {
+        let genreIds = [];
         for (let genreIndex = 0; genreIndex < this.#genres.length; genreIndex++) {
             const thisGenreId = this.#genres[genreIndex];
             if (articleName.toLowerCase().includes(thisGenreId)) {
-                genreId = thisGenreId;
-                break;
+                genreIds.push(thisGenreId);
             }
         }
-        return genreId;
+        return genreIds;
     }
 
     /**
@@ -54,6 +65,9 @@ class GenreResolver {
     }
 
     /**
+     * Export configured genres to the _manifest subfolder of the export folder.
+     * The genres are trimmed, lower-cased and sorted to ease comparing configurations.
+     * 
      * @param {Folder} exportFolder
      */
     async saveGenesToManifest(exportFolder) {
