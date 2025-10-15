@@ -402,7 +402,7 @@ function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHa
     const articleWidthInColumns = calculateArticleWidthInColumns(articleShapeJson.geometricBounds.width, actualFoldLineInPoints);
     const articleHeightInRows = calculateArticleHeightInRows(articleShapeJson.geometricBounds.height);
 
-    logger.info(
+    logger.debug(
         `Article dimensions:\n` +
         `- width x height = ${articleShapeJson.geometricBounds.width} x ${articleShapeJson.geometricBounds.height} (InDesign points)\n` +
         `- columns x rows = ${articleWidthInColumns} x ${articleHeightInRows} (page grid)`
