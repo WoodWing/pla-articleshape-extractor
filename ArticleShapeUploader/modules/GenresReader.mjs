@@ -44,4 +44,21 @@ export class GenresReader {
         this.#logger.info(`The "${genresRelativePath}" file is valid.`);
         return this.#genres;
     }
+
+    /**
+     * Tells whether or not the genres feature is in use.
+     * @returns {boolean}
+     */
+    isFeatureEnabled() {
+        return this.#genres.length > 0;
+    }
+
+    /**
+     * Tells whether or not a given genre is valid/configured.
+     * @param {string} genre 
+     * @returns 
+     */
+    genreExists(genre) {
+        return this.#genres.indexOf(genre) > -1;
+    }
 }

@@ -297,6 +297,18 @@ function validateArticleShapeJson(jsonFilePath) {
         throw new Error(`The file "${jsonFilePath}" is not valid JSON - ${error.message}`);
     }
     jsonValidator.validate('article-shape',jsonData);
+    if (genresReader.isFeatureEnabled()) {
+        if (jsonData.genreId === null) {
+            throw new Error(`The file "${jsonFilePath}" refers to no genre (genreId=null) but genres are configured, hence mandatory.`);
+        }
+        if (!genresReader.genreExists(jsonData.genreId)) {
+            throw new Error(`The file "${jsonFilePath}" refers to a genre "${jsonData.genreId}" that is not configured.`);
+        }
+    } else {
+        if (jsonData.genreId !== null) {
+            throw new Error(`The file "${jsonFilePath}" refers to a genre "${jsonData.genreId}" that is not configured.`);
+        }
+    }
     return jsonData;
 }
 
