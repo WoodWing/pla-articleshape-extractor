@@ -20,6 +20,7 @@ import { AppSettings } from "./modules/AppSettings.mjs";
 import { ColoredLogger } from "./modules/ColoredLogger.mjs";
 import { CliParams } from "./modules/CliParams.mjs";
 import { PageLayoutSettingsReader } from "./modules/PageLayoutSettingsReader.mjs";
+import { GenresReader } from "./modules/GenresReader.mjs";
 import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
 import { BrandSectionMapReader } from './modules/BrandSectionMapReader.mjs';
 import { ArticleShapeHasher } from "./modules/ArticleShapeHasher.mjs";
@@ -33,13 +34,15 @@ try {
     uploaderLocalConfig = localModule.uploaderLocalConfig;
 } catch (error) {
 }
+const validateSettingsFromExcel = true; // careful: only set temporary to false for local-dev testing
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const appSettings = new AppSettings(uploaderDefaultConfig, uploaderLocalConfig);
 const logger = new ColoredLogger(appSettings.getLogLevel());
 const cliParams = new CliParams(logger);
 const jsonValidator = new JsonValidator(logger, path.join(__dirname, 'schemas'));
 const pageLayoutSettingsReader = new PageLayoutSettingsReader(logger, jsonValidator);
-const elementLabelMapper = new ElementLabelMapper(logger, jsonValidator);
+const genresReader = new GenresReader(logger, jsonValidator);
+const elementLabelMapper = new ElementLabelMapper(logger, jsonValidator, validateSettingsFromExcel);
 const brandSectionMapReader = new BrandSectionMapReader(logger, jsonValidator);
 const hasher = new ArticleShapeHasher(elementLabelMapper);
 const plaService = new PlaService(appSettings.getPlaServiceUrl(), appSettings.getLogNetworkTraffic(), logger);
@@ -55,8 +58,12 @@ async function main() {
         }
         const inputPath = cliParams.resolveInputPath();
         const pageLayoutSettings = pageLayoutSettingsReader.readSettings(inputPath);
+        const genres = genresReader.readGenres(inputPath);
         const accessToken = resolveAccessToken();
 
+        if (!validateSettingsFromExcel) {
+            logger.warning("The 'validateSettingsFromExcel' option is disabled. Should _not_ be used for production.");
+        }
         let targetBrandName = cliParams.getTargetBrandName();
         if (!targetBrandName) {
             const articleShapeJson = await takeFirstArticleShapeJson(inputPath);
@@ -66,8 +73,11 @@ async function main() {
 
         const pageGrid = await assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId);
         pageLayoutSettingsReader.setPageGrid(pageGrid);
-        await assureTallyPageLayoutSettings(accessToken, brandId, pageLayoutSettings)
-        elementLabelMapper.init(await plaService.getElementLabelMapping(accessToken, brandId));
+        if (validateSettingsFromExcel) {
+            await assureTallyPageLayoutSettings(accessToken, brandId, pageLayoutSettings)
+            elementLabelMapper.init(await plaService.getElementLabelMapping(accessToken, brandId));
+        }
+        await assureTallyGenres(accessToken, brandId, genres)
         if (await cliParams.shouldDeletePreviouslyConfiguredArticleShapes()) {
              await plaService.deleteArticleShapes(accessToken, brandId);
         }
@@ -135,12 +145,12 @@ async function assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId)
  * Raise error when they differ with the ones read from input folder.
  * @param {string} accessToken 
  * @param {string} brandId 
- * @param {string} inputPageLayoutSettings Read from input path.
+ * @param {Object} inputPageLayoutSettings Read from input path.
  */
 async function assureTallyPageLayoutSettings(accessToken, brandId, inputPageLayoutSettings) {
     const plaPageLayoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId);
     if (plaPageLayoutSettings === null) {
-        throw new Error("There are no page layout settings configured yet. "
+        throw new Error("There are no page layout settings stored at the PLA service yet. "
             + "Please import the PLA Config Excel file and try again.");
     }
     jsonValidator.validate('page-layout-settings', plaPageLayoutSettings);
@@ -152,6 +162,54 @@ async function assureTallyPageLayoutSettings(accessToken, brandId, inputPageLayo
             "The page layout settings retrieved from PLA service "
             + "differ from the ones read from input folder.");
     }
+    logger.info("Locally configured page layout settings are tally with the PLA service.");
+}
+
+/**
+ * Validate the provided genres and assure they are the same as the genres stored in PLA service. 
+ * Depending on the user provided --old-shapes CLI option:
+ * - 'delete': Delete the genres from the PLA service and upload the provided ones.
+ * - 'keep': Retrieve the genres from the PLA service and error when differ with the provided ones.
+ * @param {string} accessToken 
+ * @param {string} brandId 
+ * @param {Array<string>} inputGenres Read from input path.
+ */
+async function assureTallyGenres(accessToken, brandId, inputGenres) {
+
+    // Nothing to do when the Genres feature is disabled and the PLA hasn't any.
+    const plaGenres = await plaService.getGenres(accessToken, brandId);
+    if (inputGenres.length === 0 && (plaGenres === null || plaGenres.length ===0)) {
+        return;
+    }
+
+    // Assure the locally provided genres are valid.
+    jsonValidator.validate('genres', inputGenres);
+
+    // If the user wants to delete shapes, assume a full replacement of the config, including
+    // the genres. Delete them from the PLA service and upload the locally provided genres.
+    if (cliParams.shouldDeletePreviouslyConfiguredArticleShapes()) {
+        if (plaGenres !== null) {
+            plaService.deleteGenres(accessToken, brandId);
+        }
+        plaService.createGenres(accessToken, brandId, inputGenres);
+        return;
+    }
+    
+    // At this point, the user wants to keep the shapes, assume including the genres. Make sure
+    // the locally provided genres are exactly the same as the ones stored at the PLA service.
+    if (plaGenres === null) {
+        throw new Error("There are no genres stored at the PLA service yet. "
+            + "Please use the --old-genres=delete option and try again.");
+    }
+    if (diff(plaGenres, inputGenres)) {
+        logger.error( "Genres differ:",
+            "\n1) retrieved from PLA service:\n", plaGenres,
+            "\n2) read from input folder:\n", inputGenres);
+        throw new Error(
+            "The genres retrieved from PLA service "
+            + "differ from the ones read from input folder.");
+    }
+    logger.info("Locally configured genres are tally with the PLA service.");
 }
 
 /**

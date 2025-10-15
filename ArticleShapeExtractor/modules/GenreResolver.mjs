@@ -28,15 +28,19 @@ class GenreResolver {
 
     /**
      * Unlike other entities, genres are not saved in the DB. So there is no id-name mapping.
-     * Instead, genres is just a list of names. To avoid inconsistencies, those are normalized;
-     * They are trimmed, lower-cased and sorted.
+     * Instead, genres is just a list of names. To avoid inconsistencies, those are normalized.
+     * Genres are normalized as follows:
+     * - trimmed, lower-cased and sorted
+     * - empty and duplicate genres are removed
      * 
      * @param {Array<String>} genres
      */
     #normalizeGenres(genres) {
-        return genres
+        let normalized = genres
             .map(genre => genre.trim().toLowerCase())
+            .filter(genre => genre.length > 0) // remove empty values
             .sort();
+        return Array.from(new Set(normalized)); // remove duplicates
     }
 
     /**

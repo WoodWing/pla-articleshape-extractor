@@ -82,64 +82,135 @@ export class PlaService {
     }    
 
     /**
-     * Retrieve the Document Setup settings from PLA service.
-     * These settings are configured per brand.
-     * When settings have not been made yet, it returns null.
+     * Retrieve the Document Setup settings from PLA service for a give brand.
      * @param {string} accessToken 
      * @param {string} brandId 
-     * @returns {{margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}}|null} Settings, or null when not found.
+     * @returns {{margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}}|null} Settings, or null when not found/configured.
      */
     async getPageLayoutSettings(accessToken, brandId) {
-        const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/setting/page-layout`;
+        return await this.#getSetting(accessToken, brandId, 'page-layout');
+    }
+
+    /**
+     * Retrieve the genres setting from the PLA service for a given brand.
+     * @param {string} accessToken 
+     * @param {string} brandId 
+     * @returns {Array<string>|null} Genres, or null when not found/configured.
+     */
+    async getGenres(accessToken, brandId) {
+        return await this.#getSetting(accessToken, brandId, 'genres');
+    }
+
+    /**
+     * Create the genres setting in the PLA service for a given brand.
+     * @param {string} accessToken 
+     * @param {string} brandId 
+     * @param {Array<string>} genres 
+     */
+    async createGenres(accessToken, brandId, genres) {
+        await this.#createSetting(accessToken, brandId, 'genres', genres);
+    }
+
+    /**
+     * Delete the genres setting in the PLA service for a given brand.
+     * @param {string} accessToken 
+     * @param {string} brandId 
+     */
+    async deleteGenres(accessToken, brandId) {
+        await this.#deleteSetting(accessToken, brandId, 'genres');
+    }
+
+    /**
+     * Retrieve the element labels mapping setting from the PLA service for a given brand.
+     * @param {string} accessToken 
+     * @param {string} brandId 
+     * @returns {Object|null} Mapping, or null when not found/configured.
+     */
+    async getElementLabelMapping(accessToken, brandId) {
+        return this.#getSetting(accessToken, brandId, 'element-labels');
+    }    
+
+    /**
+     * Retrieve a configuration setting from the PLA service for a given brand.
+     * @param {string} accessToken 
+     * @param {string} brandId 
+     * @param {string} settingName Internal name (as specified by REST API).
+     * @returns {Any|null} Setting value, or null when not found.
+     */
+    async #getSetting(accessToken, brandId, settingName) {
+        const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/setting/${settingName}`;
         try {
             const request = new Request(url, this.#requestInitForPlaService(accessToken, 'GET'));
             const response = await fetch(request);
-            const pageSettings = await response.json();
-            this.#logHttpTraffic(request, null, response, pageSettings);
+            const settingDto = await response.json();
+            this.#logHttpTraffic(request, null, response, settingDto);
             if (response.ok) {
-                const settingsValue = JSON.parse(pageSettings.value);
-                this.#logger.debug("Retrieved page layout settings:", settingsValue);
-                return settingsValue;
+                const settingValue = JSON.parse(settingDto.value);
+                this.#logger.debug(`Retrieved '${settingName}' setting: `, settingValue);
+                return settingValue;
             }
             if (response.status === StatusCodes.NOT_FOUND) {
-                this.#logger.warning("Page layout settings not defined yet.");
+                this.#logger.warning(`The '${settingName}' setting was not found.`);
                 return null;
             }
             throw new Error(`HTTP ${response.status} ${response.statusText}`);
         } catch (error) {
-            throw new Error(`Could not retrieve page layout settings - ${error.message}`);
+            throw new Error(`Could not retrieve the '${settingName}' setting - ${error.message}`);
         }
     }
 
     /**
-     * Retrieve the element labels mapping configuration from PLA service.
-     * This mapping is configured per brand.
-     * When a mapping has not been made yet, it returns null.
+     * Create a configuration setting in the PLA service for a given brand.
      * @param {string} accessToken 
      * @param {string} brandId 
-     * @returns {Object|null} Mapping, or null when not found.
+     * @param {string} settingName Internal name (as specified by REST API).
+     * @param {Any} settingValue
      */
-    async getElementLabelMapping(accessToken, brandId) {
-        const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/setting/element-labels`;
+    async #createSetting(accessToken, brandId, settingName, settingValue) {
+        const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/setting/${settingName}`;
         try {
-            const request = new Request(url, this.#requestInitForPlaService(accessToken, 'GET'));
-            const response = await fetch(request);
-            const elementMapping = await response.json();
-            this.#logHttpTraffic(request, null, response, elementMapping);
-            if (response.ok) {
-                const settingsValue = JSON.parse(elementMapping.value);
-                this.#logger.debug("Retrieved element labels mapping:", settingsValue);
-                return settingsValue;
+            const settingDto = {
+                "value": JSON.stringify(settingValue).replaceAll('"', '\"')
             }
-            if (response.status === StatusCodes.NOT_FOUND) {
-                this.#logger.warning("Element labels mapping not defined yet.");
-                return null;
+            const requestBody = JSON.stringify(settingDto);
+            const requestInit = this.#requestInitForPlaService(accessToken, 'POST', requestBody);
+            const request = new Request(url, requestInit);
+            const response = await fetch(request);
+            await response.json();
+            this.#logHttpTraffic(request, null, response, null);
+            if (response.ok) {
+                this.#logger.debug(`Created '${settingName}' setting:`, settingValue);
+                return;
             }
             throw new Error(`HTTP ${response.status} ${response.statusText}`);
         } catch (error) {
-            throw new Error(`Could not retrieve element labels mapping - ${error.message}`);
+            throw new Error(`Could not create the '${settingName}' setting - ${error.message}`);
         }
-    }    
+    }
+
+    /**
+     * Delete a configuration setting from the PLA service for a given brand.
+     * @param {string} accessToken 
+     * @param {string} brandId 
+     * @param {string} settingName Internal name (as specified by REST API).
+     */
+    async #deleteSetting(accessToken, brandId, settingName) {
+        const url = `${this.#plaServiceUrl}/brands/${brandId}/admin/setting/${settingName}`;
+        try {
+            const requestInit = this.#requestInitForPlaService(accessToken, 'DELETE');
+            const request = new Request(url, requestInit);
+            const response = await fetch(request);
+            await response.json();
+            this.#logHttpTraffic(request, null, response, null);
+            if (response.ok) {
+                this.#logger.debug(`Deleted the '${settingName}' setting.`);
+                return;
+            }
+            throw new Error(`HTTP ${response.status} ${response.statusText}`);
+        } catch (error) {
+            throw new Error(`Could not delete the '${settingName}' setting - ${error.message}`);
+        }
+    }
 
     /**
      * Compose request options for the PLA service.

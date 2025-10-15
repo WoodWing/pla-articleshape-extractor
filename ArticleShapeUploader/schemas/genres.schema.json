@@ -1,0 +1,12 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://www.woodwing.com/pla/genres.schema.json",
+    "title": "Genres",
+    "type": "array",
+    "minItems": 0,
+    "uniqueItems": true,
+    "items": {
+        "type": "string",
+        "minLength": 1
+    }
+}
