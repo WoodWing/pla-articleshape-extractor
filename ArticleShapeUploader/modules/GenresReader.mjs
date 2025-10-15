@@ -32,6 +32,9 @@ export class GenresReader {
         const genresFilename = "genres.json";
         const genresPath = path.join(folderPath, manifestFoldername, genresFilename);
         const genresRelativePath = `${manifestFoldername}/${genresFilename}`;
+        if (!fs.existsSync(genresPath) || !fs.lstatSync(genresPath).isFile()) {
+            throw new Error(`The file "${genresPath}" is not found. Run the ArticleShapeExtractor and try again.`);
+        }
         try {
             this.#genres = JSON.parse(fs.readFileSync(genresPath, 'utf-8'));
         } catch(error) {
