@@ -93,7 +93,8 @@ class GenreResolver {
                 const message = `Could not write into file '${genresRelativePath}'.\nPlease check access rights.`;
                 throw new ConfigurationError(message);
             }
-            this.#logger.info(`Saved the configured genres to "${filepath}".`);
+            this.#logger.info(`Saved the configured genres to "${genresRelativePath}".`);
+
         } else {
             const genresOfPrecedingOperation = JSON.parse(await genresFile.read({format: formats.utf8}));
             if (!this.#compareArraysOfStrings(this.#genres, genresOfPrecedingOperation)) {
