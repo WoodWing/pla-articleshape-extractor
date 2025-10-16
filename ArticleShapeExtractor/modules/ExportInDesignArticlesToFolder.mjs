@@ -15,6 +15,9 @@ class ExportInDesignArticlesToFolder {
     /** @type {PageLayoutSettings} */
     #pageLayoutSettings;
 
+    /** @type {GenreResolver} */
+    #genreResolver;
+
     /** @type {Object} */
     #fallbackBrand;
 
@@ -25,6 +28,7 @@ class ExportInDesignArticlesToFolder {
      * @param {Logger} logger
      * @param {InDesignArticleService} inDesignArticleService
      * @param {PageLayoutSettings} pageLayoutSettings
+     * @param {GenreResolver} genreResolver
      * @param {Object} fallbackBrand
      * @param {Object} fallbackCategory
      */
@@ -32,12 +36,14 @@ class ExportInDesignArticlesToFolder {
         logger,
         inDesignArticleService,
         pageLayoutSettings,
+        genreResolver,
         fallbackBrand,
         fallbackCategory,
     ) {
         this.#logger = logger;
         this.#inDesignArticleService = inDesignArticleService;
         this.#pageLayoutSettings = pageLayoutSettings;
+        this.#genreResolver = genreResolver;
         this.#fallbackBrand = fallbackBrand;
         this.#fallbackCategory = fallbackCategory;
     }
@@ -60,8 +66,9 @@ class ExportInDesignArticlesToFolder {
         let exportCounter = 0;
         for (let articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
             const article = doc.articles.item(articleIndex);
-            await this.#exportArticle(doc, folder, article, articleIndex);
-            exportCounter++;
+            if (await this.#exportArticle(doc, folder, article, articleIndex)) {
+                exportCounter++;
+            }
         }
         app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
         return exportCounter;
@@ -72,6 +79,7 @@ class ExportInDesignArticlesToFolder {
      * @param {Folder} folder
      * @param {Object} article
      * @param {Number} articleIndex
+     * @returns {Boolean} Whether or not successful.
      */
     async #exportArticle(doc, folder, article, articleIndex) {
         const elements = article.articleMembers.everyItem().getElements();
@@ -79,26 +87,40 @@ class ExportInDesignArticlesToFolder {
         let articleShapeJson = this.#composeArticleShapeJson(doc, article.name, outerBounds);
         if (articleShapeJson === null) {
             this.#logger.warning("Excluded article '{}' from export because conversion to JSON failed.", article.name);
-            return;
+            return false;
         }
         const pageItems = await this.#collectArticlePageItems(article, elements, outerBounds, articleShapeJson);
         if (pageItems.length === 0) {
             this.#logger.warning("Excluded article '{}' from export because it has no page items.", article.name);
-            return;
+            return false;
         }
-        const managedArticle = this.#getManagedArticleFromPageItems(pageItems)
-        if (managedArticle) {
-            articleShapeJson.genreId = this.#resolveGenreFromManagedArticle(managedArticle);
+        articleShapeJson.genreId = null;
+        if (this.#genreResolver.isFeatureEnabled()) {
+            const genreIds = this.#genreResolver.resolveGenreIds(article.name);
+            let message = null;
+            if (genreIds.length === 0) {
+                message = `Article '${article.name}' could not be exported because `
+                    + `it's name does not contain any of the configured genres.`;
+            } else if (genreIds.length > 1) {
+                message = `Article '${article.name}' could not be exported because `
+                    + `it's name contains multiple of the configured genres: ${genreIds}.`;
+            }
+            if (message !== null) {
+                alert(message);
+                this.#logger.error(message);
+                return false;
+            }
+            articleShapeJson.genreId = genreIds[0];
         }
         if (!this.#arePageItemsOnSameSpread(pageItems)) {
             const message = "Article '" + article.name + "' could not be exported because not all "
                 + "page items are placed on the same spread.";
             alert(message);
             this.#logger.error(message);
-            return;
+            return false;
         }
         this.#logger.info("Exporting article '{}'...", article.name);
-        await this.#exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
+        return await this.#exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
     }
 
     /**
@@ -338,6 +360,7 @@ class ExportInDesignArticlesToFolder {
      * @param {Number} articleIndex 
      * @param {Array} pageItems
      * @param {Object} articleShapeJson
+     * @returns {Boolean} Whether or not successful.
      */
     async #exportArticlePageItems(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
         const lfs = require('uxp').storage.localFileSystem;
@@ -361,6 +384,7 @@ class ExportInDesignArticlesToFolder {
         const preferencesManager = new PreferencesManager(app.jpegExportPreferences);
         let originalPreferences = null;
         let group = null;
+        let isExported = false;
         try {
             originalPreferences = preferencesManager.overridePreferences({
                 embedColorProfile: true,
@@ -378,6 +402,7 @@ class ExportInDesignArticlesToFolder {
                 group = doc.groups.add(pageItems);
                 group.exportFile(idd.ExportFormat.JPG, imgFile);
             }
+            isExported = true;
         } catch (error) {
             this.#logger.logError(error);
             alert("Error exporting the snippet: " + error.message);
@@ -391,15 +416,20 @@ class ExportInDesignArticlesToFolder {
         }
 
         // Export JSON.
-        this.#saveJsonToDisk(articleShapeJson, jsonFile);
+        if (isExported) {
+            return this.#saveJsonToDisk(articleShapeJson, jsonFile);
+        }
+        return false;
     }
 
     /**
      * Save JSON data to a file on disk.
      * @param {Object} jsonData - The JSON object to save.
      * @param {File} file
+     * @returns {Boolean} Whether or not successful.
      */
     #saveJsonToDisk(jsonData, file) {
+        let isSaved = false;
         try {
             // Convert JSON object to a string
             const jsonString = JSON.stringify(jsonData, null, 4);
@@ -407,10 +437,12 @@ class ExportInDesignArticlesToFolder {
             // Write the JSON string to the file
             const formats = require('uxp').storage.formats;
             file.write(jsonString, { format: formats.utf8 });
+            isSaved = true;
         } catch (error) {
             this.#logger.logError(error);
             alert("An error occurred: " + error.message);
         }
+        return isSaved;
     }
 
     /**
@@ -579,44 +611,6 @@ class ExportInDesignArticlesToFolder {
 
         // Calculate final line height.
         return leading + (baselineShift || 0);
-    }
-
-    /**
-     * @param {Array<PageItem>} pageItems 
-     * @returns {ManagedArticle|null}
-     */
-    #getManagedArticleFromPageItems(pageItems) {
-        for (let i = 0; i < pageItems.length; i++) {
-            const pageItem = pageItems[i];
-            try {
-                if (pageItem.managedArticle.constructorName === "ManagedArticle") {
-                    return pageItem.managedArticle;
-                }
-            } catch (error) { }
-        }
-        return null;
-    }
-
-    /**
-     * @param {ManagedArticle} managedArticle 
-     * @return {String|null}
-     */
-    #resolveGenreFromManagedArticle(managedArticle) {
-        if (!managedArticle.entMetaData.constructorName === "EntMetaData") {
-            return null;
-        }
-        if (!managedArticle.entMetaData.has("C_PLA_GENRE")) {
-            return null;
-        }
-        let genreId = managedArticle.entMetaData.get("C_PLA_GENRE");
-        if (!genreId instanceof String) {
-            return null;
-        }
-        genreId = genreId.trim();
-        if (genreId.length == 0) {
-            return null;
-        }
-        return genreId;
     }
 }
 

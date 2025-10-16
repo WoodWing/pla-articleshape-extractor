@@ -28,7 +28,10 @@ await (async function main() {
 
         // Resolve the brand and sections and save them to disk.
         await Container.resolve("BrandSectionMapResolver").run(folder);
-        
+
+        // Resolve the genres and save them to disk.
+        await Container.resolve("GenreResolver").saveGenesToManifest(folder);
+
         // Export article shapes to disk.
         let exportCounter = await Container.resolve("ExportInDesignArticlesToFolder").run(doc, folder);
         if (exportCounter === 0) {

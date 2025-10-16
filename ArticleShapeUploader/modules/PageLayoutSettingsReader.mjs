@@ -35,6 +35,9 @@ export class PageLayoutSettingsReader {
         const manifestFoldername = "_manifest";
         const settingsFilename = "page-layout-settings.json";
         const settingsPath = path.join(folderPath, manifestFoldername, settingsFilename);
+        if (!fs.existsSync(settingsPath) || !fs.lstatSync(settingsPath).isFile()) {
+            throw new Error(`The file "${settingsPath}" is not found. Run the ArticleShapeExtractor and try again.`);
+        }
         try {
             this.#settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
         } catch(error) {

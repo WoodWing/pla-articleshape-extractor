@@ -1,0 +1,64 @@
+import fs from 'fs';
+import path from 'path';
+
+
+export class GenresReader {
+
+    /** @type {ColoredLogger} */
+    #logger;
+
+    /** @type {JsonValidator} */
+    #jsonValidator;
+
+    /** @type {Array<string>} */
+    #genres;
+    
+    /**
+     * @param {ColoredLogger} logger 
+     * @param {JsonValidator} jsonValidator
+     */
+    constructor(logger, jsonValidator) {
+        this.#logger = logger;
+        this.#jsonValidator = jsonValidator;
+        this.#genres = null;
+    }
+
+    /**
+     * @param {string} folderPath 
+     * @return {Array<string>}
+     */
+    readGenres(folderPath) {
+        const manifestFoldername = "_manifest";
+        const genresFilename = "genres.json";
+        const genresPath = path.join(folderPath, manifestFoldername, genresFilename);
+        const genresRelativePath = `${manifestFoldername}/${genresFilename}`;
+        if (!fs.existsSync(genresPath) || !fs.lstatSync(genresPath).isFile()) {
+            throw new Error(`The file "${genresPath}" is not found. Run the ArticleShapeExtractor and try again.`);
+        }
+        try {
+            this.#genres = JSON.parse(fs.readFileSync(genresPath, 'utf-8'));
+        } catch(error) {
+            throw new Error(`The file "${genresRelativePath}" is not valid JSON - ${error.message}`);
+        }
+        this.#jsonValidator.validate('genres', this.#genres);
+        this.#logger.info(`The "${genresRelativePath}" file is valid.`);
+        return this.#genres;
+    }
+
+    /**
+     * Tells whether or not the genres feature is in use.
+     * @returns {boolean}
+     */
+    isFeatureEnabled() {
+        return this.#genres.length > 0;
+    }
+
+    /**
+     * Tells whether or not a given genre is valid/configured.
+     * @param {string} genre 
+     * @returns 
+     */
+    genreExists(genre) {
+        return this.#genres.indexOf(genre) > -1;
+    }
+}

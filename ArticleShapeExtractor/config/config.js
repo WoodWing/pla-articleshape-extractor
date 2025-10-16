@@ -18,6 +18,11 @@ const plaDefaultConfig = {
         layoutStatusOnError: "", // when process failed
     },
 
+    // List of genres (that are applicable to the brand). 
+    // Leave empty to disable the Genres feature.
+    genres: [
+    ],
+
     // Settings used if the layout is not stored in Studio.
     offlineFallback: {
         brand: {

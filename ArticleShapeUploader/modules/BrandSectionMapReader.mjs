@@ -46,6 +46,9 @@ export class BrandSectionMapReader {
      */
     #readAndValidateMap(folderPath) {
         const filepath = path.join(folderPath, this.#getRelativeMapFilepath());
+        if (!fs.existsSync(filepath) || !fs.lstatSync(filepath).isFile()) {
+            throw new Error(`The file "${filepath}" is not found. Run the ArticleShapeExtractor and try again.`);
+        }
         let brandSectionMap = null;
         try {
             brandSectionMap = JSON.parse(fs.readFileSync(filepath, 'utf-8'));

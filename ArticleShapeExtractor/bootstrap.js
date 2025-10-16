@@ -1,5 +1,6 @@
 require("./extensions/String.js");
 require("./extensions/globals.js");
+const _ = require("./extensions/lodash.min.js");
 require("./modules/Errors.mjs");
 const Container = require("./modules/Container.mjs");
 
@@ -66,6 +67,16 @@ Container.registerFactory("PageLayoutSettings", function() {
     );
 });
 
+Container.registerFactory("GenreResolver", function() {
+    const GenreResolver = require("./modules/GenreResolver.mjs");
+    const settings = Container.resolve("Settings");
+    return new GenreResolver(
+        Container.resolve("Logger"),
+        Container.resolve("FileUtils"),
+        settings.getGenres(),
+    );
+});
+
 Container.registerFactory("ExportInDesignArticlesToFolder", function() {
     const ExportInDesignArticlesToFolder = require("./modules/ExportInDesignArticlesToFolder.mjs");
     const settings = Container.resolve("Settings");
@@ -73,6 +84,7 @@ Container.registerFactory("ExportInDesignArticlesToFolder", function() {
         Container.resolve("Logger"), 
         Container.resolve("InDesignArticleService"), 
         Container.resolve("PageLayoutSettings"), 
+        Container.resolve("GenreResolver"),
         settings.getOfflineFallbackConfig().brand,
         settings.getOfflineFallbackConfig().category,
     );

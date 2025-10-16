@@ -18,7 +18,10 @@ await (async function main() {
 
         // Resolve the brand and sections and save them to disk.
         await Container.resolve("BrandSectionMapResolver").run(folder);
-        
+
+        // Resolve the genres and save them to disk.
+        await Container.resolve("GenreResolver").saveGenesToManifest(folder);
+
         // Export article shapes to disk.
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
         const report = await Container.resolve("RegenerateArticleShapesService").run(folder);
