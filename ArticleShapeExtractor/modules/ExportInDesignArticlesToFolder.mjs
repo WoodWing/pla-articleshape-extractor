@@ -169,6 +169,13 @@ class ExportInDesignArticlesToFolder {
                     }
                 }
                 articleShapeJson.textComponents.push(textComponent);
+            } else if (this.#inDesignArticleService.isUnassignedFrame(element.itemRef)) {
+                pageItems.push(element.itemRef);
+                this.#logger.info("Article '{}' has a unassigned frame item '{}' placed at ({},{},{},{}). "
+                    + "Hence the item is excluded from the article composition (JSON file). "
+                    + "Set it to TextFrame or Graphic via Object->Content",
+                    article.name, element.itemRef.constructorName,
+                    element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);               
             } else if (this.#inDesignArticleService.isValid2DGraphicFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
                 articleShapeJson.imageComponents.push({

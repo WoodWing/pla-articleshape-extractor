@@ -1,4 +1,5 @@
 const { app } = require("indesign");
+const idd = require("indesign");
 
 class InDesignArticleService {
 
@@ -173,7 +174,7 @@ class InDesignArticleService {
      * @returns {Boolean}
      */
     isValidTextFrame(pageItem) {
-        return this.#isValidFrameOfType(pageItem, ["TextFrame"]);
+        return this.#isValidFrameOfType(pageItem, ["TextFrame"]) && pageItem.contentType.toString() === idd.ContentType.TEXT_TYPE.toString();
     }
 
     /**
@@ -227,6 +228,15 @@ class InDesignArticleService {
         }
         return this.#isValidFrameOfType(pageItem, ["Rectangle"]) 
             && !this.#isValid1DRectangleFrame(pageItem);
+    }
+
+     /**
+     * Tells whether the given page item is an unassigned frame (InDesign->Object->Content)
+     * @param {Object|null} pageItem
+     * @returns {Boolean}
+     */
+    isUnassignedFrame(pageItem) {
+        return pageItem.contentType.toString() === idd.ContentType.UNASSIGNED.toString();
     }
 
     /**
