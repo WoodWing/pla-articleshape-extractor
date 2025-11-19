@@ -137,11 +137,14 @@ class ExportInDesignArticlesToFolder {
             const geometricBounds = this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef)
             if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
                 const threadedFrames = this.#getThreadedFrames(element.itemRef);
+                
                 let textComponent = {
                     "type": element.itemRef.elementLabel,
                     "words": 0,
                     "characters": 0,
                     "firstParagraphStyle": "",
+                    "overSetLines": this.#getOversetLines(threadedFrames[0]),
+                    "fitLineHeight": 0,
                     "frames": []
                 };
 
@@ -154,20 +157,23 @@ class ExportInDesignArticlesToFolder {
                     const frame = threadedFrames[frameIndex];
                     pageItems.push(frame);
                     if (this.#inDesignArticleService.isValidTextFrame(frame)) {
-                        const textStats = this.#getTextStatisticsWithoutOverset(frame);
+                        const textStats = this.#getTextStatistics(frame);
+                        textComponent.fitLineHeight += textStats.fitLineHeight;
                         textComponent.frames.push({
                             "geometricBounds": this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
                             "columns": frame.textFramePreferences.textColumnCount,
                             "words": textStats.wordCount,
                             "characters": textStats.charCount,
                             "textWrapMode": this.#getTextWrapMode(frame),
-                            "totalLineHeight": this.#roundTo3Decimals(textStats.totalLineHeight),
+                            "visibleLineHeight": this.#roundTo3Decimals(textStats.visibleLineHeight),
                             "text": textStats.text
                         });
                         textComponent.words += textStats.wordCount;
                         textComponent.characters += textStats.charCount;
                     }
                 }
+
+                textComponent.fitLineHeight = this.#roundTo3Decimals(textComponent.fitLineHeight);
                 articleShapeJson.textComponents.push(textComponent);
             } else if (this.#inDesignArticleService.isUnassignedFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
@@ -453,26 +459,33 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * Get the word count and character count of a text frame, excluding overset text.
+     * Get the word count and character count of a text frame.
+     * Optionally include overset text.
+     *
      * @param {TextFrame} textFrame - The text frame to analyze.
-     * @returns {Object} - An object containing word count, character count and text without overset.
+     * @param {Boolean} [includeOverset=false] - Whether to include overset text.
+     * @returns {Object} - An object containing wordCount, charCount, text, and totalLineHeight.
      */
-    #getTextStatisticsWithoutOverset(textFrame) {
+   /* #getTextStatistics(textFrame, includeOverset) {
 
-        // Extract only the visible text (not overset)
-        const visibleText = textFrame.lines;
+        includeOverset = includeOverset === true; // default false
+
+        // Use either the frame itself or its parent story
+        const source = includeOverset ? textFrame.parentStory : textFrame;
+
+        const lines = source.lines;
         let wordCount = 0;
         let charCount = 0;
         let text = "";
         let totalLineHeight = 0;
 
-        // Loop through visible lines to count words and characters
-        for (let i = 0; i < visibleText.length; i++) {
-            const visibleTextItem = visibleText.item(i);
-            wordCount += visibleTextItem.words.length;
-            charCount += visibleTextItem.characters.length;
-            text += visibleTextItem.contents;
-            totalLineHeight += this.#getLineHeight(visibleTextItem);
+        // Loop through lines to count words, chars, and height
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines.item(i);
+            wordCount += line.words.length;
+            charCount += line.characters.length;
+            text += line.contents;
+            totalLineHeight += this.#getLineHeight(line);
         }
 
         return {
@@ -481,7 +494,217 @@ class ExportInDesignArticlesToFolder {
             text: text,
             totalLineHeight: this.#roundTo3Decimals(totalLineHeight)
         };
+    }*/
+
+        /**
+ * Get text statistics for a text frame.
+ * Returns both visible and full-fit (overset-inclusive) line heights.
+ * Handles multi-column frames and baseline grid alignment.
+ *
+ * @param {TextFrame} textFrame
+ * @returns {{
+ *   wordCount: number,
+ *   charCount: number,
+ *   text: string,
+ *   visibleLineHeight: number,
+ *   fitLineHeight: number
+ * }}
+ *//*
+#getTextStatistics(textFrame) {
+    if (!textFrame || !textFrame.isValid) {
+        return {
+            wordCount: 0,
+            charCount: 0,
+            text: "",
+            visibleLineHeight: 0,
+            fitLineHeight: 0
+        };
     }
+
+    const story = textFrame.parentStory;
+    const wordCount = story.words.length;
+    const charCount = story.characters.length;
+    const text = story.contents;
+
+    let visibleLineHeight = 0;
+    let fitLineHeight = 0;
+
+    try {
+        // --- 1️⃣ Visible line height (current frame only) ---
+        const lines = textFrame.lines;
+        for (let i = 0; i < lines.length; i++) {
+            visibleLineHeight += this.#getLineHeight(lines.item(i)) || 0;
+        }
+
+        // --- 2️⃣ Fit line height (entire story, including overset) ---
+        const doc = textFrame.parentStory.parent; // Document
+        const pageOrSpread = textFrame.parent;
+
+        // --- Duplicate the original frame ---
+        const tempFrame = textFrame.duplicate(pageOrSpread); // Duplicate the frame
+
+        // --- Position off-page ---
+        const width = textFrame.geometricBounds[3] - textFrame.geometricBounds[1];
+        tempFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], textFrame.geometricBounds[0] + 5, textFrame.geometricBounds[3]];
+        
+
+        // --- Handle baseline grid ---
+        const gridStep = doc.gridPreferences.baselineDivision;
+        const alignToGrid = this.#storyUsesBaselineGrid(story);
+
+        let bottom = 10;
+        const maxBottom = 20000; // Safety cap
+        const increment = alignToGrid ? gridStep : 1;
+
+        while (tempFrame.overflows && bottom < maxBottom) {
+            bottom += increment;
+            if (alignToGrid) {
+                bottom = this.#snapToBaseline(bottom, gridStep);
+            }
+            tempFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], textFrame.geometricBounds[0] + bottom, textFrame.geometricBounds[3]];
+        }
+
+        // Measure composed height
+        const gb = tempFrame.geometricBounds;
+        fitLineHeight = gb[2] - gb[0];
+
+        tempFrame.remove();
+
+    } catch (err) {
+        $.writeln("Error in getTextStatistics: " + err);
+    }
+
+    return {
+        wordCount,
+        charCount,
+        text,
+        visibleLineHeight: this.#roundTo3Decimals(visibleLineHeight),
+        fitLineHeight: this.#roundTo3Decimals(fitLineHeight)
+    };
+}*/
+
+
+/**
+ * Get text statistics for a text frame.
+ * Returns both visible and full-fit (overset-inclusive) line heights.
+ *
+ * @param {TextFrame} textFrame
+ * @returns {{
+ *   wordCount: number,
+ *   charCount: number,
+ *   text: string,
+ *   visibleLineHeight: number,
+ *   fitLineHeight: number
+ * }}
+ */
+#getTextStatistics(textFrame) {
+    if (!textFrame || !textFrame.isValid) {
+        return { wordCount: 0, charCount: 0, text: "", visibleLineHeight: 0, fitLineHeight: 0 };
+    }
+
+    const story = textFrame.parentStory;
+    const wordCount = story.words.length;
+    const charCount = story.characters.length;
+    const text = story.contents;
+
+    const MIN_HEIGHT = 5;
+    const INCREMENT_STEP_SIZE = 1;
+    const MAX_HEIGHT = 20000;
+
+    let visibleLineHeight = 0;
+    let fitLineHeight = 0;
+
+    try {
+        // --- Visible line height ---
+        const lines = textFrame.lines;
+        for (let i = 0; i < lines.length; i++) {
+            visibleLineHeight += this.#getLineHeight(lines.item(i)) || 0;
+        }
+
+        // --- Overset Handling ---
+        const oversetStatus = this.#getOversetLines(textFrame);
+        const originalBounds = textFrame.geometricBounds.slice(); // [y1, x1, y2, x2]
+
+        const doc = textFrame.parentStory.parent;
+        const gridStep = doc.gridPreferences.baselineDivision;
+        const alignToGrid = this.#storyUsesBaselineGrid(story);
+        let minHeight = alignToGrid ? gridStep : MIN_HEIGHT
+
+        //Only resize if this is the LAST frame in the thread
+        if (oversetStatus !== 0 && textFrame.nextTextFrame === null) {
+            this.#adjustFrameHeightToFit(textFrame, oversetStatus, alignToGrid, gridStep, INCREMENT_STEP_SIZE, minHeight, MAX_HEIGHT);
+        }
+        // Measure final height
+        fitLineHeight = textFrame.geometricBounds[2] - textFrame.geometricBounds[0];
+
+        // Restore original size
+        textFrame.geometricBounds = originalBounds;
+    } catch (err) {
+        alert ("Error in getTextStatistics: " + err);
+    }
+
+    return {
+        wordCount,
+        charCount,
+        text,
+        visibleLineHeight: this.#roundTo3Decimals(visibleLineHeight),
+        fitLineHeight: this.#roundTo3Decimals(fitLineHeight)
+    };
+}
+
+/**
+ * Adjust frame height until text fits .
+ */
+#adjustFrameHeightToFit(textFrame, oversetStatus, alignToGrid, gridStep, step, minHeight, maxHeight) {
+    let bottom = textFrame.geometricBounds[2];
+    let minBottom = textFrame.geometricBounds[0] + minHeight;
+    let maxBottom = bottom + maxHeight;
+
+    const snap = (val, up) => alignToGrid ? this.#snapToBaseline(val, gridStep, up) : val;
+
+    // Underset: decrease size untill overset
+    if (oversetStatus < 0) {
+        while (!textFrame.overflows && bottom >= minBottom) {
+            textFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], bottom, textFrame.geometricBounds[3]];    
+            bottom = snap(bottom - step, false);     
+        }
+    }
+
+    //Increase to fit
+    while (textFrame.overflows && bottom <= maxBottom) {            
+        textFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], bottom, textFrame.geometricBounds[3]];
+        bottom = snap(bottom + step, true);
+    }
+}
+
+/**
+ * Detects if story aligns to baseline grid.
+ */
+#storyUsesBaselineGrid(story) {
+    try {
+        for (let i = 0; i < story.paragraphs.length; i++) {
+            const para = story.paragraphs.item(i)
+            if (para.alignToBaseline === true) return true;
+        }
+    } catch (err) {
+        alert (err);
+    }
+    return false;
+}
+
+/**
+ * Snaps a vertical measurement to the next baseline grid step.
+ * 
+ */
+#snapToBaseline(value, gridStep, toBottom) {
+    if (toBottom) {
+        return Math.ceil(value / gridStep) * gridStep;
+    } else {
+        return Math.floor(value / gridStep) * gridStep;
+    }
+    
+}
+
 
 
     /**
@@ -618,6 +841,52 @@ class ExportInDesignArticlesToFolder {
 
         // Calculate final line height.
         return leading + (baselineShift || 0);
+    }
+
+
+    /**
+     * Returns a signed integer describing under/over set status of a threaded frame.
+     * < 0 : underset (missing lines from earlier frames)
+     * = 0 : fit (exact content for this frame, no more, no less)
+     * > 0 : overset (there are lines beyond this frame, or true overset)
+     *
+     * @param {TextFrame} tf - A text frame from a (threaded) story.
+     * @returns {Number} negative, zero, or positive integer
+     */
+    #getOversetLines(textFrame) {
+        if (!textFrame || textFrame.constructor.name !== "TextFrame") {
+            throw Error("Please provide a valid TextFrame.");
+        }
+
+        var story = textFrame.parentStory;
+        var tfs = story.textContainers;
+        var tfsLen = tfs.length;
+
+        story.recompose();
+
+        var frameData  = eval("(" + tfs[tfsLen - 1].frameData + ")"); // Or JSON.parse (tfs[tfsLen - 1].frameData) but that is not supported by ID Server
+        return frameData[frameData.length - 1].OversetLines;
+    }
+
+    /**
+     * Fallback line height when we cannot derive from text lines.
+     * Approximates Auto leading as 120% of first character's point size.
+     * @param {TextFrame} frame
+     * @returns {number}
+     */
+    #fallbackLineHeight(frame) {
+        try {
+            if (frame.characters.length > 0) {
+                var ch = frame.characters.item(0);
+                var leading = ch.leading;
+                if (typeof leading === "object" && leading.equals(idd.Leading.AUTO)) {
+                    var fs = ch.pointSize || 10;
+                    return fs * 1.2;
+                }
+                return leading || (ch.pointSize ? ch.pointSize * 1.2 : 12);
+            }
+        } catch (e) {}
+        return 12; // default safety value in points
     }
 }
 
