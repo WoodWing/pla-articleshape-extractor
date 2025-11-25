@@ -459,253 +459,124 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * Get the word count and character count of a text frame.
-     * Optionally include overset text.
-     *
-     * @param {TextFrame} textFrame - The text frame to analyze.
-     * @param {Boolean} [includeOverset=false] - Whether to include overset text.
-     * @returns {Object} - An object containing wordCount, charCount, text, and totalLineHeight.
-     */
-   /* #getTextStatistics(textFrame, includeOverset) {
-
-        includeOverset = includeOverset === true; // default false
-
-        // Use either the frame itself or its parent story
-        const source = includeOverset ? textFrame.parentStory : textFrame;
-
-        const lines = source.lines;
-        let wordCount = 0;
-        let charCount = 0;
-        let text = "";
-        let totalLineHeight = 0;
-
-        // Loop through lines to count words, chars, and height
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines.item(i);
-            wordCount += line.words.length;
-            charCount += line.characters.length;
-            text += line.contents;
-            totalLineHeight += this.#getLineHeight(line);
+    * Get text statistics for a text frame.
+    * Returns both visible and full-fit (overset-inclusive) line heights.
+    *
+    * @param {TextFrame} textFrame
+    * @returns {{
+    *   wordCount: number,
+    *   charCount: number,
+    *   text: string,
+    *   visibleLineHeight: number,
+    *   fitLineHeight: number
+    * }}
+    */
+    #getTextStatistics(textFrame) {
+        if (!textFrame || !textFrame.isValid) {
+            return { wordCount: 0, charCount: 0, text: "", visibleLineHeight: 0, fitLineHeight: 0 };
         }
 
-        return {
-            wordCount: wordCount,
-            charCount: charCount,
-            text: text,
-            totalLineHeight: this.#roundTo3Decimals(totalLineHeight)
-        };
-    }*/
+        const story = textFrame.parentStory;
+        const wordCount = story.words.length;
+        const charCount = story.characters.length;
+        const text = story.contents;
 
-        /**
- * Get text statistics for a text frame.
- * Returns both visible and full-fit (overset-inclusive) line heights.
- * Handles multi-column frames and baseline grid alignment.
- *
- * @param {TextFrame} textFrame
- * @returns {{
- *   wordCount: number,
- *   charCount: number,
- *   text: string,
- *   visibleLineHeight: number,
- *   fitLineHeight: number
- * }}
- *//*
-#getTextStatistics(textFrame) {
-    if (!textFrame || !textFrame.isValid) {
-        return {
-            wordCount: 0,
-            charCount: 0,
-            text: "",
-            visibleLineHeight: 0,
-            fitLineHeight: 0
-        };
-    }
+        const MIN_HEIGHT = 5;
+        const INCREMENT_STEP_SIZE = 1;
+        const MAX_HEIGHT = 20000;
 
-    const story = textFrame.parentStory;
-    const wordCount = story.words.length;
-    const charCount = story.characters.length;
-    const text = story.contents;
+        let visibleLineHeight = 0;
+        let fitLineHeight = 0;
 
-    let visibleLineHeight = 0;
-    let fitLineHeight = 0;
-
-    try {
-        // --- 1️⃣ Visible line height (current frame only) ---
-        const lines = textFrame.lines;
-        for (let i = 0; i < lines.length; i++) {
-            visibleLineHeight += this.#getLineHeight(lines.item(i)) || 0;
-        }
-
-        // --- 2️⃣ Fit line height (entire story, including overset) ---
-        const doc = textFrame.parentStory.parent; // Document
-        const pageOrSpread = textFrame.parent;
-
-        // --- Duplicate the original frame ---
-        const tempFrame = textFrame.duplicate(pageOrSpread); // Duplicate the frame
-
-        // --- Position off-page ---
-        const width = textFrame.geometricBounds[3] - textFrame.geometricBounds[1];
-        tempFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], textFrame.geometricBounds[0] + 5, textFrame.geometricBounds[3]];
-        
-
-        // --- Handle baseline grid ---
-        const gridStep = doc.gridPreferences.baselineDivision;
-        const alignToGrid = this.#storyUsesBaselineGrid(story);
-
-        let bottom = 10;
-        const maxBottom = 20000; // Safety cap
-        const increment = alignToGrid ? gridStep : 1;
-
-        while (tempFrame.overflows && bottom < maxBottom) {
-            bottom += increment;
-            if (alignToGrid) {
-                bottom = this.#snapToBaseline(bottom, gridStep);
+        try {
+            // --- Visible line height ---
+            const lines = textFrame.lines;
+            for (let i = 0; i < lines.length; i++) {
+                visibleLineHeight += this.#getLineHeight(lines.item(i)) || 0;
             }
-            tempFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], textFrame.geometricBounds[0] + bottom, textFrame.geometricBounds[3]];
+
+            // --- Overset Handling ---
+            const oversetStatus = this.#getOversetLines(textFrame);
+            const originalBounds = textFrame.geometricBounds.slice(); // [y1, x1, y2, x2]
+
+            const doc = textFrame.parentStory.parent;
+            const gridStep = doc.gridPreferences.baselineDivision;
+            const alignToGrid = this.#storyUsesBaselineGrid(story);
+            let minHeight = alignToGrid ? gridStep : MIN_HEIGHT
+
+            //Only resize if this is the LAST frame in the thread
+            if (oversetStatus !== 0 && textFrame.nextTextFrame === null) {
+                this.#adjustFrameHeightToFit(textFrame, oversetStatus, alignToGrid, gridStep, INCREMENT_STEP_SIZE, minHeight, MAX_HEIGHT);
+            }
+            // Measure final height
+            fitLineHeight = textFrame.geometricBounds[2] - textFrame.geometricBounds[0];
+            
+            // Restore original size
+            textFrame.geometricBounds = originalBounds;
+        } catch (err) {
+            alert ("Error in getTextStatistics: " + err);
         }
 
-        // Measure composed height
-        const gb = tempFrame.geometricBounds;
-        fitLineHeight = gb[2] - gb[0];
-
-        tempFrame.remove();
-
-    } catch (err) {
-        $.writeln("Error in getTextStatistics: " + err);
+        return {
+            wordCount,
+            charCount,
+            text,
+            visibleLineHeight: this.#roundTo3Decimals(visibleLineHeight),
+            fitLineHeight: this.#roundTo3Decimals(fitLineHeight)
+        };
     }
 
-    return {
-        wordCount,
-        charCount,
-        text,
-        visibleLineHeight: this.#roundTo3Decimals(visibleLineHeight),
-        fitLineHeight: this.#roundTo3Decimals(fitLineHeight)
-    };
-}*/
+    /**
+     * Adjust frame height until text fits .
+     */
+    #adjustFrameHeightToFit(textFrame, oversetStatus, alignToGrid, gridStep, step, minHeight, maxHeight) {
+        let bottom = textFrame.geometricBounds[2];
+        let minBottom = textFrame.geometricBounds[0] + minHeight;
+        let maxBottom = bottom + maxHeight;
 
+        const snap = (val, up) => alignToGrid ? this.#snapToBaseline(val, gridStep, up) : val;
 
-/**
- * Get text statistics for a text frame.
- * Returns both visible and full-fit (overset-inclusive) line heights.
- *
- * @param {TextFrame} textFrame
- * @returns {{
- *   wordCount: number,
- *   charCount: number,
- *   text: string,
- *   visibleLineHeight: number,
- *   fitLineHeight: number
- * }}
- */
-#getTextStatistics(textFrame) {
-    if (!textFrame || !textFrame.isValid) {
-        return { wordCount: 0, charCount: 0, text: "", visibleLineHeight: 0, fitLineHeight: 0 };
-    }
-
-    const story = textFrame.parentStory;
-    const wordCount = story.words.length;
-    const charCount = story.characters.length;
-    const text = story.contents;
-
-    const MIN_HEIGHT = 5;
-    const INCREMENT_STEP_SIZE = 1;
-    const MAX_HEIGHT = 20000;
-
-    let visibleLineHeight = 0;
-    let fitLineHeight = 0;
-
-    try {
-        // --- Visible line height ---
-        const lines = textFrame.lines;
-        for (let i = 0; i < lines.length; i++) {
-            visibleLineHeight += this.#getLineHeight(lines.item(i)) || 0;
+        // Underset: decrease size untill overset
+        if (oversetStatus < 0) {
+            while (!textFrame.overflows && bottom >= minBottom) {
+                textFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], bottom, textFrame.geometricBounds[3]];    
+                bottom = snap(bottom - step, false);     
+            }
         }
 
-        // --- Overset Handling ---
-        const oversetStatus = this.#getOversetLines(textFrame);
-        const originalBounds = textFrame.geometricBounds.slice(); // [y1, x1, y2, x2]
-
-        const doc = textFrame.parentStory.parent;
-        const gridStep = doc.gridPreferences.baselineDivision;
-        const alignToGrid = this.#storyUsesBaselineGrid(story);
-        let minHeight = alignToGrid ? gridStep : MIN_HEIGHT
-
-        //Only resize if this is the LAST frame in the thread
-        if (oversetStatus !== 0 && textFrame.nextTextFrame === null) {
-            this.#adjustFrameHeightToFit(textFrame, oversetStatus, alignToGrid, gridStep, INCREMENT_STEP_SIZE, minHeight, MAX_HEIGHT);
-        }
-        // Measure final height
-        fitLineHeight = textFrame.geometricBounds[2] - textFrame.geometricBounds[0];
-
-        // Restore original size
-        textFrame.geometricBounds = originalBounds;
-    } catch (err) {
-        alert ("Error in getTextStatistics: " + err);
-    }
-
-    return {
-        wordCount,
-        charCount,
-        text,
-        visibleLineHeight: this.#roundTo3Decimals(visibleLineHeight),
-        fitLineHeight: this.#roundTo3Decimals(fitLineHeight)
-    };
-}
-
-/**
- * Adjust frame height until text fits .
- */
-#adjustFrameHeightToFit(textFrame, oversetStatus, alignToGrid, gridStep, step, minHeight, maxHeight) {
-    let bottom = textFrame.geometricBounds[2];
-    let minBottom = textFrame.geometricBounds[0] + minHeight;
-    let maxBottom = bottom + maxHeight;
-
-    const snap = (val, up) => alignToGrid ? this.#snapToBaseline(val, gridStep, up) : val;
-
-    // Underset: decrease size untill overset
-    if (oversetStatus < 0) {
-        while (!textFrame.overflows && bottom >= minBottom) {
-            textFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], bottom, textFrame.geometricBounds[3]];    
-            bottom = snap(bottom - step, false);     
+        //Increase to fit
+        while (textFrame.overflows && bottom <= maxBottom) {            
+            textFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], bottom, textFrame.geometricBounds[3]];
+            bottom = snap(bottom + step, true);
         }
     }
 
-    //Increase to fit
-    while (textFrame.overflows && bottom <= maxBottom) {            
-        textFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], bottom, textFrame.geometricBounds[3]];
-        bottom = snap(bottom + step, true);
-    }
-}
-
-/**
- * Detects if story aligns to baseline grid.
- */
-#storyUsesBaselineGrid(story) {
-    try {
-        for (let i = 0; i < story.paragraphs.length; i++) {
-            const para = story.paragraphs.item(i)
-            if (para.alignToBaseline === true) return true;
+    /**
+     * Detects if story aligns to baseline grid.
+     */
+    #storyUsesBaselineGrid(story) {
+        try {
+            for (let i = 0; i < story.paragraphs.length; i++) {
+                const para = story.paragraphs.item(i)
+                if (para.alignToBaseline === true) return true;
+            }
+        } catch (err) {
+            alert (err);
         }
-    } catch (err) {
-        alert (err);
+        return false;
     }
-    return false;
-}
 
-/**
- * Snaps a vertical measurement to the next baseline grid step.
- * 
- */
-#snapToBaseline(value, gridStep, toBottom) {
-    if (toBottom) {
-        return Math.ceil(value / gridStep) * gridStep;
-    } else {
-        return Math.floor(value / gridStep) * gridStep;
+    /**
+     * Snaps a vertical measurement to the next baseline grid step.
+     * 
+     */
+    #snapToBaseline(value, gridStep, toBottom) {
+        if (toBottom) {
+            return Math.ceil(value / gridStep) * gridStep;
+        } else {
+            return Math.floor(value / gridStep) * gridStep;
+        }        
     }
-    
-}
-
-
 
     /**
      * Calculates the outermost bounding box of a collection of article elements, considering threaded frames if applicable.
