@@ -70,13 +70,21 @@ async function main() {
             targetBrandName = articleShapeJson.brandName;
         }
         const brandId = brandSectionMapReader.readMapAndResolveBrandId(inputPath, targetBrandName);
+        
+        const plaPageLayoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId); 
+        if (plaPageLayoutSettings === null) {
+            throw new Error("There are no page layout settings stored at the PLA service yet. "
+                + "Please import the PLA Config Excel file and try again.");
+        }
+        jsonValidator.validate('page-layout-settings', plaPageLayoutSettings);
+        const localPageLayoutSettings = pageLayoutSettingsReader.readSettings(inputPath, appSettings.getEnforceServerSidePageLayoutSettings() ? plaPageLayoutSettings : null);
+        if (!appSettings.getEnforceServerSidePageLayoutSettings()) {
+            assureTallyPageLayoutSettings(plaPageLayoutSettings, localPageLayoutSettings)
+        }   
 
         const pageGrid = await assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId);
         pageLayoutSettingsReader.setPageGrid(pageGrid);
-        if (validateSettingsFromExcel) {
-            await assureTallyPageLayoutSettings(accessToken, brandId, pageLayoutSettings)
-            elementLabelMapper.init(await plaService.getElementLabelMapping(accessToken, brandId));
-        }
+        elementLabelMapper.init(await plaService.getElementLabelMapping(accessToken, brandId));
         await assureTallyGenres(accessToken, brandId, genres)
         if (await cliParams.shouldDeletePreviouslyConfiguredArticleShapes()) {
              await plaService.deleteArticleShapes(accessToken, brandId);
@@ -141,30 +149,22 @@ async function assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId)
 }
 
 /**
- * Retrieve the page layout settings from the PLA service and validate them.
+ * Compare page layout settings from the PLA service and validate them against local settings.
  * Raise error when they differ with the ones read from input folder.
- * @param {string} accessToken 
- * @param {string} brandId 
- * @param {Object} inputPageLayoutSettings Read from input path.
+ * @param {string} plaPageLayoutSettings Read from server 
+ * @param {string} inputPageLayoutSettings Read from input path.
  */
-async function assureTallyPageLayoutSettings(accessToken, brandId, inputPageLayoutSettings) {
-    const plaPageLayoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId);
-    if (plaPageLayoutSettings === null) {
-        throw new Error("There are no page layout settings stored at the PLA service yet. "
-            + "Please import the PLA Config Excel file and try again.");
-    }
-    jsonValidator.validate('page-layout-settings', plaPageLayoutSettings);
-    if (diff(plaPageLayoutSettings, inputPageLayoutSettings)) {
+function assureTallyPageLayoutSettings(plaPageLayoutSettings, localPageLayoutSettings) {
+    if (diff(plaPageLayoutSettings, localPageLayoutSettings)) {
         logger.error( "Page layout settings differ:",
             "\n1) retrieved from PLA service:\n", plaPageLayoutSettings,
-            "\n2) read from input folder:\n", inputPageLayoutSettings);
+            "\n2) read from input folder:\n", localPageLayoutSettings);
         throw new Error(
             "The page layout settings retrieved from PLA service "
             + "differ from the ones read from input folder.");
     }
     logger.info("Locally configured page layout settings are tally with the PLA service.");
 }
-
 /**
  * Validate the provided genres and assure they are the same as the genres stored in PLA service. 
  * Depending on the user provided --old-shapes CLI option:

@@ -10,4 +10,8 @@ export const uploaderDefaultConfig = {
 
     // Supported values: "DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"
     logLevel: 'WARNING',
+
+    //Optional enforce using the page-layout-settings from the AILA backend and disable the
+    //validation against the local settings in _manifest/page-layout-settings.json 
+    enforceServerSidePageLayoutSettings: false
 }

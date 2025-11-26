@@ -29,9 +29,10 @@ export class PageLayoutSettingsReader {
 
     /**
      * @param {string} folderPath 
+     * @param {Object} pageLayoutOverrides 
      * @return {Object}
      */
-    readSettings(folderPath) {
+    readSettings(folderPath, pageLayoutOverrides) {
         const manifestFoldername = "_manifest";
         const settingsFilename = "page-layout-settings.json";
         const settingsPath = path.join(folderPath, manifestFoldername, settingsFilename);
@@ -45,6 +46,28 @@ export class PageLayoutSettingsReader {
         }
         this.#jsonValidator.validate('page-layout-settings', this.#settings);
         this.#logger.info(`The "${manifestFoldername}/${settingsFilename}" file is valid.`);
+
+
+        // Apply overrides (deep merge)
+        const applyOverrides = (target, overrides) => {
+            for (const key in overrides) {
+                if (overrides[key] && typeof overrides[key] === 'object' && !Array.isArray(overrides[key])) {
+                    target[key] = applyOverrides(target[key] || {}, overrides[key]);
+                } else {
+                    this.#logger.info(`Apply page-layout-settings override ${key}=${overrides[key]}.`);
+                    target[key] = overrides[key];
+                }
+            }
+            return target;
+        };
+
+        if (pageLayoutOverrides) {
+            this.#logger.info(`The local page layout settings are overriden`);
+            this.#settings = applyOverrides(this.#settings, pageLayoutOverrides);    
+        }
+        
+
+
         return this.#settings;
     }
 
