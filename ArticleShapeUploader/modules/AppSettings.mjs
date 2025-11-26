@@ -60,4 +60,11 @@ export class AppSettings {
     getLogLevel() {
         return this.#configData.logLevel;
     }
+
+    /**
+     * @returns {boolean}
+     */    
+    getEnforceServerSidePageLayoutSettings () {
+        return this.#configData.enforceServerSidePageLayoutSettings;
+    }
 }
