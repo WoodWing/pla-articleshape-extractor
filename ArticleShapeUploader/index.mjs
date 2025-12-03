@@ -56,8 +56,7 @@ async function main() {
         if (cliParams.userHasAskedForHelpOnly()) {
             return;
         }
-        const inputPath = cliParams.resolveInputPath();
-        const pageLayoutSettings = pageLayoutSettingsReader.readSettings(inputPath);
+        const inputPath = cliParams.resolveInputPath();        
         const genres = genresReader.readGenres(inputPath);
         const accessToken = resolveAccessToken();
 
@@ -71,16 +70,19 @@ async function main() {
         }
         const brandId = brandSectionMapReader.readMapAndResolveBrandId(inputPath, targetBrandName);
         
-        const plaPageLayoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId); 
-        if (plaPageLayoutSettings === null) {
+        const remotePageLayoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId); 
+        if (remotePageLayoutSettings === null) {
             throw new Error("There are no page layout settings stored at the PLA service yet. "
                 + "Please import the PLA Config Excel file and try again.");
         }
-        jsonValidator.validate('page-layout-settings', plaPageLayoutSettings);
-        const localPageLayoutSettings = pageLayoutSettingsReader.readSettings(inputPath, appSettings.getEnforceServerSidePageLayoutSettings() ? plaPageLayoutSettings : null);
-        if (!appSettings.getEnforceServerSidePageLayoutSettings()) {
-            assureTallyPageLayoutSettings(plaPageLayoutSettings, localPageLayoutSettings)
-        }   
+        jsonValidator.validate('page-layout-settings', remotePageLayoutSettings);
+
+        if (appSettings.getEnforceServerSidePageLayoutSettings()) {
+            pageLayoutSettingsReader.initSettings(remotePageLayoutSettings);
+        } else {
+            const localPageLayoutSettings = pageLayoutSettingsReader.readSettings(inputPath);
+            assureTallyPageLayoutSettings(remotePageLayoutSettings, localPageLayoutSettings);
+        }
 
         const pageGrid = await assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId);
         pageLayoutSettingsReader.setPageGrid(pageGrid);
