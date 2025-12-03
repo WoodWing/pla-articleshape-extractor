@@ -31,7 +31,9 @@ export class PageLayoutSettingsReader {
      * @param {Object} settings 
      */
     initSettings (settings) {
+        this.#jsonValidator.validate('page-layout-settings', settings);
         this.#settings = settings;
+        this.#logger.debug ("PageLayoutSetting set to ", this.#settings);
     }
 
     /**
@@ -42,20 +44,20 @@ export class PageLayoutSettingsReader {
         const manifestFoldername = "_manifest";
         const settingsFilename = "page-layout-settings.json";
         const settingsPath = path.join(folderPath, manifestFoldername, settingsFilename);
+
         if (!fs.existsSync(settingsPath) || !fs.lstatSync(settingsPath).isFile()) {
             throw new Error(`The file "${settingsPath}" is not found. Run the ArticleShapeExtractor and try again.`);
         }
         try {
-            this.#settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+            this.initSettings (JSON.parse(fs.readFileSync(settingsPath, 'utf-8')));
         } catch(error) {
             throw new Error(`The file "${settingsPath}" is not valid JSON - ${error.message}`);
         }
-        this.#jsonValidator.validate('page-layout-settings', this.#settings);
+        
         this.#logger.info(`The "${manifestFoldername}/${settingsFilename}" file is valid.`);
 
         return this.#settings;
     }
-
 
     /**
      * Provides the page layout settings. Raises error when not initialized yet.

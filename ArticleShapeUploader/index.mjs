@@ -75,15 +75,15 @@ async function main() {
             throw new Error("There are no page layout settings stored at the PLA service yet. "
                 + "Please import the PLA Config Excel file and try again.");
         }
-        jsonValidator.validate('page-layout-settings', remotePageLayoutSettings);
-
+        
         if (appSettings.getEnforceServerSidePageLayoutSettings()) {
+            logger.warning(`Due to EnforceServerSidePageLayoutSettings the validation against the local settings is disabled.`);
             pageLayoutSettingsReader.initSettings(remotePageLayoutSettings);
         } else {
             const localPageLayoutSettings = pageLayoutSettingsReader.readSettings(inputPath);
             assureTallyPageLayoutSettings(remotePageLayoutSettings, localPageLayoutSettings);
         }
-
+        
         const pageGrid = await assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId);
         pageLayoutSettingsReader.setPageGrid(pageGrid);
         elementLabelMapper.init(await plaService.getElementLabelMapping(accessToken, brandId));
