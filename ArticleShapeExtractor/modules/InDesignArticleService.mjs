@@ -174,7 +174,8 @@ class InDesignArticleService {
      * @returns {Boolean}
      */
     isValidTextFrame(pageItem) {
-        return this.#isValidFrameOfType(pageItem, ["TextFrame"]) && pageItem.contentType.toString() === idd.ContentType.TEXT_TYPE.toString();
+        return this.#isValidFrameOfType(pageItem, ["TextFrame"]) 
+            && pageItem.contentType.toString() === idd.ContentType.TEXT_TYPE.toString();
     }
 
     /**
@@ -236,7 +237,9 @@ class InDesignArticleService {
      * @returns {Boolean}
      */
     isUnassignedFrame(pageItem) {
-        return pageItem.contentType.toString() === idd.ContentType.UNASSIGNED.toString();
+        return pageItem 
+            && pageItem.isValid 
+            && pageItem.contentType.toString() === idd.ContentType.UNASSIGNED.toString();
     }
 
     /**
