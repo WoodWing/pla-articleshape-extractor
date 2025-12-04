@@ -174,7 +174,8 @@ class InDesignArticleService {
      * @returns {Boolean}
      */
     isValidTextFrame(pageItem) {
-        return this.#isValidFrameOfType(pageItem, ["TextFrame"]) && pageItem.contentType.toString() === idd.ContentType.TEXT_TYPE.toString();
+        return this.#isValidFrameOfType(pageItem, ["TextFrame"]) 
+            && pageItem.contentType.toString() === idd.ContentType.TEXT_TYPE.toString();
     }
 
     /**
@@ -183,6 +184,8 @@ class InDesignArticleService {
      * @returns {Boolean}
      */
     isValidGraphicFrame(pageItem) {
+        //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString() 
+        // check just like text frames however the side-effects are unclear
         return this.#isValidFrameOfType(pageItem, ["Oval", "Polygon", "Rectangle", "GraphicLine"]);
     }
 
@@ -193,6 +196,8 @@ class InDesignArticleService {
      * @returns {Boolean}
      */
     #isValid1DRectangleFrame(pageItem) {
+        //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString() 
+        // check just like text frames however the side-effects are unclear
         if (!this.#isValidFrameOfType(pageItem, ["Rectangle"])) {
             return false;
         }
@@ -211,6 +216,8 @@ class InDesignArticleService {
      * @returns {Boolean}
      */
     isValid1DGraphicFrame(pageItem) {
+        //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString() 
+        // check just like text frames however the side-effects are unclear        
         return this.#isValidFrameOfType(pageItem, ["GraphicLine"]) 
             || this.#isValid1DRectangleFrame(pageItem);
     }
@@ -223,6 +230,8 @@ class InDesignArticleService {
      * @returns {Boolean}
      */
     isValid2DGraphicFrame(pageItem) {
+        //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString() 
+        // check just like text frames however the side-effects are unclear        
         if (this.#isValidFrameOfType(pageItem, ["Oval", "Polygon"])) {
             return true;
         }
@@ -236,7 +245,9 @@ class InDesignArticleService {
      * @returns {Boolean}
      */
     isUnassignedFrame(pageItem) {
-        return pageItem.contentType.toString() === idd.ContentType.UNASSIGNED.toString();
+        return pageItem 
+            && pageItem.isValid 
+            && pageItem.contentType.toString() === idd.ContentType.UNASSIGNED.toString();
     }
 
     /**
