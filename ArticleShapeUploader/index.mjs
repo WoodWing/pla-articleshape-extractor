@@ -34,7 +34,6 @@ try {
     uploaderLocalConfig = localModule.uploaderLocalConfig;
 } catch (error) {
 }
-const validateSettingsFromExcel = true; // careful: only set temporary to false for local-dev testing
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const appSettings = new AppSettings(uploaderDefaultConfig, uploaderLocalConfig);
 const logger = new ColoredLogger(appSettings.getLogLevel());
@@ -42,7 +41,7 @@ const cliParams = new CliParams(logger);
 const jsonValidator = new JsonValidator(logger, path.join(__dirname, 'schemas'));
 const pageLayoutSettingsReader = new PageLayoutSettingsReader(logger, jsonValidator);
 const genresReader = new GenresReader(logger, jsonValidator);
-const elementLabelMapper = new ElementLabelMapper(logger, jsonValidator, validateSettingsFromExcel);
+const elementLabelMapper = new ElementLabelMapper(logger, jsonValidator);
 const brandSectionMapReader = new BrandSectionMapReader(logger, jsonValidator);
 const hasher = new ArticleShapeHasher(elementLabelMapper);
 const plaService = new PlaService(appSettings.getPlaServiceUrl(), appSettings.getLogNetworkTraffic(), logger);
@@ -61,9 +60,6 @@ async function main() {
         const genres = genresReader.readGenres(inputPath);
         const accessToken = resolveAccessToken();
 
-        if (!validateSettingsFromExcel) {
-            logger.warning("The 'validateSettingsFromExcel' option is disabled. Should _not_ be used for production.");
-        }
         let targetBrandName = cliParams.getTargetBrandName();
         if (!targetBrandName) {
             const articleShapeJson = await takeFirstArticleShapeJson(inputPath);
@@ -73,10 +69,8 @@ async function main() {
 
         const pageGrid = await assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId);
         pageLayoutSettingsReader.setPageGrid(pageGrid);
-        if (validateSettingsFromExcel) {
-            await assureTallyPageLayoutSettings(accessToken, brandId, pageLayoutSettings)
-            elementLabelMapper.init(await plaService.getElementLabelMapping(accessToken, brandId));
-        }
+        await assureTallyPageLayoutSettings(accessToken, brandId, pageLayoutSettings)
+        elementLabelMapper.init(await plaService.getElementLabelMapping(accessToken, brandId));
         await assureTallyGenres(accessToken, brandId, genres)
         if (await cliParams.shouldDeletePreviouslyConfiguredArticleShapes()) {
              await plaService.deleteArticleShapes(accessToken, brandId);
