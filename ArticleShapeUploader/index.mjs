@@ -64,18 +64,13 @@ async function main() {
             targetBrandName = articleShapeJson.brandName;
         }
         const brandId = brandSectionMapReader.readMapAndResolveBrandId(inputPath, targetBrandName);
-
-        const pageGrid = await assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId);
-        const localPageLayoutSettings = new PageLayoutSettings(await readLocalPageSettings(inputPath), pageGrid);
-        const remotePageLayoutSettings = new PageLayoutSettings(await readRemotePageSettings(accessToken, brandId), pageGrid);
-        await assureTallyInDesignPageLayoutGrid(localPageLayoutSettings, remotePageLayoutSettings);
-
+        const pageLayoutSettings = await readAndValidationPageLayoutSettings(inputPath, accessToken, brandId);
         elementLabelMapper.init(await plaService.getElementLabelMapping(accessToken, brandId));
         await assureTallyGenres(accessToken, brandId, genres)
         if (await cliParams.shouldDeletePreviouslyConfiguredArticleShapes()) {
              await plaService.deleteArticleShapes(accessToken, brandId);
         }
-        await scanDirAndUploadFiles(inputPath, accessToken, brandId, remotePageLayoutSettings);
+        await scanDirAndUploadFiles(inputPath, accessToken, brandId, pageLayoutSettings);
         await validateBrandConfiguration(accessToken, brandId);
     } catch(error) {
         if (logger.isDebug()) {
@@ -103,6 +98,28 @@ function resolveAccessToken() {
     logger.info(`Targeting for systemId "${JSON.parse(decoded).systemId}".`);
 
     return accessToken;
+}
+
+/**
+ * Retrieves the page grid settings from the PLA service. Reads page layout settings from local 
+ * disk and retrieves them from remote PLA service. The latter is used to compares InDesign layout 
+ * grid properties to assure article shapes can later be correctly placed across layouts.
+ * @param {string} inputPath 
+ * @param {string} accessToken 
+ * @param {string} brandId 
+ * @returns {PageLayoutSettings}
+ */
+async function readAndValidationPageLayoutSettings(inputPath, accessToken, brandId) {
+    const pageGrid = await assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId);
+
+    const localSettingsDto = await readLocalPageSettings(inputPath);
+    const localSettings = new PageLayoutSettings(localSettingsDto, pageGrid);
+
+    const remoteSettingsDto = await readRemotePageSettings(accessToken, brandId);
+    const remoteSettings = new PageLayoutSettings(remoteSettingsDto, pageGrid);
+
+    await assureTallyInDesignPageLayoutGrid(localSettings, remoteSettings);
+    return remoteSettings;
 }
 
 /**
