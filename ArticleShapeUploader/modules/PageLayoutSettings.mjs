@@ -30,7 +30,7 @@ export class PageLayoutSettings {
     getColumnWidth() {
         const columnCount = this.#pageGrid.columnCount;
         if (columnCount <= 0) {
-            throw new Error(`The column count ${columnWidth} is invalid.`);
+            throw new Error(`The column count ${columnCount} is invalid.`);
         }
         const gutterCount = columnCount - 1;
         const gutterWidth = this.#settings.columns.gutter;
