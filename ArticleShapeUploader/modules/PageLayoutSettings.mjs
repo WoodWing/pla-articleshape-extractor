@@ -44,36 +44,6 @@ export class PageLayoutSettings {
     }
 
     /**
-     * Compares the columns gutter and baseline grid increments properties of the page layout settings.
-     * @param {PageLayoutSettings} that The other page settings to compare with.
-     * @returns {{propertyPath: string, lhsValue: Any, rhsValue: Any}|null} A property that differs, null otherwise.
-     */
-    diffInDesignPageLayoutGrid(that) {
-        const pathsToCompare = [
-            "columns.gutter",
-            "baseline-grid.increment"
-        ];
-        for (const path of pathsToCompare) {
-            const thisValue = this.#getPropertyValueByPath(this.#settings, path);
-            const thatValue = this.#getPropertyValueByPath(that.#settings, path);
-            if (thisValue != thatValue) {
-                return {"propertyPath": path, "lhsValue": thisValue, "rhsValue": thatValue};
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Resolves the value of a property (path) in a deeply nested DTO (obj).
-     * @param {Object} obj 
-     * @param {string} path 
-     * @returns {Any}
-     */
-    #getPropertyValueByPath(obj, path) {
-        return path.split('.').reduce((acc, key) => acc?.[key], obj);
-    }
-
-    /**
      * The width of the usable space within the page borders, in points.
      * @returns {number}
      */
@@ -115,5 +85,35 @@ export class PageLayoutSettings {
     #getUsablePageHeight() {
         const settings = this.#settings;
         return settings.dimensions.height - settings.margins.top - settings.margins.bottom;
-    }  
+    }
+
+    /**
+     * Compares the columns gutter and baseline grid increments properties of the page layout settings.
+     * @param {PageLayoutSettings} that The other page settings to compare with.
+     * @returns {{propertyPath: string, lhsValue: Any, rhsValue: Any}|null} A property that differs, null otherwise.
+     */
+    diffInDesignPageLayoutGrid(that) {
+        const pathsToCompare = [
+            "columns.gutter",
+            "baseline-grid.increment"
+        ];
+        for (const path of pathsToCompare) {
+            const thisValue = this.#getPropertyValueByPath(this.#settings, path);
+            const thatValue = this.#getPropertyValueByPath(that.#settings, path);
+            if (thisValue != thatValue) {
+                return {"propertyPath": path, "lhsValue": thisValue, "rhsValue": thatValue};
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resolves the value of a property (path) in a deeply nested DTO (obj).
+     * @param {Object} obj 
+     * @param {string} path 
+     * @returns {Any}
+     */
+    #getPropertyValueByPath(obj, path) {
+        return path.split('.').reduce((acc, key) => acc?.[key], obj);
+    }
 }
