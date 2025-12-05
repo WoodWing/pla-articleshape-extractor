@@ -17,13 +17,6 @@ export class PageLayoutSettings {
     }
 
     /**
-     * @param {{columnCount: number, rowCount: number}} pageGrid 
-     */
-    setPageGrid(pageGrid) {
-        this.#pageGrid = pageGrid;
-    }
-
-    /**
      * The width of one column in points. The column refers to the simple page grid configured for PLA.
      * @returns {number} Positive number.
      */
