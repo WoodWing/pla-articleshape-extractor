@@ -1,0 +1,46 @@
+name: CI - Article Shape Uploader
+
+on:
+  # Run the tests on pushes to these branches.
+  push:
+    branches:
+      - master
+
+  # Run the tests on pushes to feature branches (PRs) that are targeting these branches.
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      # Change directory for succeeding steps to work in.
+      run:
+        working-directory: ArticleShapeUploader
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Log stack versions
+        run: |
+          echo "Versions used:"
+          echo "- Ubuntu: $(lsb_release -d -s)"
+          echo "- Node: $(node -v)"
+          echo "- npm: $(npm -v)"
+          echo "- Vitest: $(npx vitest --version)"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests (using Vitest)
+        run: npm test -- --run
