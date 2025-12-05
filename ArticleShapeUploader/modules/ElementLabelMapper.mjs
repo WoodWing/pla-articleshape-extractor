@@ -13,18 +13,13 @@ export class ElementLabelMapper {
     /** @type {Object} */
     #elementMapping = {};
 
-    /** @type {boolean} */
-    #validateSettingsFromExcel;
-
     /**
      * @param {ColoredLogger} logger 
      * @param {JsonValidator} jsonValidator 
-     * @param {boolean} validateSettingsFromExcel
      */
-    constructor(logger, jsonValidator, validateSettingsFromExcel) {
+    constructor(logger, jsonValidator) {
         this.#logger = logger;
         this.#jsonValidator = jsonValidator;
-        this.#validateSettingsFromExcel = validateSettingsFromExcel;
     }
 
     /**
@@ -45,9 +40,6 @@ export class ElementLabelMapper {
      * @returns {string} The standard label.
      */
     mapCustomToStandardLabel(customLabel) {
-        if (!this.#validateSettingsFromExcel) {
-            return customLabel;
-        }
         if (this.#elementMapping[customLabel]) {
             return this.#elementMapping[customLabel];
         }
