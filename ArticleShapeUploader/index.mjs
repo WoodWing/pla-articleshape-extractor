@@ -19,7 +19,7 @@ import diff from 'deep-diff';
 import { AppSettings } from "./modules/AppSettings.mjs";
 import { ColoredLogger } from "./modules/ColoredLogger.mjs";
 import { CliParams } from "./modules/CliParams.mjs";
-import { PageLayoutSettingsReader } from "./modules/PageLayoutSettingsReader.mjs";
+import { PageLayoutSettings } from "./modules/PageLayoutSettings.mjs";
 import { GenresReader } from "./modules/GenresReader.mjs";
 import { ElementLabelMapper } from './modules/ElementLabelMapper.mjs';
 import { BrandSectionMapReader } from './modules/BrandSectionMapReader.mjs';
@@ -39,7 +39,6 @@ const appSettings = new AppSettings(uploaderDefaultConfig, uploaderLocalConfig);
 const logger = new ColoredLogger(appSettings.getLogLevel());
 const cliParams = new CliParams(logger);
 const jsonValidator = new JsonValidator(logger, path.join(__dirname, 'schemas'));
-const pageLayoutSettingsReader = new PageLayoutSettingsReader(logger, jsonValidator);
 const genresReader = new GenresReader(logger, jsonValidator);
 const elementLabelMapper = new ElementLabelMapper(logger, jsonValidator);
 const brandSectionMapReader = new BrandSectionMapReader(logger, jsonValidator);
@@ -56,7 +55,6 @@ async function main() {
             return;
         }
         const inputPath = cliParams.resolveInputPath();
-        const pageLayoutSettings = pageLayoutSettingsReader.readSettings(inputPath);
         const genres = genresReader.readGenres(inputPath);
         const accessToken = resolveAccessToken();
 
@@ -68,14 +66,16 @@ async function main() {
         const brandId = brandSectionMapReader.readMapAndResolveBrandId(inputPath, targetBrandName);
 
         const pageGrid = await assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId);
-        pageLayoutSettingsReader.setPageGrid(pageGrid);
-        await assureTallyPageLayoutSettings(accessToken, brandId, pageLayoutSettings)
+        const localPageLayoutSettings = new PageLayoutSettings(await readLocalPageSettings(inputPath), pageGrid);
+        const remotePageLayoutSettings = new PageLayoutSettings(await readRemotePageSettings(accessToken, brandId), pageGrid);
+        await assureTallyInDesignPageLayoutGrid(localPageLayoutSettings, remotePageLayoutSettings);
+
         elementLabelMapper.init(await plaService.getElementLabelMapping(accessToken, brandId));
         await assureTallyGenres(accessToken, brandId, genres)
         if (await cliParams.shouldDeletePreviouslyConfiguredArticleShapes()) {
              await plaService.deleteArticleShapes(accessToken, brandId);
         }
-        await scanDirAndUploadFiles(inputPath, accessToken, brandId);
+        await scanDirAndUploadFiles(inputPath, accessToken, brandId, remotePageLayoutSettings);
         await validateBrandConfiguration(accessToken, brandId);
     } catch(error) {
         logger.error(error.message);
@@ -135,28 +135,83 @@ async function assureBlueprintsConfiguredAndDerivePageGrid(accessToken, brandId)
 }
 
 /**
- * Retrieve the page layout settings from the PLA service and validate them.
- * Raise error when they differ with the ones read from input folder.
+ * Retrieve the page layout settings from the local manifest folder.
+ * @param {string} folderPath 
+ * @return {Object}
+ */
+async function readLocalPageSettings(folderPath) {
+    const manifestFoldername = "_manifest";
+    const settingsFilename = "page-layout-settings.json";
+    const settingsPath = path.join(folderPath, manifestFoldername, settingsFilename);
+    if (!fs.existsSync(settingsPath) || !fs.lstatSync(settingsPath).isFile()) {
+        throw new Error(`The file "${settingsPath}" is not found. Run the ArticleShapeExtractor and try again.`);
+    }
+    let settings = null;
+    try {
+        settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+    } catch(error) {
+        throw new Error(`The file "${settingsPath}" is not valid JSON - ${error.message}`);
+    }
+    jsonValidator.validate('page-layout-settings', settings);
+    logger.info(`The "${manifestFoldername}/${settingsFilename}" file is valid.`);
+    return settings;
+}
+
+/**
+ * Retrieve the page layout settings from the PLA service.
  * @param {string} accessToken 
  * @param {string} brandId 
- * @param {Object} inputPageLayoutSettings Read from input path.
+ * @return {Object}
  */
-async function assureTallyPageLayoutSettings(accessToken, brandId, inputPageLayoutSettings) {
-    const plaPageLayoutSettings = await plaService.getPageLayoutSettings(accessToken, brandId);
-    if (plaPageLayoutSettings === null) {
+async function readRemotePageSettings(accessToken, brandId) {
+    const settings = await plaService.getPageLayoutSettings(accessToken, brandId);
+    if (settings === null) {
         throw new Error("There are no page layout settings stored at the PLA service yet. "
             + "Please import the PLA Config Excel file and try again.");
     }
-    jsonValidator.validate('page-layout-settings', plaPageLayoutSettings);
-    if (diff(plaPageLayoutSettings, inputPageLayoutSettings)) {
-        logger.error( "Page layout settings differ:",
-            "\n1) retrieved from PLA service:\n", plaPageLayoutSettings,
-            "\n2) read from input folder:\n", inputPageLayoutSettings);
-        throw new Error(
-            "The page layout settings retrieved from PLA service "
-            + "differ from the ones read from input folder.");
-    }
+    jsonValidator.validate('page-layout-settings', settings);
+    return settings;
+}
+
+/**
+ * Raise error when the InDesign page layout grid is not tally. It compares the gutter and baseline grid increment 
+ * settings taken from the page layouts settings retrieved from PLA service and the ones read from input folder.
+ * This is about InDesign measurements (in points), not to be confused with the PLA page grid (in column/row counts).
+ * 
+ * In practice, it turned out unworkable to compare all page layout settings (LA-187), and most settings actually 
+ * rather unimportant to be the same across all layouts of the section. Reason is that an article taken from source
+ * layout A will perfectly be placed on target layout B while their margins/dimensions are not exactly matching.
+ * 
+ * @param {PageLayoutSettings} localPageLayoutSettings Read from input path.
+ * @param {PageLayoutSettings} remotePageLayoutSettings Retrieved from PLA service.
+ */
+async function assureTallyInDesignPageLayoutGrid(localPageLayoutSettings, remotePageLayoutSettings) {
+    const localSettings = localPageLayoutSettings.getPageLayoutSettings();
+    const remoteSettings = remotePageLayoutSettings.getPageLayoutSettings();
+    const pathsToCompare = [
+        "columns.gutter",
+        "baseline-grid.increment"
+    ];
+    pathsToCompare.forEach(path => {
+        const localValue = getPropertyValueByPath(localSettings, path);
+        const remoteValue = getPropertyValueByPath(remoteSettings, path);
+        if( localValue!= remoteValue) {
+            throw new Error(
+                `The '${path}' in the page layout settings retrieved from PLA service is `
+                + `'${remoteValue}' which differs from '${localValue}' read from input folder.`);
+        }
+    });
     logger.info("Locally configured page layout settings are tally with the PLA service.");
+}
+
+/**
+ * Resolves the value of a property (path) in a deeply nested DTO (obj).
+ * @param {Object} obj 
+ * @param {string} path 
+ * @returns {Any}
+ */
+function getPropertyValueByPath(obj, path) {
+  return path.split('.').reduce((acc, key) => acc?.[key], obj);
 }
 
 /**
@@ -232,8 +287,9 @@ async function takeFirstArticleShapeJson(folderPath) {
  * @param {string} folderPath 
  * @param {string} accessToken 
  * @param {string} brandId 
+ * @param {PageLayoutSettings} pageLayoutSettings
  */
-async function scanDirAndUploadFiles(folderPath, accessToken, brandId) {
+async function scanDirAndUploadFiles(folderPath, accessToken, brandId, pageLayoutSettings) {
     await scanDirForArticleShapeJson(folderPath, async (baseName) => {
         const jsonFilePath = composePathAndAssertExists(folderPath, baseName, 'json');
         const articleShapeJson = validateArticleShapeJson(jsonFilePath);
@@ -251,7 +307,7 @@ async function scanDirAndUploadFiles(folderPath, accessToken, brandId) {
         const sectionId = brandSectionMapReader.resolveSectionId(
             articleShapeJson.brandName, articleShapeJson.sectionName);
         await uploadArticleShapeWithFiles(
-            accessToken, brandId, sectionId, baseName, articleShapeJson, localFiles, fileRenditions);        
+            accessToken, brandId, sectionId, baseName, articleShapeJson, localFiles, fileRenditions, pageLayoutSettings);
         return true;
     });
 }
@@ -368,13 +424,14 @@ function composeFileRenditionDto(renditionName, contentType, fileExtension) {
  * @param {Object} articleShapeJson
  * @param {Array<Object>} localFiles
  * @param {Array<string>} fileRenditions 
+ * @param {PageLayoutSettings} pageLayoutSettings
  */
 async function uploadArticleShapeWithFiles(
-    accessToken, brandId, sectionId, articleShapeName, articleShapeJson, localFiles, fileRenditions
+    accessToken, brandId, sectionId, articleShapeName, articleShapeJson, localFiles, fileRenditions, pageLayoutSettings
 ) {
     logger.info(`Processing article shape "${articleShapeName}".`);
     const compositionHash = hasher.hash(articleShapeJson);
-    const articleShapeDto = articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash);
+    const articleShapeDto = articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash, pageLayoutSettings);
     articleShapeDto.section_id = sectionId;
     const articleShapeWithRenditionsDto = {
         article_shape: articleShapeDto,
@@ -401,12 +458,13 @@ async function uploadArticleShapeWithFiles(
  * @param {Object} articleShapeJson 
  * @param {string} articleShapeName
  * @param {string} compositionHash
+ * @param {PageLayoutSettings} pageLayoutSettings
  * @returns {Object} DTO
  */
-function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash) {
-    const actualFoldLineInPoints = sanitizeFoldLineInPoints(articleShapeJson.foldLine);
-    const articleWidthInColumns = calculateArticleWidthInColumns(articleShapeJson.geometricBounds.width, actualFoldLineInPoints);
-    const articleHeightInRows = calculateArticleHeightInRows(articleShapeJson.geometricBounds.height);
+function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHash, pageLayoutSettings) {
+    const actualFoldLineInPoints = sanitizeFoldLineInPoints(articleShapeJson.foldLine, pageLayoutSettings);
+    const articleWidthInColumns = calculateArticleWidthInColumns(articleShapeJson.geometricBounds.width, actualFoldLineInPoints, pageLayoutSettings);
+    const articleHeightInRows = calculateArticleHeightInRows(articleShapeJson.geometricBounds.height, pageLayoutSettings);
 
     logger.debug(
         `Article dimensions:\n` +
@@ -424,7 +482,7 @@ function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHa
         body_length: 0,
         quote_count: 0,
         image_count: articleShapeJson.imageComponents?.length || 0,
-        fold_line: determineFoldLineInColumns(actualFoldLineInPoints, articleWidthInColumns),
+        fold_line: determineFoldLineInColumns(actualFoldLineInPoints, articleWidthInColumns, pageLayoutSettings),
         composition_hash: compositionHash,
     };
 
@@ -449,13 +507,14 @@ function articleShapeJsonToDto(articleShapeJson, articleShapeName, compositionHa
  * If the article is placed to near to the fold line, assume the article is placed at the fold line.
  * In that case, assume there is no fold line, so return null. Otherwise, just use the fold line as provided. 
  * @param {number|null} foldLineInPoints 
+ * @param {PageLayoutSettings} pageLayoutSettings
  * @returns {number|null} Fold line, or null if no fold line.
  */
-function sanitizeFoldLineInPoints(foldLineInPoints) {
-    const columnWidthInPoints = pageLayoutSettingsReader.getColumnWidth();
+function sanitizeFoldLineInPoints(foldLineInPoints, pageLayoutSettings) {
+    const columnWidthInPoints = pageLayoutSettings.getColumnWidth();
     // If article is technically placed on the LHS page but too near to the fold line,
     // assume it supposed to be placed at the very left of the RHS page, so no fold line.
-    if (foldLineInPoints < (pageLayoutSettingsReader.getPageMarginInside() + (columnWidthInPoints/2))) {
+    if (foldLineInPoints < (pageLayoutSettings.getPageMarginInside() + (columnWidthInPoints/2))) {
         foldLineInPoints = null;
     }
     return foldLineInPoints;
@@ -465,19 +524,20 @@ function sanitizeFoldLineInPoints(foldLineInPoints) {
  * Convert the article width from InDesign points into PLA page grid columns.
  * @param {number} actualWidthInPoints 
  * @param {number} foldLineInPoints 
+ * @param {PageLayoutSettings} pageLayoutSettings
  * @returns {number}
  */
-function calculateArticleWidthInColumns(actualWidthInPoints, foldLineInPoints) {
-    const columnGutterInPoints = pageLayoutSettingsReader.getColumnGutter();
+function calculateArticleWidthInColumns(actualWidthInPoints, foldLineInPoints, pageLayoutSettings) {
+    const columnGutterInPoints = pageLayoutSettings.getColumnGutter();
     let uniformWidthInPoints = actualWidthInPoints;
     // When there is a fold line, exclude right margin of LHS page and left margin of RHS page.
     // Instead, add the size of a column gutter. So in fact, 'replace' page margins with a gutter.
     // As a result, further calculations will then work the same as without a fold line.
     if (foldLineInPoints !== null) {
-        uniformWidthInPoints -= (2 * pageLayoutSettingsReader.getPageMarginInside());
+        uniformWidthInPoints -= (2 * pageLayoutSettings.getPageMarginInside());
         uniformWidthInPoints += columnGutterInPoints;
     }
-    const columnWidthInPoints = pageLayoutSettingsReader.getColumnWidth();
+    const columnWidthInPoints = pageLayoutSettings.getColumnWidth();
     const preciseWidthInColumns = (uniformWidthInPoints + columnGutterInPoints) / (columnWidthInPoints + columnGutterInPoints);
     const roundedWidthInColumns = Math.max(1, Math.round(preciseWidthInColumns));
     logger.debug(`Column count calculation:\n`
@@ -496,10 +556,11 @@ function calculateArticleWidthInColumns(actualWidthInPoints, foldLineInPoints) {
  * the fractional part exceeds 10% of a full row height.
  *
  * @param {number} articleHeightPoints
+ * @param {PageLayoutSettings} pageLayoutSettings
  * @returns {number} The calculated article height in rows (minimum 1).
  */
-function calculateArticleHeightInRows(articleHeightPoints) {
-  const rowHeightInPoints = pageLayoutSettingsReader.getRowHeight();
+function calculateArticleHeightInRows(articleHeightPoints, pageLayoutSettings) {
+  const rowHeightInPoints = pageLayoutSettings.getRowHeight();
   const rawHeightInRows = articleHeightPoints / rowHeightInPoints;
   const integerPart = Math.floor(rawHeightInRows);
   const fractionalPart = rawHeightInRows - integerPart;
@@ -515,18 +576,19 @@ function calculateArticleHeightInRows(articleHeightPoints) {
  * E.g. the value 1 means, the fold line appears between the 1st and 2nd column of the article.
  * @param {number|null} actualFoldLineInPoints Position of the fold line in the article (from its left side) in points. Null when no fold line.
  * @param {number} articleWidthInColumns Article width in number of columns.
+ * @param {PageLayoutSettings} pageLayoutSettings
  * @returns {number|null} The Nth column whereafter the fold line occurs, or null when no fold line.
  */ 
-function determineFoldLineInColumns(actualFoldLineInPoints, articleWidthInColumns) {
+function determineFoldLineInColumns(actualFoldLineInPoints, articleWidthInColumns, pageLayoutSettings) {
     if (actualFoldLineInPoints === null) {
         return null; // No fold line provided, no fold line determined.
     }
     if (articleWidthInColumns <= 1) {
         return null; // For a single column article there can never be a fold line.
     }
-    const columnGutterInPoints = pageLayoutSettingsReader.getColumnGutter();
-    const columnWidthInPoints = pageLayoutSettingsReader.getColumnWidth();
-    const insidePageMarginInPoints = pageLayoutSettingsReader.getPageMarginInside();
+    const columnGutterInPoints = pageLayoutSettings.getColumnGutter();
+    const columnWidthInPoints = pageLayoutSettings.getColumnWidth();
+    const insidePageMarginInPoints = pageLayoutSettings.getPageMarginInside();
     const uniformFoldLineInPoints = actualFoldLineInPoints - insidePageMarginInPoints;
     const preciseFoldLineInColumns = (uniformFoldLineInPoints + columnGutterInPoints) / (columnWidthInPoints + columnGutterInPoints);
     const roundedFoldLineInColumns = Math.round(preciseFoldLineInColumns);
