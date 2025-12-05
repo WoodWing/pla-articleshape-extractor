@@ -104,4 +104,12 @@ export class ColoredLogger {
 		}
 		this.error(message);
 	}
+
+	/**
+	 * Whether or not the DEBUG level is set.
+	 * @returns {boolean}
+	 */
+	isDebug() {
+		return this.#level >= 5;
+	}
 }

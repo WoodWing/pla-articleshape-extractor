@@ -78,7 +78,11 @@ async function main() {
         await scanDirAndUploadFiles(inputPath, accessToken, brandId, remotePageLayoutSettings);
         await validateBrandConfiguration(accessToken, brandId);
     } catch(error) {
-        logger.error(error.message);
+        if (logger.isDebug()) {
+            logger.logError(error);
+        } else {
+            logger.error(error.message);
+        }
     }
 }
 
@@ -329,6 +333,9 @@ async function scanDirForArticleShapeJson(folderPath, callback) {
                 }
             } catch (error) {
                 logger.error(`Failed to process article shape "${baseName}" - ` + error.message);
+                if (logger.isDebug()) {
+                    logger.logError(error);
+                }
             }
         }
     }
