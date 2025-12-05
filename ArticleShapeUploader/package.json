@@ -4,7 +4,7 @@
   "description": "Add article shapes to the PLA service configuration and upload article shape files to S3.",
   "main": "index.mjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest"
   },
   "license": "Copyright 2000-2025 (c) - WoodWing Software",
   "dependencies": {
@@ -16,5 +16,8 @@
     "minimist": "^1.2.8",
     "readline": "^1.3.0",
     "semver": "^7.7.2"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }
