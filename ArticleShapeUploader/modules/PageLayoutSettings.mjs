@@ -51,10 +51,33 @@ export class PageLayoutSettings {
     }
 
     /**
-     * @returns {Object}
+     * Compares the columns gutter and baseline grid increments properties of the page layout settings.
+     * @param {PageLayoutSettings} that The other page settings to compare with.
+     * @returns {{propertyPath: string, lhsValue: Any, rhsValue: Any}|null} A property that differs, null otherwise.
      */
-    getPageLayoutSettings() {
-        return this.#settings;
+    diffInDesignPageLayoutGrid(that) {
+        const pathsToCompare = [
+            "columns.gutter",
+            "baseline-grid.increment"
+        ];
+        for (const path of pathsToCompare) {
+            const thisValue = this.#getPropertyValueByPath(this.#settings, path);
+            const thatValue = this.#getPropertyValueByPath(that.#settings, path);
+            if (thisValue != thatValue) {
+                return {"propertyPath": path, "lhsValue": thisValue, "rhsValue": thatValue};
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resolves the value of a property (path) in a deeply nested DTO (obj).
+     * @param {Object} obj 
+     * @param {string} path 
+     * @returns {Any}
+     */
+    #getPropertyValueByPath(obj, path) {
+        return path.split('.').reduce((acc, key) => acc?.[key], obj);
     }
 
     /**

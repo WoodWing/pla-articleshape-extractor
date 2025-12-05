@@ -190,32 +190,13 @@ async function readRemotePageSettings(accessToken, brandId) {
  * @param {PageLayoutSettings} remotePageLayoutSettings Retrieved from PLA service.
  */
 async function assureTallyInDesignPageLayoutGrid(localPageLayoutSettings, remotePageLayoutSettings) {
-    const localSettings = localPageLayoutSettings.getPageLayoutSettings();
-    const remoteSettings = remotePageLayoutSettings.getPageLayoutSettings();
-    const pathsToCompare = [
-        "columns.gutter",
-        "baseline-grid.increment"
-    ];
-    pathsToCompare.forEach(path => {
-        const localValue = getPropertyValueByPath(localSettings, path);
-        const remoteValue = getPropertyValueByPath(remoteSettings, path);
-        if( localValue!= remoteValue) {
-            throw new Error(
-                `The '${path}' in the page layout settings retrieved from PLA service is `
-                + `'${remoteValue}' which differs from '${localValue}' read from input folder.`);
-        }
-    });
-    logger.info("Locally configured page layout settings are tally with the PLA service.");
-}
-
-/**
- * Resolves the value of a property (path) in a deeply nested DTO (obj).
- * @param {Object} obj 
- * @param {string} path 
- * @returns {Any}
- */
-function getPropertyValueByPath(obj, path) {
-  return path.split('.').reduce((acc, key) => acc?.[key], obj);
+    const diff = localPageLayoutSettings.diffInDesignPageLayoutGrid(remotePageLayoutSettings);
+    if (diff != null) {
+        throw new Error(
+            `The '${diff.propertyPath}' in the page layout settings retrieved from PLA service is `
+            + `'${diff.rhsValue}' which differs from '${diff.lhsValue}' read from input folder.`);
+    }
+    logger.info("Locally configured page layout settings are tally with the PLA service regarding the InDesign grid.");
 }
 
 /**
