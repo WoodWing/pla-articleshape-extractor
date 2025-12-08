@@ -96,6 +96,7 @@ export class PageLayoutSettings {
         const pathsToCompare = [
             "columns.gutter",
             "baseline-grid.increment"
+            // Keep this list in sync with the diffInDesignPageLayoutGrid function in ArticleShapeExtractor/modules/PageLayoutSettings.mjs
         ];
         for (const path of pathsToCompare) {
             const thisValue = this.#getPropertyValueByPath(this.#settings, path);
