@@ -126,8 +126,17 @@ class PageLayoutSettings{
     }
 
     /**
-     * Save a settings object to the "_manifest/page-layout-settings.json" file in a provided export folder.
-     * If the file already exists, it compares whether the given settings are equal with settings from the file.
+     * Saves page layout settings object to the "_manifest/page-layout-settings.json" file in a provided export folder.
+     * If the file already exists, it reads the file instead and validates those settings against the provided ones.
+     * 
+     * Raises an error when the InDesign page layout grid is not tally. It compares the gutter and baseline grid increment 
+     * settings taken from the current layout and the ones read from the manifest folder.
+     * This is about InDesign measurements (in points), not to be confused with the PLA page grid (in column/row counts).
+     * 
+     * In practice, it turned out unworkable to compare all page layout settings (LA-187), and most settings actually 
+     * rather unimportant to be the same across all layouts of the section. Reason is that an article taken from source
+     * layout A will perfectly be placed on target layout B while their margins/dimensions are not exactly matching.
+     * 
      * @param {Object} settings
      * @param {Folder} exportFolder
      */
@@ -146,38 +155,50 @@ class PageLayoutSettings{
             }
         } else {
             const settingsOfPrecedingLayout = JSON.parse(await settingsFile.read({format: formats.utf8}));
-            if (!this.#isDeepEqual(settings, settingsOfPrecedingLayout)) {
-                this.#logger.error("Detected differences in settings:\n"
-                    + `1) current layout: ${JSON.stringify(settings, null, 4)}\n`
-                    + `2) page-layout-settings.json:\n${JSON.stringify(settingsOfPrecedingLayout, null, 4)}\n`
-                );
+            const diff = this.#diffInDesignPageLayoutGrid(settings, settingsOfPrecedingLayout);
+            if (diff != null) {
                 const { ConfigurationError } = require('./Errors.mjs');
                 const message = "\n" 
-                    + "Page layout settings of current layout differ with preceding layout, processed just before.\n"
-                    + `Note that setting of preceding layout were saved in "${manifestFoldername}/${settingsFilename}".\n`
+                    + `A page setting for the current layout differs from the preceding layout, processed before.\n`
+                    + `The '${diff.propertyPath}' setting for the current layout is '${diff.lhsValue}' but for the preceding layout is '${diff.rhsValue}'.\n`
+                    + `Settings of the preceding layout were saved in '${manifestFoldername}/${settingsFilename}'.\n`
                     + "For both layouts, check settings for menu items 'Document Setup' and 'Margins and Columns'.\n"
-                    + "After adjusting the settings for any of the two layouts, remove the file and try both again.\n"
-                    + "See also logging for the differences found.";
+                    + "After adjusting the settings for any of the two layouts, remove the file and try both again.";
                 throw new ConfigurationError(message);
             }
         }
     }
 
     /**
-     * Compares two items, such as two objects and all their properties.
-     * @param {any} lhs 
-     * @param {any} rhs 
-     * @returns {boolean}
+     * Compares the columns gutter and baseline grid increments properties of the page layout settings.
+     * @param {PageLayoutSettings} lhsSettings
+     * @param {PageLayoutSettings} rhsSettings
+     * @returns {{propertyPath: string, lhsValue: Any, rhsValue: Any}|null} A property that differs, null otherwise.
      */
-    #isDeepEqual(lhs, rhs) {
-        const objectKeys = Object.keys;
-        if (lhs && rhs && (typeof lhs) === 'object' && (typeof rhs) === 'object') {
-            return objectKeys(lhs).length === objectKeys(rhs).length &&
-                objectKeys(lhs).every(
-                    key => this.#isDeepEqual(lhs[key], rhs[key])
-                )
+    #diffInDesignPageLayoutGrid(lhsSettings, rhsSettings) {
+        const pathsToCompare = [
+            "columns.gutter",
+            "baseline-grid.increment"
+            // Keep this list in sync with the diffInDesignPageLayoutGrid function in ArticleShapeUploader/modules/PageLayoutSettings.mjs
+        ];
+        for (const path of pathsToCompare) {
+            const thisValue = this.#getPropertyValueByPath(lhsSettings, path);
+            const thatValue = this.#getPropertyValueByPath(rhsSettings, path);
+            if (thisValue != thatValue) {
+                return {"propertyPath": path, "lhsValue": thisValue, "rhsValue": thatValue};
+            }
         }
-        return lhs === rhs;
+        return null;
+    }
+
+    /**
+     * Resolves the value of a property (path) in a deeply nested DTO (obj).
+     * @param {Object} obj 
+     * @param {string} path 
+     * @returns {Any}
+     */
+    #getPropertyValueByPath(obj, path) {
+        return path.split('.').reduce((acc, key) => acc?.[key], obj);
     }
 }
 
