@@ -33,7 +33,7 @@ class BrandSectionMapResolver {
         if (!this.#studioJsonRpcClient.hasSession()) {
             return; // only provide info when having a session
         }
-        const publicationInfos = this.#studioJsonRpcClient.getPublicationInfos(null, ["Categories"]);
+        const publicationInfos = await this.#studioJsonRpcClient.getPublicationInfos(null, ["Categories"]);
         const brandSectionMap = this.#composeBrandSectionMap(publicationInfos);
         await this.#saveBrandSectionMapToDisk(brandSectionMap, exportFolder);
     }

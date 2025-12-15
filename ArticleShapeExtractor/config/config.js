@@ -43,7 +43,10 @@ const plaDefaultConfig = {
         folder: "", // Directory where to create the log file.
         wipe: true, // Whether to clean the log file before starting a new operation.
         logNetworkTraffic: false, // Log all HTTP requests/responses. Requires "DEBUG" level.
-    },    
+    },
+
+    // Connection to the Layout Automation (AILA) service.
+    plaServiceUrl: "https://service.aila.woodwing.cloud",
 
     // Error on attempts running scripts on older InDesign versions that are not compatible.
     minimumRequiredInDesignVersion: "19.0.0",

@@ -46,11 +46,18 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
 	debug() {
-		if(5 > this.#level)
+		if(!this.isDebug())
 			return;
 		const args = Array.prototype.slice.call(arguments);
 		this.#log(5, args);
 	};
+
+	/**
+	 * @returns {boolean}
+	 */
+	isDebug() { 
+		return this.#level <= 5;
+	}
 
 	/**
 	 * Log an info message, in case of an achievement or major state changes.
@@ -58,11 +65,18 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
 	info() {
-		if(4 > this.#level)
+		if(!this.isInfo())
 			return;
 		const args = Array.prototype.slice.call(arguments);
 		this.#log(4, args);
 	};
+
+	/**
+	 * @returns {boolean}
+	 */
+	isInfo() { 
+		return this.#level <= 4;
+	}
 
 	/**
 	 * Log a warning message, in case of an unwanted state.
@@ -70,11 +84,18 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
 	warning() {
-		if(3 > this.#level)
+		if(!this.isWarning())
 			return;
 		const args = Array.prototype.slice.call(arguments);
 		this.#log(3, args);
 	};
+
+	/**
+	 * @returns {boolean}
+	 */
+	isWarning() { 
+		return this.#level <= 3;
+	}
 
 	/**
 	 * Log an error message, in case the process can not continue.
@@ -82,11 +103,18 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
 	error() {
-		if(2 > this.#level)
+		if(!this.isError())
 			return;
 		const args = Array.prototype.slice.call(arguments);
 		this.#log(2, args);
 	};
+
+	/**
+	 * @returns {boolean}
+	 */
+	isError() { 
+		return this.#level <= 2;
+	}
 
 	/**
 	 * Log a critical message, in case the application can not continue.
@@ -94,11 +122,18 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
 	critical() {
-		if(1 > this.#level)
+		if(!this.isCritical())
 			return;
 		const args = Array.prototype.slice.call(arguments);
 		this.#log(1, args);
 	};
+
+	/**
+	 * @returns {boolean}
+	 */
+	isCritical() { 
+		return this.#level <= 1;
+	}
 
 	/**
 	 * @param {String} logLevel 

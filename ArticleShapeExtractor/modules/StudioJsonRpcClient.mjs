@@ -8,8 +8,8 @@ class StudioJsonRpcClient {
     /** @type {Logger} */
     #logger;
     
-    /** @type {boolean} */
-    #logNetworkTraffic;
+    /** @type {HttpLogger} */
+    #httpLogger;
     
     /** @type {string|null} */
     #serverUrl;
@@ -17,17 +17,21 @@ class StudioJsonRpcClient {
     /** @type {string|null} */
     #ticket;
 
+    /** @type {number} */
+    #rpcSequenceId;
+
     /**
      * @param {Logger} logger 
-     * @param {boolean} logNetworkTraffic
+     * @param {HttpLogger} httpLogger 
      * @param {string|null} serverUrl 
      * @param {string|null} ticket 
      */    
-    constructor(logger, logNetworkTraffic, serverUrl, ticket) {
+    constructor(logger, httpLogger, serverUrl, ticket) {
         this.#logger = logger;
-        this.#logNetworkTraffic = logNetworkTraffic;
+        this.#httpLogger = httpLogger;
         this.#serverUrl = serverUrl;
         this.#ticket = ticket;
+        this.#rpcSequenceId = 0;
     }
 
     /**
@@ -44,7 +48,8 @@ class StudioJsonRpcClient {
      * @param {Array<string>|null} requestInfo Brand setup info to resolve: "FeatureAccessList", "ObjectTypeProperties", "ActionProperties", "States", "CurrentIssue", "PubChannels", "Categories"
      * @returns {Array<Object>} List of PublicationInfo data objects.
      */
-    getPublicationInfos(brandIds, requestInfo) {
+    async getPublicationInfos(brandIds, requestInfo) {
+        const url = this.#getStudioServerUrl();
         const request = {
             Ticket: this.#ticket
         }
@@ -54,57 +59,65 @@ class StudioJsonRpcClient {
         if (requestInfo) {
             request["RequestInfo"] = requestInfo;
         }
-        const response = this.#callWebService(request, "GetPublications");
+        const response = await this.#callWebService(url, request, "GetPublications");
         return response.Publications;
     }
 
     /**
      * Calls a workflow service provided by Studio Server.
      * Uses the JSON-RPC communication protocol.
+     * @param {string} url
      * @param {Object} request
      * @param {string} serviceName
      * @returns {Object} Response
      */
-    #callWebService(request, serviceName) {
-        const separator = this.#serverUrl.indexOf("?") === -1 ? '?' : '&';
-        const serverUrlJson = `${this.#serverUrl}${separator}protocol=JSON`;
+    async #callWebService(url, request, serviceName) {
+        this.#rpcSequenceId += 1;
         const rpcRequest = {
             "method": serviceName,
-            "id": "1",
+            "id": `${this.#rpcSequenceId}`,
             "params": [request],
             "jsonrpc": "2.0"
         };
-        const rawRequest = JSON.stringify(rpcRequest);
-        const rawResponse = app.jsonRequest(serverUrlJson, rawRequest);
-        try {
-            const rpcResponse = JSON.parse(rawResponse);
-            this.#logHttpTraffic(serverUrlJson, rpcRequest, rpcResponse);
-            return rpcResponse.result;
-        } catch (SyntaxError) {
-            this.#logger.error("Could not parse response: {}", rawResponse);
-            const { StudioServerCommunicationError } = require('./Errors.mjs');
+        const httpRequest = new Request(url, {
+            mode: 'cors',
+            withCredentials: false,
+            method: 'POST',
+            body: JSON.stringify(rpcRequest)
+        });
+        const httpResponse = await fetch(httpRequest);
+        const { StudioServerCommunicationError } = require('./Errors.mjs');
+        if (!httpResponse.ok) {
+            this.#httpLogger.debugLogHttpTraffic(httpRequest, rpcRequest, null, null);
+            this.#logger.error(`Communication error with Studio Server: HTTP ${httpResponse.status} ${httpResponse.statusText}` );
             throw new StudioServerCommunicationError();
         }
-    };
-
-    /**
-     * Log the URL, request JSON-RPC body and response JSON-RPC body.
-     * @param {string} serverUrlJson
-     * @param {Object} rpcRequest 
-     * @param {Object} rpcResponse 
-     */
-    #logHttpTraffic(serverUrlJson, rpcRequest, rpcResponse) {
-        if (!this.#logNetworkTraffic) {
-            return;
+        try {
+            const rpcResponse = await httpResponse.json();
+            this.#httpLogger.debugLogHttpTraffic(httpRequest, rpcRequest, httpResponse, rpcResponse);
+            if (rpcResponse?.error) {
+                this.#logger.error(`Communication error with Studio Server: ${rpcResponse.error.message}` );
+                throw new StudioServerCommunicationError();
+            }
+            return rpcResponse.result;
+        } catch (error) {
+            if (error instanceof StudioServerCommunicationError) {
+                throw error;
+            }
+            this.#httpLogger.debugLogHttpTraffic(httpRequest, rpcRequest, null, null);
+            this.#logger.error("Communication error with Studio Server. Could not parse response: {}", httpResponse.body);
+            this.#logger.logError(error);
+            throw new StudioServerCommunicationError();
         }
-        const dottedLine = "- - - - - - - - - - - - - - - - - - - - - - -";
-        this.#logger.debug(
-            `Network traffic:\n${dottedLine}\n${serverUrlJson}\nRequest:\n`
-            + `${JSON.stringify(rpcRequest, null, 3)}\n`
-            + `${dottedLine}\nResponse:\n`
-            + `${JSON.stringify(rpcResponse, null, 3)}\n`
-            + dottedLine);
-    }
+
+        // Don't use the jsonRequest API provided by SC plugins; That does not seem to work 
+        // for JSON-RPC services provided by server plugins (like the ContentStation plugin).
+        // For example:
+        //    const rawRequest = JSON.stringify(rpcRequest);
+        //    const rawResponse = app.jsonRequest(url, rawRequest);
+        //    const rpcResponse = JSON.parse(rawResponse);
+        //    return rpcResponse.result;
+    };
 
     /**
      * Calls the QueryObjects service in paged manner until all objects are retrieved.
@@ -149,6 +162,7 @@ class StudioJsonRpcClient {
             const { ArgumentError } = require('./Errors.mjs');
             throw new ArgumentError("The 'resolveProperties' param should start with 'ID', 'Name' and 'Type' values.");
         }
+        const url = this.#getStudioServerUrl();
         const request = {
             "Ticket": this.#ticket,
             "Params": searchParams,
@@ -157,7 +171,7 @@ class StudioJsonRpcClient {
             "RequestProps": resolveProperties,
             "Order": [{ Property: "ID", Direction: true, __classname__: "QueryOrder" }], // oldest first
         };
-        const response = this.#callWebService(request, "QueryObjects");
+        const response = await this.#callWebService(url, request, "QueryObjects");
         return response;
     };
 
@@ -191,7 +205,8 @@ class StudioJsonRpcClient {
      * @param {Array<string>} objectIds 
      * @param {string} statusId
      */
-    sendObjectsToStatus(objectIds, statusId) {
+    async sendObjectsToStatus(objectIds, statusId) {
+        const url = this.#getStudioServerUrl();
         const request = {
             Ticket: this.#ticket,
             IDs: objectIds,
@@ -204,7 +219,50 @@ class StudioJsonRpcClient {
                 __classname__: "MetaDataValue"
             }]
         }
-        this.#callWebService(request, "MultiSetObjectProperties");
+        await this.#callWebService(url, request, "MultiSetObjectProperties");
+    }
+
+    /**
+     * Retrieve a new access token that can be used for WW cloud services.
+     * @param {string} brandId
+     * @returns {string}
+     */
+    async getAccessToken(brandId) {
+        const url = this.#getStudioClientServerPluginUrl();
+        const request = {
+            BrandIds: [brandId],
+            __classname__: "CsPubGetAccessTokenRequest",
+            Ticket: this.#ticket
+        }
+        const response = await this.#callWebService(url, request, "GetAccessToken");
+        return response.Token;
+    }
+
+    /**
+     * Compose an entry point for the JSON-RPC publishing web services provided by the CS plugin.
+     * @returns {string}
+     */
+    #getStudioClientServerPluginUrl() {
+        const pluginUrl = this.#serverUrl.replace("index.php", "pluginindex.php");
+        const separator = this.#getUrlParamSeparator(pluginUrl);
+        return `${pluginUrl}${separator}plugin=ContentStation&interface=pub&protocol=JSON`;
+    }
+
+    /**
+     * Compose an entry point for the JSON-RPC workflow services provided by Studio Server.
+     * @returns {string}
+     */
+    #getStudioServerUrl() {
+        const separator = this.#getUrlParamSeparator(this.#serverUrl);
+        return `${this.#serverUrl}${separator}protocol=JSON`;
+    }
+
+    /**
+     * @param {string} url
+     * @returns {string}
+     */
+    #getUrlParamSeparator(url) {
+        return url.indexOf("?") === -1 ? '?' : '&';
     }
 }
 

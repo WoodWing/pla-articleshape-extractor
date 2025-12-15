@@ -77,6 +77,14 @@ class Settings {
     getGenres() {
         return this.#configData.genres;
     }
+
+    /**
+     * 
+     * @returns {string}
+     */
+    getPlaServiceUrl() {
+        return this.#configData.plaServiceUrl;
+    }
 }
 
 module.exports = Settings;
