@@ -69,14 +69,23 @@ class FitArticleWithAIService {
      */
     async #retrieveArticleShapeSuggestions(accessToken, brandId, sectionId) {
         // TODO: Take values from extracted shape instead (to compose the request body).
+        const width = 2, height = 7, foldLine = null, genreId = null;
         const requestBody = this.#plaService.composeSuggestArticleShapesRequestBody(
-            null, 1, // genreId, shapeType, 
+            genreId, 1, // genreId, shapeType, 
             3000, 1, 1, // bodyLength, imageCount, quoteCount,
-            2, 6, null, 5, // width, height, foldLine, shapeCount        
+            width, height, foldLine, 5, // width, height, foldLine, shapeCount        
         );
         const downloadUrls = await this.#plaService.suggestArticleShapes(
             accessToken, brandId, sectionId, requestBody
         );
+        if (downloadUrls.length === 0) {
+            const message = "No article shape suggestions found:\n"
+                + "- within the current brand and section"
+                + (genreId ? ` and genre '${genreId}'` : '') + ";\n"
+                + `- having dimension of ${width} columns and ${height} rows;\n`
+                + "- having " + (foldLine ? `a fold line between columns ${foldLine} and ${foldLine+1}` : 'no fold line') + ".\n";
+            throw new Error(message);
+        }
         const articleShapeFiles = [];
         for (const downloadUrl of downloadUrls) {
             const response = await fetch(downloadUrl);
