@@ -21,9 +21,9 @@ class HttpLogger {
     /**
      * Log the URL, request JSON body (optional), response status and response JSON body (optional).
      * @param {Request} request
-     * @param {string|null} requestJson 
+     * @param {Object|null} requestJson 
      * @param {Response|null} response 
-     * @param {string|null} responseJson 
+     * @param {Object|null} responseJson 
      */
     debugLogHttpTraffic(request, requestJson, response, responseJson) {
         if (!this.#logNetworkTraffic || !this.#logger.isDebug()) {
@@ -60,7 +60,7 @@ class HttpLogger {
     }
 
     /**
-     * @param {string} jsonBody 
+     * @param {Object|null} jsonBody 
      * @returns {string}
      */
     #composeJsonBody(jsonBody) {
