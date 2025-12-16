@@ -56,7 +56,7 @@ class Logger {
 	 * @returns {boolean}
 	 */
 	isDebug() { 
-		return this.#level <= 5;
+		return this.#level >= 5;
 	}
 
 	/**
@@ -75,7 +75,7 @@ class Logger {
 	 * @returns {boolean}
 	 */
 	isInfo() { 
-		return this.#level <= 4;
+		return this.#level >= 4;
 	}
 
 	/**
@@ -94,7 +94,7 @@ class Logger {
 	 * @returns {boolean}
 	 */
 	isWarning() { 
-		return this.#level <= 3;
+		return this.#level >= 3;
 	}
 
 	/**
@@ -113,7 +113,7 @@ class Logger {
 	 * @returns {boolean}
 	 */
 	isError() { 
-		return this.#level <= 2;
+		return this.#level >= 2;
 	}
 
 	/**
@@ -132,7 +132,7 @@ class Logger {
 	 * @returns {boolean}
 	 */
 	isCritical() { 
-		return this.#level <= 1;
+		return this.#level >= 1;
 	}
 
 	/**
