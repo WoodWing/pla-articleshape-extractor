@@ -69,7 +69,7 @@ class FitArticleWithAIService {
      */
     async #retrieveArticleShapeSuggestions(accessToken, brandId, sectionId) {
         // TODO: Take values from extracted shape instead (to compose the request body).
-        const width = 2, height = 7, foldLine = null, genreId = null;
+        const width = 2, height = 6, foldLine = null, genreId = null;
         const requestBody = this.#plaService.composeSuggestArticleShapesRequestBody(
             genreId, 1, // genreId, shapeType, 
             3000, 1, 1, // bodyLength, imageCount, quoteCount,
