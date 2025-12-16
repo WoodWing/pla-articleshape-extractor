@@ -126,31 +126,38 @@ class PlaService {
     async suggestArticleShapes(accessToken, brandId, sectionId, requestBody) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/sections/${sectionId}/suggest-article-shapes`
             + "?renditions=composition"; // ask for article JSON file
+        const requestInit = this.#requestInitForPlaService(accessToken, 'PUT', JSON.stringify(requestBody));
+        const request = new Request(url, requestInit);
+        let response = null;
+        let responseJson = null;
         try {
-            const requestInit = this.#requestInitForPlaService(accessToken, 'PUT', JSON.stringify(requestBody));
-            const request = new Request(url, requestInit);
-            const response = await fetch(request);
-            const responseJson = await response.json();
-            this.#httpLogger.debugLogHttpTraffic(request, requestBody, response, responseJson);
-            if (response.ok) {
-                this.#logger.debug(`Retrieved ${responseJson.length} shape suggestions.`);
-                const downloadUrls = [];
-                responseJson.forEach(suggestion => {
-                    suggestion.renditions.forEach(rendition => {
-                        downloadUrls.push(rendition.presigned_url);
-                    });
-                });
-                return downloadUrls;
+            response = await fetch(request);
+            try {
+                responseJson = await response.json();
+            } catch(e) {
             }
-            if (response.status === 404) { // HTTP 404 - NOT FOUND
-                if (responseJson?.message.includes("is not registered")) {
-                    throw new Error(responseJson.message); // client not registered
+            if (!response.ok) {
+                let message = `HTTP ${response.status} ${response.statusText}`;
+                if (responseJson?.message) {
+                    message += `\n${responseJson.message}`;
                 }
-                return [];
+                throw new Error(message);
             }
-            throw new Error(`HTTP ${response.status} ${response.statusText}`);
+            if (!responseJson) {
+                throw new Error("Response does not contain a (valid) JSON.")
+            }
+            this.#logger.debug(`Retrieved ${responseJson.length} shape suggestions.`);
+            const downloadUrls = [];
+            responseJson.forEach(suggestion => {
+                suggestion.renditions.forEach(rendition => {
+                    downloadUrls.push(rendition.presigned_url);
+                });
+            });
+            return downloadUrls;
         } catch (error) {
-            throw new Error(`Could not retrieve shape suggestions - ${error.message}`);
+            throw new Error(`Could not retrieve shape suggestions.\n${error.message}`);
+        } finally {
+            this.#httpLogger.debugLogHttpTraffic(request, requestBody, response, responseJson);
         }
     }
 }
