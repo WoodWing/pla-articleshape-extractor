@@ -424,7 +424,7 @@ class ExportInDesignArticlesToFolder {
 
         // Export JSON.
         if (isExported) {
-            return this.#saveJsonToDisk(articleShapeJson, jsonFile);
+            return await this.#saveJsonToDisk(articleShapeJson, jsonFile);
         }
         return false;
     }
@@ -435,7 +435,7 @@ class ExportInDesignArticlesToFolder {
      * @param {File} file
      * @returns {Boolean} Whether or not successful.
      */
-    #saveJsonToDisk(jsonData, file) {
+    async #saveJsonToDisk(jsonData, file) {
         let isSaved = false;
         try {
             // Convert JSON object to a string
@@ -443,7 +443,7 @@ class ExportInDesignArticlesToFolder {
 
             // Write the JSON string to the file
             const formats = require('uxp').storage.formats;
-            file.write(jsonString, { format: formats.utf8 });
+            await file.write(jsonString, { format: formats.utf8 });
             isSaved = true;
         } catch (error) {
             this.#logger.logError(error);
