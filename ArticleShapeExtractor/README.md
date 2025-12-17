@@ -102,6 +102,9 @@ An example - By default, the logging feature is disabled. To enable it:
 
    > Tip: You could use the `Search...` option in the `Studio` panel to fill in the same filter settings to assure the correct layouts are listed.
 
+# Known limitations
+- The [SSL certificate configuration](https://helpcenter.woodwing.com/hc/en-us/articles/360041017752-Using-SSL-to-secure-the-connection-between-Studio-Server-and-Studio-for-InDesign-and-InCopy) in the WWSettings.xml file is not supported by the Article Shape Extractor.
+
 # Development notes
 
 ## How to debug an IDJS script?

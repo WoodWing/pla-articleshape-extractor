@@ -93,13 +93,19 @@ class StudioJsonRpcClient {
             throw new StudioServerCommunicationError(`${serviceName} service failed.\n${error.message}`);
         }
 
-        // Don't use the jsonRequest API provided by SC plugins; That does not seem to work 
+        // Don't simply use the app.jsonRequest() API provided by SC plugins; That does not seem to work 
         // for JSON-RPC services provided by server plugins (like the ContentStation plugin).
         // For example:
         //    const rawRequest = JSON.stringify(rpcRequest);
         //    const rawResponse = app.jsonRequest(url, rawRequest);
         //    const rpcResponse = JSON.parse(rawResponse);
         //    return rpcResponse.result;
+        //
+        // Nevertheless, app.jsonRequest() caters for on-premise SSL certificate configuration in the 
+        // WWSettings.xml file. For now, this.#fetchRpc() calls fetch(), which is implemented by IDJS/UXP, 
+        // hence might lead into SSL problems in the future for on-premise customers using such config. 
+        // However, over time, most likely this will become less of a problem as we are moving to WW Cloud. 
+        // See also chapter "Known limitations" in the ../README.md file.
     };
 
     /**
