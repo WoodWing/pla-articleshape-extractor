@@ -53,6 +53,7 @@ class FitArticleWithAIService {
         const pubInfos = await this.#studioJsonRpcClient.getPublicationInfos([brandId]);
         const accessToken = await this.#studioJsonRpcClient.getAccessToken(brandId);
         const dimensions = await this.#plaService.getSheetDimensions(accessToken, brandId);
+        // TODO: Error when layout does not occur in any of the dimensions.
         const shapeFiles = await this.#retrieveArticleShapeSuggestions(accessToken, brandId, sectionId);
         for (const shapeFile of shapeFiles) {
             this.#logger.debug(`Removing article shape JSON '${shapeFile.nativePath}'.`)

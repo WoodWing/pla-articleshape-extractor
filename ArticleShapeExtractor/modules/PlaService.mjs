@@ -32,25 +32,48 @@ class PlaService {
      */
     async getSheetDimensions(accessToken, brandId) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/sheet-dimensions`;
+        const httpRequest = new Request(url, this.#requestInitForPlaService(accessToken, 'GET'));
         try {
-            const request = new Request(url, this.#requestInitForPlaService(accessToken, 'GET'));
-            const response = await fetch(request);
-            const responseJson = await response.json();
-            this.#httpLogger.debugLogHttpTraffic(request, null, response, responseJson);
-            if (response.ok) {
-                this.#logger.debug(`Retrieved sheet dimensions:\n${JSON.stringify(responseJson, null, 3)}`);
-                return responseJson;
-            }
-            if (response.status === 404) { // HTTP 404 - NOT FOUND
-                if (responseJson?.message.includes("is not registered")) {
-                    throw new Error(responseJson.message); // client not registered
-                }
-                return [];
-            }
-            throw new Error(`HTTP ${response.status} ${response.statusText}`);
+            const jsonResponseBody = await this.#fetchJson(httpRequest, null);
+            this.#logger.info(`Retrieved ${jsonResponseBody.length} sheet dimensions.`);
+            return jsonResponseBody;
         } catch (error) {
-            throw new Error(`Could not retrieve sheet dimensions - ${error.message}`);
+            const { PlaServiceCommunicationError } = require('./Errors.mjs');
+            throw new PlaServiceCommunicationError(`Could not retrieve sheet dimensions.\n${error.message}`);
         }
+    }
+
+    /**
+     * @param {Request} httpRequest 
+     * @param {Object|null} jsonRequestBody JSON request body
+     * @returns {Object} JSON response body.
+     */
+    async #fetchJson(httpRequest, jsonRequestBody) {
+        let httpResponse = null;
+        let jsonResponseBody = null;
+        try {
+            this.#httpLogger.debugLogHttpRequest(httpRequest, jsonRequestBody);
+            httpResponse = await fetch(httpRequest);
+            const responseBodyText = await httpResponse.text(); 
+            try {            
+                jsonResponseBody = JSON.parse(responseBodyText);
+            } catch(error) {
+            }
+            if (!httpResponse.ok) {
+                let message = `HTTP ${httpResponse.status} ${httpResponse.statusText}`;
+                if (jsonResponseBody?.message) {
+                    message += `\n${jsonResponseBody.message}`;
+                }
+                throw new Error(message);
+            }
+            if (!jsonResponseBody) {
+                this.#logger.error("Invalid JSON response: {}", responseBodyText);
+                throw new Error("Response does not contain a (valid) JSON.")
+            }
+        } finally {
+            this.#httpLogger.debugLogHttpResponse(httpResponse, jsonResponseBody);
+        }
+        return jsonResponseBody;
     }
 
     /**
@@ -120,44 +143,27 @@ class PlaService {
      * @param {string} accessToken 
      * @param {string} brandId
      * @param {string} sectionId
-     * @param {Object} requestBody
+     * @param {Object} jsonRequestBody
      * @returns {Array<string>} List of download URLs of the suggested article JSON files.
      */
-    async suggestArticleShapes(accessToken, brandId, sectionId, requestBody) {
+    async suggestArticleShapes(accessToken, brandId, sectionId, jsonRequestBody) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/sections/${sectionId}/suggest-article-shapes`
             + "?renditions=composition"; // ask for article JSON file
-        const requestInit = this.#requestInitForPlaService(accessToken, 'PUT', JSON.stringify(requestBody));
-        const request = new Request(url, requestInit);
-        let response = null;
-        let responseJson = null;
+        const requestInit = this.#requestInitForPlaService(accessToken, 'PUT', JSON.stringify(jsonRequestBody));
+        const httpRequest = new Request(url, requestInit);
         try {
-            response = await fetch(request);
-            try {
-                responseJson = await response.json();
-            } catch(e) {
-            }
-            if (!response.ok) {
-                let message = `HTTP ${response.status} ${response.statusText}`;
-                if (responseJson?.message) {
-                    message += `\n${responseJson.message}`;
-                }
-                throw new Error(message);
-            }
-            if (!responseJson) {
-                throw new Error("Response does not contain a (valid) JSON.")
-            }
-            this.#logger.debug(`Retrieved ${responseJson.length} shape suggestions.`);
+            const jsonResponseBody = await this.#fetchJson(httpRequest, jsonRequestBody);
+            this.#logger.info(`Retrieved ${jsonResponseBody.length} shape suggestions.`);
             const downloadUrls = [];
-            responseJson.forEach(suggestion => {
+            jsonResponseBody.forEach(suggestion => {
                 suggestion.renditions.forEach(rendition => {
                     downloadUrls.push(rendition.presigned_url);
                 });
             });
             return downloadUrls;
         } catch (error) {
-            throw new Error(`Could not retrieve shape suggestions.\n${error.message}`);
-        } finally {
-            this.#httpLogger.debugLogHttpTraffic(request, requestBody, response, responseJson);
+            const { PlaServiceCommunicationError } = require('./Errors.mjs');
+            throw new PlaServiceCommunicationError(`Could not retrieve shape suggestions.\n${error.message}`);
         }
     }
 }

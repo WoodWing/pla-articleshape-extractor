@@ -19,28 +19,43 @@ class HttpLogger {
     }
 
     /**
-     * Log the URL, request JSON body (optional), response status and response JSON body (optional).
-     * @param {Request} request
-     * @param {Object|null} requestJson 
-     * @param {Response|null} response 
-     * @param {Object|null} responseJson 
+     * Log the HTTP URL, request headers and JSON body.
+     * @param {Request} httpRequest
+     * @param {Object|null} jsonRequestBody 
      */
-    debugLogHttpTraffic(request, requestJson, response, responseJson) {
+    debugLogHttpRequest(httpRequest, jsonRequestBody) {
         if (!this.#logNetworkTraffic || !this.#logger.isDebug()) {
             return;
         }
-        const dottedLine = "- - - - - - - - - - - - - - - - - - - - - - -";
-        let message = `Network traffic:\n${dottedLine}\n`
-            +`Request: HTTP ${request.method} ${request.url}\n`
-            + this.#composeHttpHeaders(request.headers)
-            + this.#composeJsonBody(requestJson);
-        if (response) {
-            message += `${dottedLine}\n`
-            + `Response: HTTP ${response.status} ${response.statusText}\n`
-            + this.#composeHttpHeaders(response.headers)
-            + this.#composeJsonBody(responseJson)
-            + dottedLine;
+        const message = `HTTP request:\n${this.#dottedLine()}\n`
+            +`Status: HTTP ${httpRequest.method} ${httpRequest.url}\n`
+            + this.#composeHttpHeaders(httpRequest.headers)
+            + this.#composeJsonBody(jsonRequestBody)
+            + `${this.#dottedLine()}`;
+        this.#logger.debug(message);
+    }
+
+    #dottedLine() {
+        return "- - - - - - - - - - - - - - - - - - - - - - -";
+    }
+
+    /**
+     * Log the HTTP status, response headers and JSON body.
+     * @param {Response|null} httpResponse 
+     * @param {Object|null} jsonResponseBody 
+     */
+    debugLogHttpResponse(httpResponse, jsonResponseBody) {
+        if (!this.#logNetworkTraffic || !this.#logger.isDebug()) {
+            return;
         }
+        if (!httpResponse) {
+            return;
+        }
+        const message = `HTTP response:\n${this.#dottedLine()}\n`
+            + `Status: HTTP ${httpResponse.status} ${httpResponse.statusText}\n`
+            + this.#composeHttpHeaders(httpResponse.headers)
+            + this.#composeJsonBody(jsonResponseBody)
+            + `${this.#dottedLine()}`;
         this.#logger.debug(message);
     }
 
@@ -53,7 +68,7 @@ class HttpLogger {
         if (headers && typeof headers.forEach === "function") {
             message += "Headers:\n";
             headers.forEach((value, key) => {
-                message += `- '${key}': '${value}'\n`;
+                message += `- ${key}: ${value}\n`;
             });
         }
         return message;

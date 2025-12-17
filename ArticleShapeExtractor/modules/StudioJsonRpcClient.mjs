@@ -85,29 +85,12 @@ class StudioJsonRpcClient {
             method: 'POST',
             body: JSON.stringify(rpcRequest)
         });
-        const httpResponse = await fetch(httpRequest);
-        const { StudioServerCommunicationError } = require('./Errors.mjs');
-        if (!httpResponse.ok) {
-            this.#httpLogger.debugLogHttpTraffic(httpRequest, rpcRequest, null, null);
-            this.#logger.error(`Communication error with Studio Server: HTTP ${httpResponse.status} ${httpResponse.statusText}` );
-            throw new StudioServerCommunicationError();
-        }
         try {
-            const rpcResponse = await httpResponse.json();
-            this.#httpLogger.debugLogHttpTraffic(httpRequest, rpcRequest, httpResponse, rpcResponse);
-            if (rpcResponse?.error) {
-                this.#logger.error(`Communication error with Studio Server: ${rpcResponse.error.message}` );
-                throw new StudioServerCommunicationError();
-            }
+            const rpcResponse = await this.#fetchRpc(httpRequest, rpcRequest);
             return rpcResponse.result;
         } catch (error) {
-            if (error instanceof StudioServerCommunicationError) {
-                throw error;
-            }
-            this.#httpLogger.debugLogHttpTraffic(httpRequest, rpcRequest, null, null);
-            this.#logger.error("Communication error with Studio Server. Could not parse response: {}", httpResponse.body);
-            this.#logger.logError(error);
-            throw new StudioServerCommunicationError();
+            const { StudioServerCommunicationError } = require('./Errors.mjs');
+            throw new StudioServerCommunicationError(`${serviceName} service failed.\n${error.message}`);
         }
 
         // Don't use the jsonRequest API provided by SC plugins; That does not seem to work 
@@ -118,6 +101,43 @@ class StudioJsonRpcClient {
         //    const rpcResponse = JSON.parse(rawResponse);
         //    return rpcResponse.result;
     };
+
+    /**
+     * @param {Request} httpRequest 
+     * @param {Object} rpcRequestBody JSON RPC request body.
+     * @returns {Object} JSON RPC response body.
+     */
+    async #fetchRpc(httpRequest, rpcRequestBody) {
+        let httpResponse = null;
+        let rpcResponseBody = null;
+        try {
+            this.#httpLogger.debugLogHttpRequest(httpRequest, rpcRequestBody);
+            httpResponse = await fetch(httpRequest);
+            const responseBodyText = await httpResponse.text();
+            try {
+                rpcResponseBody = JSON.parse(responseBodyText);
+            } catch(error) {
+            }
+            if (!httpResponse.ok) {
+                throw new Error(`HTTP ${httpResponse.status} ${httpResponse.statusText}`);
+            }
+            if (!rpcResponseBody) {            
+                this.#logger.error("Invalid JSON response:\n{}", responseBodyText);
+                throw new Error("Response does not contain a (valid) JSON.")
+            }
+            if (rpcResponseBody?.error) {
+                this.#logger.error("JSON RPC error:\n{}", JSON.stringify(rpcResponseBody, null, 3));
+                throw new Error(rpcResponseBody.error.message);
+            }
+            if (!rpcResponseBody.result) {
+                this.#logger.error("JSON RPC result missing:\n{}", JSON.stringify(rpcResponseBody, null, 3));
+                throw new Error("Response has no JSON RPC result.")
+            }
+        } finally {
+            this.#httpLogger.debugLogHttpResponse(httpResponse, rpcResponseBody);
+        }
+        return rpcResponseBody;
+    }
 
     /**
      * Calls the QueryObjects service in paged manner until all objects are retrieved.
