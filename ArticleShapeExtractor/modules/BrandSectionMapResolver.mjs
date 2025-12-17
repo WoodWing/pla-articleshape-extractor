@@ -68,7 +68,7 @@ class BrandSectionMapResolver {
         const formats = require('uxp').storage.formats;
         const jsonFile = await lfs.createEntryWithUrl(filepath, { overwrite: true });
         const jsonString = JSON.stringify(brandSectionMap, null, 4);
-        jsonFile.write(jsonString, {format: formats.utf8}); 
+        await jsonFile.write(jsonString, {format: formats.utf8}); 
         this.#logger.info(`Saved the ids/names of brands and their sections to "${filepath}".`);
     }
 }
