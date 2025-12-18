@@ -14,18 +14,23 @@ class FitArticleWithAIService {
     
     /** @type {PlaService} */
     #plaService;
+
+    /** @type {BrandSectionResolver} */
+    #brandSectionResolver;
     
     /**
      * @param {Logger} logger
      * @param {{{brand: <string>, issue: <string>, category: <string>, status: <string>}, layoutStatusOnSuccess: <string>, layoutStatusOnError: <string>}} settings
      * @param {StudioJsonRpcClient} studioJsonRpcClient
      * @param {PlaService} plaService
+     * @param {BrandSectionResolver} brandSectionResolver
      */
-    constructor(logger, settings, studioJsonRpcClient, plaService) {
+    constructor(logger, settings, studioJsonRpcClient, plaService, brandSectionResolver) {
         this.#logger = logger;
         this.#settings = settings;
         this.#studioJsonRpcClient = studioJsonRpcClient;
         this.#plaService = plaService;
+        this.#brandSectionResolver = brandSectionResolver;
     }
 
     /**
@@ -37,8 +42,10 @@ class FitArticleWithAIService {
      * - Retrieve suggestions for the article from AILA service.
      * - Retrieve fitted shape from AI fitting service.
      * - Update the unfitted article with fitted shape (on the layout).
+     * 
+     * @param {Document} doc
      */
-    async run() {
+    async run(doc) {
 
         // Bail out when user is currently not logged in.
         if (!this.#studioJsonRpcClient.hasSession() ) {
@@ -46,15 +53,14 @@ class FitArticleWithAIService {
             throw new NoStudioSessionError();
         }
 
-        // TODO: Get brand id and section id from the current layout instead.
-        const brandId = this.#settings.getOfflineFallbackConfig().brand.id;
-        const sectionId = this.#settings.getOfflineFallbackConfig().category.id;
+        // Resolve brand and section from layout doc (or use fallback settings).
+        const {brand, section} = this.#brandSectionResolver.resolve(doc);
 
-        const pubInfos = await this.#studioJsonRpcClient.getPublicationInfos([brandId]);
-        const accessToken = await this.#studioJsonRpcClient.getAccessToken(brandId);
-        const dimensions = await this.#plaService.getSheetDimensions(accessToken, brandId);
+        const pubInfos = await this.#studioJsonRpcClient.getPublicationInfos([brand.id]);
+        const accessToken = await this.#studioJsonRpcClient.getAccessToken(brand.id);
+        const dimensions = await this.#plaService.getSheetDimensions(accessToken, brand.id);
         // TODO: Error when layout does not occur in any of the dimensions.
-        const shapeFiles = await this.#retrieveArticleShapeSuggestions(accessToken, brandId, sectionId);
+        const shapeFiles = await this.#retrieveArticleShapeSuggestions(accessToken, brand, section);
         for (const shapeFile of shapeFiles) {
             this.#logger.debug(`Removing article shape JSON '${shapeFile.nativePath}'.`)
             await shapeFile.delete();
@@ -64,11 +70,11 @@ class FitArticleWithAIService {
     /**
      * Request for shape suggestions and retrieve the article JSON files into temp folder.
      * @param {string} accessToken 
-     * @param {string} brandId 
-     * @param {string} sectionId 
+     * @param {{id: string, name: string}} brand 
+     * @param {{id: string, name: string}} section
      * @returns {Array<File>}
      */
-    async #retrieveArticleShapeSuggestions(accessToken, brandId, sectionId) {
+    async #retrieveArticleShapeSuggestions(accessToken, brand, section) {
         // TODO: Take values from extracted shape instead (to compose the request body).
         const width = 2, height = 6, foldLine = null, genreId = null;
         const requestBody = this.#plaService.composeSuggestArticleShapesRequestBody(
@@ -77,11 +83,11 @@ class FitArticleWithAIService {
             width, height, foldLine, 5, // width, height, foldLine, shapeCount        
         );
         const downloadUrls = await this.#plaService.suggestArticleShapes(
-            accessToken, brandId, sectionId, requestBody
+            accessToken, brand.id, section.id, requestBody
         );
         if (downloadUrls.length === 0) {
             const message = "No article shape suggestions found:\n"
-                + "- within the current brand and section"
+                + `- within the brand '${brand.name}' (id=${brand.id}) and section '${section.name}' (id=${section.id})`
                 + (genreId ? ` and genre '${genreId}'` : '') + ";\n"
                 + `- having dimension of ${width} columns and ${height} rows;\n`
                 + "- having " + (foldLine ? `a fold line between columns ${foldLine} and ${foldLine+1}` : 'no fold line') + ".\n";

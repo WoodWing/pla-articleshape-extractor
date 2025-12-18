@@ -85,16 +85,24 @@ Container.registerFactory("GenreResolver", function() {
     );
 });
 
+Container.registerFactory("BrandSectionResolver", function() {
+    const BrandSectionResolver = require("./modules/BrandSectionResolver.mjs");
+    const settings = Container.resolve("Settings");
+    return new BrandSectionResolver(
+        Container.resolve("Logger"),
+        settings.getOfflineFallbackConfig().brand,
+        settings.getOfflineFallbackConfig().category,
+    );
+});
+
 Container.registerFactory("ExportInDesignArticlesToFolder", function() {
     const ExportInDesignArticlesToFolder = require("./modules/ExportInDesignArticlesToFolder.mjs");
-    const settings = Container.resolve("Settings");
     return new ExportInDesignArticlesToFolder(
         Container.resolve("Logger"), 
         Container.resolve("InDesignArticleService"), 
         Container.resolve("PageLayoutSettings"), 
         Container.resolve("GenreResolver"),
-        settings.getOfflineFallbackConfig().brand,
-        settings.getOfflineFallbackConfig().category,
+        Container.resolve("BrandSectionResolver"),
     );
 });
 
@@ -145,6 +153,7 @@ Container.registerFactory("FitArticleWithAIService", function() {
         Container.resolve("Settings"),
         Container.resolve("StudioJsonRpcClient"),
         Container.resolve("PlaService"),
+        Container.resolve("BrandSectionResolver"),        
     );
 });
 
