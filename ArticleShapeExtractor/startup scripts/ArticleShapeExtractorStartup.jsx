@@ -28,6 +28,11 @@
 		var scriptFile = new File(scriptsFolder() + '/commands/FitArticleWithAI.idjs');
 		addMenuItem(fittingSubMenu, menuTitle, invokeScript(menuTitle, scriptFile));
 
+		// Update enabled state of our menu items when selection changes.
+		app.addEventListener("afterSelectionChanged", updateMenuStates);
+		app.addEventListener("afterContextChanged", updateMenuStates);
+		updateMenuStates(); // set initial state
+
 		// For heavy debugging only; Add another menu item that removes our custom menu items.
 		//addMenuItem(fittingSubMenu, "Remove ArticleShapeExtractor menus (debug)", removeMenuItems);
 	}
@@ -88,6 +93,52 @@
 				customMenu.action.remove();
 			} catch (_) {}
 		}
+	}
+
+	/**
+	 * Enable our custom menu items when any of the selected frames 
+	 * belongs to an InDesign article. Otherwise, disable the menu item.
+	 */
+    function updateMenuStates() {
+		if (!_customMenus.length) {
+			return;
+		}
+		var menuItemsEnabled = isArticleFrameSelected();
+		for( var actIndex = 0; actIndex < _customMenus.length; actIndex++ ) {
+			var actionId = _customMenus[actIndex].action.id;
+			var action = app.menuActions.itemByID(actionId);
+			action.enabled = menuItemsEnabled;
+		}
+    }
+
+	/**
+	 * Tells whether any of the selected frames belongs to an InDesign article.
+	 * @returns {boolean}
+	 */
+	function isArticleFrameSelected() {
+		var document = app.activeDocument;
+        if (!document || !app.selection.length) {
+			return false;
+		}
+        for (var selIdx = 0; selIdx < app.selection.length; selIdx++) {
+			var selectedItem = app.selection[selIdx];
+			if (!selectedItem.isValid || !("geometricBounds" in selectedItem)) {
+				continue;
+			}
+			for (var artIdx = 0; artIdx < document.articles.length; artIdx++) {
+				var article = document.articles[artIdx];
+				var elements = article.articleMembers.everyItem().getElements(); // Get all members as an array
+				for (var elmIdx = 0; elmIdx < elements.length; elmIdx++) {
+					var element = elements[elmIdx];
+					if (element.itemRef 
+						&& element.itemRef.isValid 
+						&& element.itemRef.id === selectedItem.id) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	// On InDesign shutdown, automatically remove the custom menu items.
