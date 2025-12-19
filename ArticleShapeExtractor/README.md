@@ -10,7 +10,7 @@ The tool provides the following functionality:
   * Fitting of article content with use of AI.
  
 The tool is a set of scripts to be installed in your InDesign application. 
-
+Usage of the scripts falls under the license agreement in the separate LICENSE file.
 Refer to [here](../README.md) for an overview of the available tools.
 
 # Installation

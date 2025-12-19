@@ -1,5 +1,7 @@
 # Introduction
 Article Shape Uploader tool for the Print Layout Automation (PLA) project.
+The tool is a set of scripts to be executed from the command-line with Node. 
+Usage of the scripts falls under the license agreement in the separate LICENSE file.
 Refer to [here](../README.md) for an overview of the available tools.
 
 # Installation
