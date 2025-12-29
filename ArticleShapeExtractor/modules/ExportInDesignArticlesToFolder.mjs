@@ -137,14 +137,14 @@ class ExportInDesignArticlesToFolder {
             const geometricBounds = this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef)
             if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
                 const threadedFrames = this.#getThreadedFrames(element.itemRef);
-                
+
                 let textComponent = {
                     "type": element.itemRef.elementLabel,
                     "words": 0,
                     "characters": 0,
                     "firstParagraphStyle": "",
                     "overSetLines": this.#getOversetLines(threadedFrames[0]),
-                    "fitLineHeight": 0,
+                    "requiredVisibleArea": 0,
                     "frames": []
                 };
 
@@ -158,7 +158,7 @@ class ExportInDesignArticlesToFolder {
                     pageItems.push(frame);
                     if (this.#inDesignArticleService.isValidTextFrame(frame)) {
                         const textStats = this.#getTextStatistics(frame);
-                        textComponent.fitLineHeight += textStats.fitLineHeight;
+                        textComponent.requiredVisibleArea += textStats.requiredVisibleArea;
                         textComponent.frames.push({
                             "geometricBounds": this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
                             "columns": frame.textFramePreferences.textColumnCount,
@@ -173,7 +173,7 @@ class ExportInDesignArticlesToFolder {
                     }
                 }
 
-                textComponent.fitLineHeight = this.#roundTo3Decimals(textComponent.fitLineHeight);
+                textComponent.requiredVisibleArea = this.#roundTo3Decimals(textComponent.requiredVisibleArea);
                 articleShapeJson.textComponents.push(textComponent);
             } else if (this.#inDesignArticleService.isUnassignedFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
@@ -181,7 +181,7 @@ class ExportInDesignArticlesToFolder {
                     + "Hence the item is excluded from the article composition (JSON file). "
                     + "Set it to TextFrame or Graphic via Object->Content",
                     article.name, element.itemRef.constructorName,
-                    element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);               
+                    element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);
             } else if (this.#inDesignArticleService.isValid2DGraphicFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
                 articleShapeJson.imageComponents.push({
@@ -468,12 +468,11 @@ class ExportInDesignArticlesToFolder {
     *   charCount: number,
     *   text: string,
     *   visibleLineHeight: number,
-    *   fitLineHeight: number
     * }}
     */
     #getTextStatistics(textFrame) {
         if (!textFrame || !textFrame.isValid) {
-            return { wordCount: 0, charCount: 0, text: "", visibleLineHeight: 0, fitLineHeight: 0 };
+            return { wordCount: 0, charCount: 0, text: "", visibleLineHeight: 0};
         }
 
         const story = textFrame.parentStory;
@@ -486,7 +485,7 @@ class ExportInDesignArticlesToFolder {
         const MAX_HEIGHT = 20000;
 
         let visibleLineHeight = 0;
-        let fitLineHeight = 0;
+        let requiredVisibleArea = 0;
 
         try {
             // --- Visible line height ---
@@ -498,6 +497,7 @@ class ExportInDesignArticlesToFolder {
             // --- Overset Handling ---
             const oversetStatus = this.#getOversetLines(textFrame);
             const originalBounds = textFrame.geometricBounds.slice(); // [y1, x1, y2, x2]
+            const textFrameWidth = originalBounds[3] - originalBounds[1];
 
             const doc = textFrame.parentStory.parent;
             const gridStep = doc.gridPreferences.baselineDivision;
@@ -508,13 +508,14 @@ class ExportInDesignArticlesToFolder {
             if (oversetStatus !== 0 && textFrame.nextTextFrame === null) {
                 this.#adjustFrameHeightToFit(textFrame, oversetStatus, alignToGrid, gridStep, INCREMENT_STEP_SIZE, minHeight, MAX_HEIGHT);
             }
-            // Measure final height
-            fitLineHeight = textFrame.geometricBounds[2] - textFrame.geometricBounds[0];
-            
+
+            // Calculate requiredVisibleArea
+            requiredVisibleArea = this.#getRequiredVisibleArea(textFrame);            
+
             // Restore original size
             textFrame.geometricBounds = originalBounds;
         } catch (err) {
-            alert ("Error in getTextStatistics: " + err);
+            alert("Error in getTextStatistics: " + err);
         }
 
         return {
@@ -522,7 +523,7 @@ class ExportInDesignArticlesToFolder {
             charCount,
             text,
             visibleLineHeight: this.#roundTo3Decimals(visibleLineHeight),
-            fitLineHeight: this.#roundTo3Decimals(fitLineHeight)
+            requiredVisibleArea: this.#roundTo3Decimals(requiredVisibleArea)
         };
     }
 
@@ -539,13 +540,13 @@ class ExportInDesignArticlesToFolder {
         // Underset: decrease size untill overset
         if (oversetStatus < 0) {
             while (!textFrame.overflows && bottom >= minBottom) {
-                textFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], bottom, textFrame.geometricBounds[3]];    
-                bottom = snap(bottom - step, false);     
+                textFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], bottom, textFrame.geometricBounds[3]];
+                bottom = snap(bottom - step, false);
             }
         }
 
         //Increase to fit
-        while (textFrame.overflows && bottom <= maxBottom) {            
+        while (textFrame.overflows && bottom <= maxBottom) {
             textFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], bottom, textFrame.geometricBounds[3]];
             bottom = snap(bottom + step, true);
         }
@@ -561,7 +562,7 @@ class ExportInDesignArticlesToFolder {
                 if (para.alignToBaseline === true) return true;
             }
         } catch (err) {
-            alert (err);
+            alert(err);
         }
         return false;
     }
@@ -575,7 +576,7 @@ class ExportInDesignArticlesToFolder {
             return Math.ceil(value / gridStep) * gridStep;
         } else {
             return Math.floor(value / gridStep) * gridStep;
-        }        
+        }
     }
 
     /**
@@ -735,30 +736,115 @@ class ExportInDesignArticlesToFolder {
 
         story.recompose();
 
-        var frameData  = eval("(" + tfs[tfsLen - 1].frameData + ")"); // Or JSON.parse (tfs[tfsLen - 1].frameData) but that is not supported by ID Server
+        var frameData = eval("(" + tfs[tfsLen - 1].frameData + ")"); // Or JSON.parse (tfs[tfsLen - 1].frameData) but that is not supported by ID Server
         return frameData[frameData.length - 1].OversetLines;
     }
 
-    /**
-     * Fallback line height when we cannot derive from text lines.
-     * Approximates Auto leading as 120% of first character's point size.
-     * @param {TextFrame} frame
-     * @returns {number}
-     */
-    #fallbackLineHeight(frame) {
+    #getRequiredVisibleArea(textFrame) {
         try {
-            if (frame.characters.length > 0) {
-                var ch = frame.characters.item(0);
-                var leading = ch.leading;
-                if (typeof leading === "object" && leading.equals(idd.Leading.AUTO)) {
-                    var fs = ch.pointSize || 10;
-                    return fs * 1.2;
-                }
-                return leading || (ch.pointSize ? ch.pointSize * 1.2 : 12);
+            const bounds = textFrame.geometricBounds;
+            const targetPolygon = this.#rectToPolygon(bounds);
+            const fullArea = (bounds[2] - bounds[0]) * (bounds[3] - bounds[1]);
+
+            const spread = (textFrame.parent instanceof idd.Page) ? textFrame.parent.parent : textFrame.parent;
+            const spreadItems = spread.pageItems;
+
+            const sortedItems = this.#getItemsByZOrder(spreadItems);
+            const selectedIndex = this.#getItemIndex(sortedItems, textFrame);
+
+            let remainingPolygons = [targetPolygon];
+
+            // Collect overlapping polygons ABOVE the selected frame
+            for (let i = selectedIndex + 1; i < sortedItems.length; i++) {
+                const item = sortedItems[i];
+                if (item.id != textFrame.id && item.visible && item.constructor.name !== "Guide") {
+                    const b = item.geometricBounds;                    
+                    if (this.#rectsOverlap(bounds, b)) {
+                        const overlapPolygon = this.#rectToPolygon(b);
+                        let newPolygons = [];
+                        for (let k = 0; k < remainingPolygons.length; k++) {
+                            const pieces = this.#subtractPolygon(remainingPolygons[k], overlapPolygon);
+                            newPolygons = newPolygons.concat(pieces);
+                        }
+                        remainingPolygons = newPolygons;
+                    }
+                }                    
+
+
             }
-        } catch (e) {}
-        return 12; // default safety value in points
+
+            // Sum remaining area
+            let remainingArea = 0;
+            for (let i = 0; i < remainingPolygons.length; i++) {
+                remainingArea += this.#polygonArea(remainingPolygons[i]);
+            }
+
+            return remainingArea;
+        } catch (err) {
+            alert("Error in getRequiredVisibleArea: " + err);
+            return 0;
+        }
     }
+
+
+    #rectToPolygon(bounds) {
+        return [
+            [bounds[1], bounds[0]],
+            [bounds[3], bounds[0]],
+            [bounds[3], bounds[2]],
+            [bounds[1], bounds[2]]
+        ];
+    }
+
+    #rectsOverlap(a, b) {
+        return !(a[3] < b[1] || a[1] > b[3] || a[2] < b[0] || a[0] > b[2]);
+    }
+
+    //Reverse the order, highest on top
+    #getItemsByZOrder(items) {
+        var arr = [];
+        for (var i = items.length - 1; i >= 0; i--) {
+            arr.push(items.item(i));
+        }    
+        return arr; // DOM order reflects z-order
+    }
+
+    #getItemIndex(array, item) {
+        for (let i = 0; i < array.length; i++) {
+            if (array[i].id === item.id) return i;
+        }
+        return -1;
+    }
+
+    #subtractPolygon(A, B) {
+        const ax1 = A[0][0], ay1 = A[0][1], ax2 = A[2][0], ay2 = A[2][1];
+        const bx1 = B[0][0], by1 = B[0][1], bx2 = B[2][0], by2 = B[2][1];
+
+        const ix1 = Math.max(ax1, bx1);
+        const iy1 = Math.max(ay1, by1);
+        const ix2 = Math.min(ax2, bx2);
+        const iy2 = Math.min(ay2, by2);
+
+        if (ix1 >= ix2 || iy1 >= iy2) return [A];
+
+        const remainingRects = [];
+        if (ay1 < iy1) remainingRects.push([[ax1, ay1], [ax2, ay1], [ax2, iy1], [ax1, iy1]]);
+        if (iy2 < ay2) remainingRects.push([[ax1, iy2], [ax2, iy2], [ax2, ay2], [ax1, ay2]]);
+        if (ax1 < ix1) remainingRects.push([[ax1, iy1], [ix1, iy1], [ix1, iy2], [ax1, iy2]]);
+        if (ix2 < ax2) remainingRects.push([[ix2, iy1], [ax2, iy1], [ax2, iy2], [ix2, iy2]]);
+        return remainingRects;
+    }
+
+    #polygonArea(polygon) {
+        let area = 0;
+        for (let i = 0; i < polygon.length; i++) {
+            const j = (i + 1) % polygon.length;
+            area += polygon[i][0] * polygon[j][1];
+            area -= polygon[j][0] * polygon[i][1];
+        }
+        return Math.abs(area / 2);
+    }
+
 }
 
 module.exports = ExportInDesignArticlesToFolder;
