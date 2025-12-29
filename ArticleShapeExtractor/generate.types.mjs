@@ -21,21 +21,24 @@ let imports = [];
 
 // Extract class names and generate typedef imports.
 for (const file of files) {
+    const relativePath = `./modules/${file}`;
     const fullPath = path.join(MODULES_DIR, file);
     const content = fs.readFileSync(fullPath, "utf8");
 
     // Try to extract "class <Name>"
-    const classMatch = content.match(/class\s+([A-Za-z0-9_]+)/);
+    const classNames = [...content.matchAll(/\bclass\s+([A-Za-z_$][A-Za-z0-9_$]*)\b/g)].map(m => m[1]);
 
-    if (!classMatch) {
-        console.warn(`⚠ No class found in ${file}, skipping`);
+    if (classNames.length === 0) {
+        console.warn(`⚠ No class found in '${relativePath}', skipping`);
         continue;
     }
 
-    const className = classMatch[1];
-    const relativePath = `./modules/${file}`;
+    if (classNames.length > 1) {
+        console.warn(`⚠ More than one class found in '${relativePath}', skipping`);
+        continue;
+    }
 
-    imports.push(`/** @typedef {import('${relativePath}')} ${className} */`);
+    imports.push(`/** @typedef {import('${relativePath}')} ${classNames[0]} */`);
 }
 
 // Build final output.
