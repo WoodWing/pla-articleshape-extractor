@@ -38,7 +38,7 @@ class PlaService {
             this.#logger.info(`Retrieved ${jsonResponseBody.length} sheet dimensions.`);
             return jsonResponseBody;
         } catch (error) {
-            const { PlaServiceCommunicationError } = require('./Errors.mjs');
+            const { PlaServiceCommunicationError } = require('./Errors.cjs');
             throw new PlaServiceCommunicationError(`Could not retrieve sheet dimensions.\n${error.message}`);
         }
     }
@@ -162,7 +162,7 @@ class PlaService {
             });
             return downloadUrls;
         } catch (error) {
-            const { PlaServiceCommunicationError } = require('./Errors.mjs');
+            const { PlaServiceCommunicationError } = require('./Errors.cjs');
             throw new PlaServiceCommunicationError(`Could not retrieve shape suggestions.\n${error.message}`);
         }
     }

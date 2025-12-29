@@ -49,7 +49,7 @@ class FitArticleWithAIService {
 
         // Bail out when user is currently not logged in.
         if (!this.#studioJsonRpcClient.hasSession() ) {
-            const { NoStudioSessionError } = require('./Errors.mjs');
+            const { NoStudioSessionError } = require('./Errors.cjs');
             throw new NoStudioSessionError();
         }
 
