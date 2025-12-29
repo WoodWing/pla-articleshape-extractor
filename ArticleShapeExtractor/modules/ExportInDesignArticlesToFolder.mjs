@@ -33,8 +33,7 @@ class ExportInDesignArticlesToFolder {
         inDesignArticleService,
         pageLayoutSettings,
         genreResolver,
-        fallbackBrand,
-        fallbackCategory,
+        brandSectionResolver,
     ) {
         this.#logger = logger;
         this.#inDesignArticleService = inDesignArticleService;
