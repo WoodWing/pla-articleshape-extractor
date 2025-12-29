@@ -116,10 +116,17 @@
 	 * @returns {boolean}
 	 */
 	function isArticleFrameSelected() {
-		var document = app.activeDocument;
-        if (!document || !app.selection.length) {
+        if (!app.documents.length 
+			|| !app.windows.length
+			|| !app.selection.length) {
 			return false;
 		}
+		var document;
+		try {
+			document = app.activeDocument;
+		} catch (_) {
+			return false;
+		}		
         for (var selIdx = 0; selIdx < app.selection.length; selIdx++) {
 			var selectedItem = app.selection[selIdx];
 			if (!selectedItem.isValid || !("geometricBounds" in selectedItem)) {
