@@ -18,34 +18,28 @@ class ExportInDesignArticlesToFolder {
     /** @type {GenreResolver} */
     #genreResolver;
 
-    /** @type {Object} */
-    #fallbackBrand;
-
-    /** @type {Object} */
-    #fallbackCategory;
+    /** @type {BrandSectionResolver} */
+    #brandSectionResolver;
 
     /**
      * @param {Logger} logger
      * @param {InDesignArticleService} inDesignArticleService
      * @param {PageLayoutSettings} pageLayoutSettings
      * @param {GenreResolver} genreResolver
-     * @param {Object} fallbackBrand
-     * @param {Object} fallbackCategory
+     * @param {BrandSectionResolver} brandSectionResolver
      */
     constructor(
         logger,
         inDesignArticleService,
         pageLayoutSettings,
         genreResolver,
-        fallbackBrand,
-        fallbackCategory,
+        brandSectionResolver,
     ) {
         this.#logger = logger;
         this.#inDesignArticleService = inDesignArticleService;
         this.#pageLayoutSettings = pageLayoutSettings;
         this.#genreResolver = genreResolver;
-        this.#fallbackBrand = fallbackBrand;
-        this.#fallbackCategory = fallbackCategory;
+        this.#brandSectionResolver = brandSectionResolver;
     }
 
     /**
@@ -286,24 +280,8 @@ class ExportInDesignArticlesToFolder {
      */
     #composeArticleShapeJson(doc, articleName, outerBounds) {
 
-        // Resolve Brand/Category. Fallback to defaults when no Studio session.
-        let brand = null;
-        let category = null;
-        try {
-            brand = app.entSession.getPublication(
-                doc.entMetaData.get("Core_Publication")
-            );
-            category = app.entSession.getCategory(
-                doc.entMetaData.get("Core_Publication"),
-                doc.entMetaData.get("Core_Section"),
-                doc.entMetaData.get("Core_Issue")
-            );
-        } catch (error) {
-            brand = this.#fallbackBrand;
-            category = this.#fallbackCategory;
-        }
-        this.#logger.info("Resolved brand '{}' (id={}) and category '{}' (id={}).",
-            brand.name, brand.id, category.name, category.id);
+        // Resolve brand and section from layout doc (or use fallback settings).
+        const {brand, section} = this.#brandSectionResolver.resolve(doc);
 
         // Resolve the shape type. Bail out when article has bad naming convention.
         const shapeType = this.#resolveShapeTypeFromArticleName(articleName)
@@ -315,8 +293,8 @@ class ExportInDesignArticlesToFolder {
         let articleShapeJson = {
             "brandName": brand.name,
             "brandId": brand.id,
-            "sectionName": category.name,
-            "sectionId": category.id,
+            "sectionName": section.name,
+            "sectionId": section.id,
             "genreId": null,
             "shapeTypeName": shapeType.name,
             "shapeTypeId": shapeType.id,

@@ -8,6 +8,7 @@
  */
 
 /** @typedef {import('./modules/BrandSectionMapResolver.mjs')} BrandSectionMapResolver */
+/** @typedef {import('./modules/BrandSectionResolver.mjs')} BrandSectionResolver */
 /** @typedef {import('./modules/Errors.mjs')} ArgumentError */
 /** @typedef {import('./modules/ExportInDesignArticlesToFolder.mjs')} ExportInDesignArticlesToFolder */
 /** @typedef {import('./modules/FileUtils.mjs')} FileUtils */

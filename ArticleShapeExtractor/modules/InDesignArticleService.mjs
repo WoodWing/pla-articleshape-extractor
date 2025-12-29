@@ -32,7 +32,7 @@ class InDesignArticleService {
 
         // Add new InDesign Articles.
         const doc = app.activeDocument;
-        const articles = this.#getInDesignArticles(doc, frame);
+        const articles = this.getInDesignArticles(doc, frame);
         if (articles.length == 0) {
             this.#createNewInDesignArticleWithSelectedFrames(doc, articleName);
             alert("A new article '" + articleName + "' has been created, and selected frames have been added.");
@@ -81,7 +81,7 @@ class InDesignArticleService {
      * @param {PageItem} Valid text/graphic frame.
      * @returns {Array<Article>}
      */
-    #getInDesignArticles(doc, frame) {
+    getInDesignArticles(doc, frame) {
         const docArticles = doc.articles;
         let frameArticles = [];
 
