@@ -30,7 +30,11 @@ export default [
             "stylistic/eol-last": ["error", "always"],
             "stylistic/space-before-blocks": ["error", "always"],
             "stylistic/keyword-spacing": ["error", { "before": true, "after": true }],
-            "stylistic/brace-style": ["error", "stroustrup"]
+            "stylistic/brace-style": ["error", "stroustrup"],
+            "stylistic/curly-newline": ["error", "always"],
+            "stylistic/comma-spacing": ["error", { "before": false, "after": true }],
+            "stylistic/key-spacing": ["error", { "beforeColon": false, "afterColon": true }]
+            // L> Documentation: https://eslint.style/rules
         }
     },
 
