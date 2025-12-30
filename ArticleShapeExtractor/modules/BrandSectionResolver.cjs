@@ -46,7 +46,7 @@ class BrandSectionResolver {
                 doc.entMetaData.get("Core_Issue")
             );
             source = "document";
-        } catch (error) {
+        } catch {
             brand = this.#fallbackBrand;
             section = this.#fallbackCategory;
             source = "settings";

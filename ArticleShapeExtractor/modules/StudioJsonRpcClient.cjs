@@ -122,7 +122,7 @@ class StudioJsonRpcClient {
             const responseBodyText = await httpResponse.text();
             try {
                 rpcResponseBody = JSON.parse(responseBodyText);
-            } catch(error) {
+            } catch {
             }
             if (!httpResponse.ok) {
                 throw new Error(`HTTP ${httpResponse.status} ${httpResponse.statusText}`);

@@ -10,7 +10,7 @@ Container.registerSingleton("Settings", function() {
     let plaLocalConfig = {}
     try {
         plaLocalConfig = require("./config/config-local.js");
-    } catch (error) {
+    } catch {
     }
     return new Settings(plaDefaultConfig, plaLocalConfig);
 });
