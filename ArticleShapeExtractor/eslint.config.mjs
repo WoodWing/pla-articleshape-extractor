@@ -26,7 +26,8 @@ export default [
             "stylistic/quotes": ["error", "double"],
             "stylistic/comma-dangle": ["error", "never"],
             "stylistic/object-curly-spacing": ["error", "always"],
-            "stylistic/no-trailing-spaces": "error"
+            "stylistic/no-trailing-spaces": "error",
+            "stylistic/eol-last": ["error", "always"]
         }
     },
 
