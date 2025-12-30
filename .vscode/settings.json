@@ -3,7 +3,9 @@
         "*.idjs": "javascript"
     },
     "cSpell.words": [
+        "aila",
         "idms",
+        "idjs",
         "malpositioned"
     ],
     "editor.defaultFormatter": "dbaeumer.vscode-eslint",
