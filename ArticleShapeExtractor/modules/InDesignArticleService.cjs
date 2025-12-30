@@ -129,7 +129,8 @@ class InDesignArticleService {
             if (this.isValidArticleComponentFrame(frame)) {
                 try {
                     article.articleMembers.add(frame);
-                } catch (error) {
+                } catch {
+                    // Intentionally ignored
                 }
             }
         }

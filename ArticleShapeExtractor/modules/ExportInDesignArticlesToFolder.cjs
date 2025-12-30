@@ -233,7 +233,7 @@ class ExportInDesignArticlesToFolder {
         try {
             // Get workflow object ID and Version from Studio.
             fileName = fileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';
-        } catch (error) {
+        } catch {
             // Use path of layout to make file name unique.
             if (doc.saved) {
                 const docFile = await doc.fullName;

@@ -258,7 +258,7 @@ class RegenerateArticleShapesService {
         const settingToProperty = { brand: "Publication", issue: "Issue", category: "Category", status: "State" };
         const queryParams = [];
         for (const setting in settingToProperty) {
-            if (settingToProperty.hasOwnProperty(setting)) {
+            if (Object.prototype.hasOwnProperty.call(settingToProperty, setting)) {
                 if (['issue', 'category'].includes(setting) 
                     && this.#settings.filter[setting].length === 0) {
                     continue; // these filters can be left empty, which refers to 'all'

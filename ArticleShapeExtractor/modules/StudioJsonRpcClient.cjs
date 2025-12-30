@@ -1,5 +1,3 @@
-const { app } = require("indesign");
-
 /**
  * Understands how to communicate with Studio Server using the JSON-RPC protocol.
  */
@@ -122,7 +120,8 @@ class StudioJsonRpcClient {
             const responseBodyText = await httpResponse.text();
             try {
                 rpcResponseBody = JSON.parse(responseBodyText);
-            } catch(error) {
+            } catch {
+                // Intentionally ignored
             }
             if (!httpResponse.ok) {
                 throw new Error(`HTTP ${httpResponse.status} ${httpResponse.statusText}`);

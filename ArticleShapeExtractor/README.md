@@ -159,3 +159,29 @@ Now your modifications to the scripts are directly reflected to both GitHub and 
 4. A JSX script can not invoke an IDJS script (e.g. via `app.doScript(...)`).
 5. IDJS scripts in the `Startup Scripts` folder are not recognized/executed by InDesign.
 6. Bullets 3, 4 and 5 make it impossible to add a menu item or shortcut key for a UXP/IDJS script.
+
+## ESLint checker
+
+### Installation
+
+Install ESLint:
+```bash
+cd ArticleShapeExtractor
+npm install
+```
+
+Install `ESLint` extension for VS Code.
+
+### Configuration
+
+Settings are made in the [eslint.config.mjs](eslint.config.mjs) file.
+
+### Usage
+
+Validate whole project at once:
+```bash
+cd ArticleShapeExtractor
+npx eslint .
+```
+
+In VS Code, ESLint errors are reported via red curly underlines in the editor.

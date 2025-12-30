@@ -1,6 +1,6 @@
 require("./extensions/String.js");
 require("./extensions/globals.js");
-const _ = require("./extensions/lodash.min.js");
+require("./extensions/lodash.min.js");
 require("./modules/Errors.cjs");
 const Container = require("./modules/Container.cjs");
 
@@ -10,7 +10,8 @@ Container.registerSingleton("Settings", function() {
     let plaLocalConfig = {}
     try {
         plaLocalConfig = require("./config/config-local.js");
-    } catch (error) {
+    } catch {
+        // Intentionally ignored
     }
     return new Settings(plaDefaultConfig, plaLocalConfig);
 });
@@ -150,7 +151,6 @@ Container.registerFactory("FitArticleWithAIService", function() {
     const FitArticleWithAIService = require("./modules/FitArticleWithAIService.cjs");
     return new FitArticleWithAIService(
         Container.resolve("Logger"), 
-        Container.resolve("Settings"),
         Container.resolve("StudioJsonRpcClient"),
         Container.resolve("PlaService"),
         Container.resolve("BrandSectionResolver"),        

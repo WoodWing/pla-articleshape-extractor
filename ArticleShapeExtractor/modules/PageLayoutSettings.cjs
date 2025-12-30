@@ -143,7 +143,7 @@ class PageLayoutSettings{
     async #saveOrComparePageLayoutSettings(settings, exportFolder) {
         const manifestFoldername = "_manifest";
         const settingsFilename = "page-layout-settings.json";
-        const { entry: settingsFolder, _ } = await this.#fileUtils.getOrCreateSubFolder(exportFolder, manifestFoldername);
+        const { entry: settingsFolder } = await this.#fileUtils.getOrCreateSubFolder(exportFolder, manifestFoldername);
         const { entry: settingsFile, created } = await this.#fileUtils.getOrCreateFile(settingsFolder, settingsFilename);
         if (created) {
             const settingsJson = JSON.stringify(settings, null, 4);

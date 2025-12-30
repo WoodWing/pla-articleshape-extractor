@@ -57,7 +57,8 @@ class PlaService {
             const responseBodyText = await httpResponse.text(); 
             try {            
                 jsonResponseBody = JSON.parse(responseBodyText);
-            } catch(error) {
+            } catch {
+                // Intentionally ignored
             }
             if (!httpResponse.ok) {
                 let message = `HTTP ${httpResponse.status} ${httpResponse.statusText}`;

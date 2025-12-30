@@ -9,7 +9,7 @@ class FileUtils {
     async getOrCreateSubFolder(parentFolder, subfolderName) {
         try {
             return {entry: await parentFolder.getEntry(subfolderName), created: false};
-        } catch (e) {
+        } catch {
             return {entry: await parentFolder.createFolder(subfolderName, { overwrite: false }), created: true};
         }
     }
@@ -23,7 +23,7 @@ class FileUtils {
     async getOrCreateFile(folder, filename) {
         try {
             return {entry: await folder.getEntry(filename), created: false};
-        } catch (e) {
+        } catch {
             return {entry: await folder.createFile(filename, { overwrite: false }), created: true};
         }
     }    
