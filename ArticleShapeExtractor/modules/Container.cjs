@@ -23,7 +23,7 @@ const Container = {
      * @param {String} providerType
      */
     _register: function(service, factoryFunction, providerType) {
-        if(typeof factoryFunction !== "function") {
+        if (typeof factoryFunction !== "function") {
             throw new Error("Factory '" + typeof factoryFunction + "' is not a function.");
         }
         if (this._registrations[service]) {
@@ -53,13 +53,13 @@ const Container = {
             || registration.providerType === "factory"
         ) {
             const createdInstance = registration.factoryFunction();
-            if(typeof createdInstance !== "object") {
+            if (typeof createdInstance !== "object") {
                 throw new Error(
                     "Factory function for service '" + service + "' created '" + typeof createdInstance + "', "
                     + "but expected an object.");
             }
             const actualService = this._getClassname(createdInstance);
-            if( actualService !== service) {
+            if ( actualService !== service) {
                 throw new Error(
                     "Factory function for service '" + service + "' created instance of '" + actualService + "', "
                     + "but expected an instance of '" + service + "'.");

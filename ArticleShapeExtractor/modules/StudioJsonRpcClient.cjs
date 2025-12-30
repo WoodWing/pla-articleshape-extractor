@@ -183,7 +183,7 @@ class StudioJsonRpcClient {
      */
     async #queryObjectsOneResultPage(searchParams, resolveProperties, firstEntry) {
         const startsWithProps = ["ID", "Type", "Name"]; // service rule: must start with this sequence of props
-        if( !startsWithProps.every((value, index) => resolveProperties[index] === value) ) {
+        if ( !startsWithProps.every((value, index) => resolveProperties[index] === value) ) {
             const { ArgumentError } = require("./Errors.cjs");
             throw new ArgumentError("The 'resolveProperties' param should start with 'ID', 'Name' and 'Type' values.");
         }

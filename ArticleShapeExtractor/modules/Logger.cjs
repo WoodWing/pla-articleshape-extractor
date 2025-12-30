@@ -46,7 +46,7 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
     debug() {
-        if(!this.isDebug())
+        if (!this.isDebug())
             return;
         const args = Array.prototype.slice.call(arguments);
         this.#log(5, args);
@@ -65,7 +65,7 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
     info() {
-        if(!this.isInfo())
+        if (!this.isInfo())
             return;
         const args = Array.prototype.slice.call(arguments);
         this.#log(4, args);
@@ -84,7 +84,7 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
     warning() {
-        if(!this.isWarning())
+        if (!this.isWarning())
             return;
         const args = Array.prototype.slice.call(arguments);
         this.#log(3, args);
@@ -103,7 +103,7 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
     error() {
-        if(!this.isError())
+        if (!this.isError())
             return;
         const args = Array.prototype.slice.call(arguments);
         this.#log(2, args);
@@ -122,7 +122,7 @@ class Logger {
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
     critical() {
-        if(!this.isCritical())
+        if (!this.isCritical())
             return;
         const args = Array.prototype.slice.call(arguments);
         this.#log(1, args);
