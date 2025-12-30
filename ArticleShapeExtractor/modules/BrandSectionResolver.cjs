@@ -2,7 +2,7 @@
  * Understands how to resolve the Brand and Section.
  */
 class BrandSectionResolver {
-   /** @type {Logger} */
+    /** @type {Logger} */
     #logger;
 
     /** @type {{id: string, name: string}} */

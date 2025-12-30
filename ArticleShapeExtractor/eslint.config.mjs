@@ -21,6 +21,7 @@ export default [
         },
         rules: {
             // formatting rules (ALL autofixable)
+            "stylistic/indent": ["error", 4]
         }
     },
 

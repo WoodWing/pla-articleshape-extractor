@@ -168,8 +168,8 @@ class ExportInDesignArticlesToFolder {
                 this.#logger.info("Article '{}' has a unassigned frame item '{}' placed at ({},{},{},{}). "
                     + "Hence the item is excluded from the article composition (JSON file). "
                     + "Set it to TextFrame or Graphic via Object->Content",
-                    article.name, element.itemRef.constructorName,
-                    element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);               
+                article.name, element.itemRef.constructorName,
+                element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);               
             } else if (this.#inDesignArticleService.isValid2DGraphicFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
                 articleShapeJson.imageComponents.push({
@@ -181,14 +181,14 @@ class ExportInDesignArticlesToFolder {
                 this.#logger.info("Article '{}' has a graphic frame item '{}' placed at ({},{},{},{}). "
                     + "The graphic is too slim. It is either a line or a very slim rectangle. "
                     + "Hence the item is excluded from the article composition (JSON file).",
-                    article.name, element.itemRef.constructorName,
-                    element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);
+                article.name, element.itemRef.constructorName,
+                element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);
             } else {
                 this.#logger.info("Article '{}' has a page item '{}' placed at ({},{}). "
                     + "The page item is either not valid or not a text/graphic frame. "
                     + "Hence the item is excluded from the article export operation.",
-                    article.name, element.itemRef.constructorName,
-                    element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0]);
+                article.name, element.itemRef.constructorName,
+                element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0]);
             }
         }
         return pageItems;

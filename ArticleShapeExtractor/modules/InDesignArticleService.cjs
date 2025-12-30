@@ -240,7 +240,7 @@ class InDesignArticleService {
             && !this.#isValid1DRectangleFrame(pageItem);
     }
 
-     /**
+    /**
      * Tells whether the given page item is an unassigned frame (InDesign->Object->Content)
      * @param {Object|null} pageItem
      * @returns {Boolean}

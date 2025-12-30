@@ -186,7 +186,7 @@ class RegenerateArticleShapesService {
                     break;
                 case 1: // File on disk is newer.
                     for (const oldFile of mapItem.shapeFiles) {
-                         await this.#deleteFile(oldFile);
+                        await this.#deleteFile(oldFile);
                     }
                     mapItem.shapeFiles = [shapeFile];
                     mapItem.layoutVersion = layoutVersion;
