@@ -21,24 +21,24 @@ export default [
         },
         rules: {
             // formatting rules (ALL autofixable)
-            "stylistic/indent": ["error", 4],
-            "stylistic/semi": ["error", "always"],
-            "stylistic/quotes": ["error", "double"],
-            "stylistic/comma-dangle": ["error", "never"],
-            "stylistic/object-curly-spacing": ["error", "always"],
-            "stylistic/no-trailing-spaces": "error",
-            "stylistic/eol-last": ["error", "always"],
-            "stylistic/space-before-blocks": ["error", "always"],
-            "stylistic/keyword-spacing": ["error", { "before": true, "after": true }],
             "stylistic/brace-style": ["error", "stroustrup"],
             "stylistic/curly-newline": ["error", "always"],
+            "stylistic/comma-dangle": ["error", "never"],
             "stylistic/comma-spacing": ["error", { "before": false, "after": true }],
+            "stylistic/eol-last": ["error", "always"],
+            "stylistic/indent": ["error", 4],
             "stylistic/key-spacing": ["error", { "beforeColon": false, "afterColon": true }],
-            "stylistic/space-infix-ops": "error",
+            "stylistic/keyword-spacing": ["error", { "before": true, "after": true }],
+            "stylistic/no-mixed-spaces-and-tabs": ["error", true],
+            "stylistic/no-tabs": ["error", {}],
+            "stylistic/no-trailing-spaces": "error",
+            "stylistic/object-curly-spacing": ["error", "always"],
+            "stylistic/quotes": ["error", "double"],
+            "stylistic/semi": ["error", "always"],
+            "stylistic/space-before-blocks": ["error", "always"],
             "stylistic/space-before-function-paren": ["error", "always"],
             "stylistic/space-in-parens": ["error", "never"],
-            "stylistic/no-mixed-spaces-and-tabs": ["error", true],
-            "stylistic/no-tabs": ["error", {}]
+            "stylistic/space-infix-ops": "error"
             // L> Documentation: https://eslint.style/rules
         }
     },
