@@ -287,7 +287,7 @@ class RegenerateArticleShapesService {
             Operation: operation,
             Value: value,
             __classname__: "QueryParam"
-        } 
+        }; 
     }
 }
 

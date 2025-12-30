@@ -57,7 +57,7 @@ class FitArticleWithAIService {
         // TODO: Error when layout does not occur in any of the dimensions.
         const shapeFiles = await this.#retrieveArticleShapeSuggestions(accessToken, brand, section);
         for (const shapeFile of shapeFiles) {
-            this.#logger.debug(`Removing article shape JSON '${shapeFile.nativePath}'.`)
+            this.#logger.debug(`Removing article shape JSON '${shapeFile.nativePath}'.`);
             await shapeFile.delete();
         }
     }
@@ -93,7 +93,7 @@ class FitArticleWithAIService {
             const response = await fetch(downloadUrl);
             const articleShapeJson = await response.json();
             const articleShapeFile = await this.#writeArticleJsonToTemp(articleShapeJson);
-            this.#logger.debug(`Wrote article shape JSON into '${articleShapeFile.nativePath}'.`)
+            this.#logger.debug(`Wrote article shape JSON into '${articleShapeFile.nativePath}'.`);
             articleShapeFiles.push(articleShapeFile);
         }
         return articleShapeFiles;

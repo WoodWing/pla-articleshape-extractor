@@ -57,7 +57,7 @@ class InDesignArticleService {
                 newName = articleName + " " + newName;
             }
 
-            newName = this.#cleanWhitespaces(newName)
+            newName = this.#cleanWhitespaces(newName);
 
             if (newName != oldName) {
                 article.name = newName;

@@ -7,7 +7,7 @@ const Container = require("./modules/Container.cjs");
 Container.registerSingleton("Settings", function() {
     const Settings = require("./modules/Settings.cjs");
     const plaDefaultConfig = require("./config/config.js");
-    let plaLocalConfig = {}
+    let plaLocalConfig = {};
     try {
         plaLocalConfig = require("./config/config-local.js");
     } catch {

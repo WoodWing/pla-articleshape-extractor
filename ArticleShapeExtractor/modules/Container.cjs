@@ -6,7 +6,7 @@ const Container = {
      * @param {Function} factoryFunction
      */    
     registerFactory: function(service, factoryFunction) {
-        this._register(service, factoryFunction, 'factory')
+        this._register(service, factoryFunction, 'factory');
     },
 
     /**
@@ -14,7 +14,7 @@ const Container = {
      * @param {Function} factoryFunction
      */    
     registerSingleton: function(service, factoryFunction) {
-        this._register(service, factoryFunction, 'singleton')
+        this._register(service, factoryFunction, 'singleton');
     },
 
     /**
@@ -58,7 +58,7 @@ const Container = {
                     "Factory function for service '" + service + "' created '" + typeof createdInstance + "', " 
                     + "but expected an object.");
             }
-            const actualService = this._getClassname(createdInstance)
+            const actualService = this._getClassname(createdInstance);
             if( actualService !== service) {
                 throw new Error(
                     "Factory function for service '" + service + "' created instance of '" + actualService + "', "

@@ -114,7 +114,7 @@ class ExportInDesignArticlesToFolder {
             return false;
         }
         this.#logger.info("Exporting article '{}'...", article.name);
-        return await this.#exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson)
+        return await this.#exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson);
     }
 
     /**
@@ -128,7 +128,7 @@ class ExportInDesignArticlesToFolder {
         let pageItems = []; // Collect all associated page items for the article.
         for (let elementIndex = 0; elementIndex < elements.length; elementIndex++) {
             const element = elements[elementIndex];
-            const geometricBounds = this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef)
+            const geometricBounds = this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef);
             if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
                 const threadedFrames = this.#getThreadedFrames(element.itemRef);
                 let textComponent = {
@@ -141,7 +141,7 @@ class ExportInDesignArticlesToFolder {
 
                 // Add the name of the first paragraph style used in the chain of threaded frames.
                 if (threadedFrames[0].paragraphs.length > 0) {
-                    textComponent.firstParagraphStyle = threadedFrames[0].paragraphs.item(0).appliedParagraphStyle.name
+                    textComponent.firstParagraphStyle = threadedFrames[0].paragraphs.item(0).appliedParagraphStyle.name;
                 }
 
                 for (let frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
@@ -243,7 +243,7 @@ class ExportInDesignArticlesToFolder {
                 fileName = fileName + ' (' + suffix + ")";
             }
         }
-        return window.path.join(folder, fileName)
+        return window.path.join(folder, fileName);
     }
 
     /**
@@ -259,7 +259,7 @@ class ExportInDesignArticlesToFolder {
             "y": this.#roundTo3Decimals(pageItem.geometricBounds[0] - topLeftY),
             "width": this.#roundTo3Decimals(pageItem.geometricBounds[3] - pageItem.geometricBounds[1]),
             "height": this.#roundTo3Decimals(pageItem.geometricBounds[2] - pageItem.geometricBounds[0])
-        }
+        };
     }
 
     /**
@@ -284,7 +284,7 @@ class ExportInDesignArticlesToFolder {
         const { brand, section } = this.#brandSectionResolver.resolve(doc);
 
         // Resolve the shape type. Bail out when article has bad naming convention.
-        const shapeType = this.#resolveShapeTypeFromArticleName(articleName)
+        const shapeType = this.#resolveShapeTypeFromArticleName(articleName);
         if (shapeType === null) {
             return null;
         }
@@ -307,7 +307,7 @@ class ExportInDesignArticlesToFolder {
             "foldLine": null,
             "textComponents": [],
             "imageComponents": []
-        }
+        };
         // Set the foldLine property when the article shape does crossover the fold line of the spread.
         const geometricBoundsRight = articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
         const crossoverFoldLine =
@@ -560,17 +560,17 @@ class ExportInDesignArticlesToFolder {
         const textWrapPrefs = frame.textWrapPreferences;
 
         if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.NONE)) {
-            return "none"
+            return "none";
         } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.BOUNDING_BOX_TEXT_WRAP)) {
-            return "bounding_box"
+            return "bounding_box";
         } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.CONTOUR)) {
-            return "contour"
+            return "contour";
         } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.JUMP_OBJECT_TEXT_WRAP)) {
-            return "jump_object"
+            return "jump_object";
         } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.NEXT_COLUMN_TEXT_WRAP)) {
-            return "jump_to_next_column"
+            return "jump_to_next_column";
         } else {
-            return ""
+            return "";
         }
     }
 

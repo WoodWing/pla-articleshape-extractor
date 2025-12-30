@@ -11,7 +11,7 @@ String.prototype.ltrim = function(characters) {
 
 String.prototype._escapeRegExChars = function(characters) {
     return characters.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
-}
+};
 
 /**
  * @description Remove characters or whitespaces from the end of string.

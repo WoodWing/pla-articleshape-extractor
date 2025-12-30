@@ -17,4 +17,4 @@ globalThis.alert = function(msg, caption) {
     theDialog.show();
     theDialog.destroy();
     return;
-}
+};

@@ -50,7 +50,7 @@ class StudioJsonRpcClient {
         const url = this.#getStudioServerUrl();
         const request = {
             Ticket: this.#ticket
-        }
+        };
         if (brandIds) {
             request["IDs"] = brandIds;
         }
@@ -128,7 +128,7 @@ class StudioJsonRpcClient {
             }
             if (!rpcResponseBody) {            
                 this.#logger.error("Invalid JSON response:\n{}", responseBodyText);
-                throw new Error("Response does not contain a (valid) JSON.")
+                throw new Error("Response does not contain a (valid) JSON.");
             }
             if (rpcResponseBody?.error) {
                 this.#logger.error("JSON RPC error:\n{}", JSON.stringify(rpcResponseBody, null, 3));
@@ -136,7 +136,7 @@ class StudioJsonRpcClient {
             }
             if (!rpcResponseBody.result) {
                 this.#logger.error("JSON RPC result missing:\n{}", JSON.stringify(rpcResponseBody, null, 3));
-                throw new Error("Response has no JSON RPC result.")
+                throw new Error("Response has no JSON RPC result.");
             }
         } finally {
             this.#httpLogger.debugLogHttpResponse(httpResponse, rpcResponseBody);
@@ -208,7 +208,7 @@ class StudioJsonRpcClient {
      */
     #getObjectsFromQueryObjectsResponse(response, resolveProperties) {
         const wflObjects = [];
-        const columnIndexes = new Map()
+        const columnIndexes = new Map();
         for (var columnIndex = 0; columnIndex < response.Columns.length; columnIndex++) {
             const columnName = response.Columns[columnIndex].Name;
             if (resolveProperties.includes(columnName)) {
@@ -218,7 +218,7 @@ class StudioJsonRpcClient {
         for (var rowIndex = 0; rowIndex < response.Rows.length; rowIndex++) {
             let wflObject = {};
             for (const property of resolveProperties) {
-                wflObject[property] = response.Rows[rowIndex][columnIndexes.get(property)]
+                wflObject[property] = response.Rows[rowIndex][columnIndexes.get(property)];
             }
             wflObjects.push(wflObject);
         }
@@ -243,7 +243,7 @@ class StudioJsonRpcClient {
                 }],
                 __classname__: "MetaDataValue"
             }]
-        }
+        };
         await this.#callWebService(url, request, "MultiSetObjectProperties");
     }
 
@@ -258,7 +258,7 @@ class StudioJsonRpcClient {
             BrandIds: [brandId],
             __classname__: "CsPubGetAccessTokenRequest",
             Ticket: this.#ticket
-        }
+        };
         const response = await this.#callWebService(url, request, "GetAccessToken");
         return response.Token;
     }

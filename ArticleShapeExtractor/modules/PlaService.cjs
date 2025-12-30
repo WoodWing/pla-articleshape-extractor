@@ -69,7 +69,7 @@ class PlaService {
             }
             if (!jsonResponseBody) {
                 this.#logger.error("Invalid JSON response: {}", responseBodyText);
-                throw new Error("Response does not contain a (valid) JSON.")
+                throw new Error("Response does not contain a (valid) JSON.");
             }
         } finally {
             this.#httpLogger.debugLogHttpResponse(httpResponse, jsonResponseBody);
@@ -94,7 +94,7 @@ class PlaService {
             },
             body: body,
             method: method
-        }
+        };
     }
 
     /**
@@ -136,7 +136,7 @@ class PlaService {
             height: height,
             fold_line: foldLine,
             shape_count: shapeCount
-        }
+        };
     }
 
     /**
