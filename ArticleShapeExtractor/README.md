@@ -167,7 +167,7 @@ Now your modifications to the scripts are directly reflected to both GitHub and 
 Install `ESLint` for code validation and its `stylistic` plugin for code formatting:
 ```bash
 cd ArticleShapeExtractor
-npm install
+npm ci
 ```
 
 Make sure you have the `ESLint` VS Code extension installed:
