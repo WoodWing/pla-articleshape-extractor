@@ -58,6 +58,7 @@ class PlaService {
             try {            
                 jsonResponseBody = JSON.parse(responseBodyText);
             } catch {
+                // Intentionally ignored
             }
             if (!httpResponse.ok) {
                 let message = `HTTP ${httpResponse.status} ${httpResponse.statusText}`;

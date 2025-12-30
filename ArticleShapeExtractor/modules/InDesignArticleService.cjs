@@ -130,6 +130,7 @@ class InDesignArticleService {
                 try {
                     article.articleMembers.add(frame);
                 } catch {
+                    // Intentionally ignored
                 }
             }
         }

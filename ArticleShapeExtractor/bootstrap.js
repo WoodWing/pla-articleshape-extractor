@@ -11,6 +11,7 @@ Container.registerSingleton("Settings", function() {
     try {
         plaLocalConfig = require("./config/config-local.js");
     } catch {
+        // Intentionally ignored
     }
     return new Settings(plaDefaultConfig, plaLocalConfig);
 });

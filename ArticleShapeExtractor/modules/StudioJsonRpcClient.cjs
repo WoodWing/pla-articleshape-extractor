@@ -123,6 +123,7 @@ class StudioJsonRpcClient {
             try {
                 rpcResponseBody = JSON.parse(responseBodyText);
             } catch {
+                // Intentionally ignored
             }
             if (!httpResponse.ok) {
                 throw new Error(`HTTP ${httpResponse.status} ${httpResponse.statusText}`);
