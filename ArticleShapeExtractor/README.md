@@ -160,28 +160,41 @@ Now your modifications to the scripts are directly reflected to both GitHub and 
 5. IDJS scripts in the `Startup Scripts` folder are not recognized/executed by InDesign.
 6. Bullets 3, 4 and 5 make it impossible to add a menu item or shortcut key for a UXP/IDJS script.
 
-## ESLint checker
+## Code checker and formatter
 
 ### Installation
 
-Install ESLint:
+Install `ESLint` for code validation and its `stylistic` plugin for code formatting:
 ```bash
 cd ArticleShapeExtractor
 npm install
 ```
 
-Install `ESLint` extension for VS Code.
+Make sure you have the `ESLint` VS Code extension installed:
+* Publisher: `Microsoft`
+* ID: `dbaeumer.vscode-eslint`
 
 ### Configuration
 
-Settings are made in the [eslint.config.mjs](eslint.config.mjs) file.
+Settings are made in:
+* ESLint configuration and rules: [eslint.config.mjs](eslint.config.mjs)
+* VSCode settings to use ESLint: [settings.json](../.vscode/settings.json)
+* Node dependencies and scripts: [package.json](package.json)
 
 ### Usage
 
 Validate whole project at once:
 ```bash
 cd ArticleShapeExtractor
-npx eslint .
+npm lint
 ```
 
-In VS Code, ESLint errors are reported via red curly underlines in the editor.
+Auto fix whole project at once:
+```bash
+cd ArticleShapeExtractor
+npm lint:fix
+```
+
+In VS Code:
+* ESLint errors are reported via red curly underlines in the editor.
+* When saving a source file, it gets auto formatted by ESLint's stylistic plugin.
