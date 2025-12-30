@@ -152,7 +152,7 @@ class PageLayoutSettings {
         if (created) {
             const settingsJson = JSON.stringify(settings, null, 4);
             const byteCount = await settingsFile.write(settingsJson, { format: formats.utf8 });
-            if (!byteCount ) {
+            if (!byteCount) {
                 const { ConfigurationError } = require("./Errors.cjs");
                 const message = `Could not write into file "${manifestFoldername}/${settingsFilename}".\nPlease check access rights.`;
                 throw new ConfigurationError(message);

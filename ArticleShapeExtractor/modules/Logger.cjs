@@ -32,7 +32,7 @@ class Logger {
         this.#level = this.LOGLEVEL.indexOf(logLevel);
         this.#wipe = wipe;
 
-        if (this.#level > 0 && (!filePath || !logLevel) ) {
+        if (this.#level > 0 && (!filePath || !logLevel)) {
             throw new Error("No log folder or filename provided.");
         }
         if (this.#level === -1) {

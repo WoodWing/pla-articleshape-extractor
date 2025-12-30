@@ -88,7 +88,7 @@ class GenreResolver {
         if (created) {
             const genresJson = JSON.stringify(this.#genres, null, 4);
             const byteCount = await genresFile.write(genresJson, { format: formats.utf8 });
-            if (!byteCount ) {
+            if (!byteCount) {
                 const { ConfigurationError } = require("./Errors.cjs");
                 const message = `Could not write into file '${genresRelativePath}'.\nPlease check access rights.`;
                 throw new ConfigurationError(message);

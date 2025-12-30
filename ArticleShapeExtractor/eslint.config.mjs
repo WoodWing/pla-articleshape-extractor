@@ -35,7 +35,8 @@ export default [
             "stylistic/comma-spacing": ["error", { "before": false, "after": true }],
             "stylistic/key-spacing": ["error", { "beforeColon": false, "afterColon": true }],
             "stylistic/space-infix-ops": "error",
-            "stylistic/space-before-function-paren": ["error", "always"]
+            "stylistic/space-before-function-paren": ["error", "always"],
+            "stylistic/space-in-parens": ["error", "never"]
             // L> Documentation: https://eslint.style/rules
         }
     },

@@ -59,7 +59,7 @@ const Container = {
                     + "but expected an object.");
             }
             const actualService = this._getClassname(createdInstance);
-            if ( actualService !== service) {
+            if (actualService !== service) {
                 throw new Error(
                     "Factory function for service '" + service + "' created instance of '" + actualService + "', "
                     + "but expected an instance of '" + service + "'.");
