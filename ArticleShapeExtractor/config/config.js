@@ -10,12 +10,12 @@ const plaDefaultConfig = {
             brand: "", // name of the brand/publication
             issue: "", // name of the issue (leave empty for all issues)
             category: "", // name of the category/section (leave empty for all categories/sections)
-            status: "" // name of the layout status
+            status: "", // name of the layout status
         },
 
         // Name of layout status, to be set after processing:
         layoutStatusOnSuccess: "", // when processed OK
-        layoutStatusOnError: "" // when process failed
+        layoutStatusOnError: "", // when process failed
     },
 
     // List of genres (that are applicable to the brand).
@@ -27,12 +27,12 @@ const plaDefaultConfig = {
     offlineFallback: {
         brand: {
             id: "1",
-            name: "WW News"
+            name: "WW News",
         },
         category: {
             id: "1",
-            name: "News"
-        }
+            name: "News",
+        },
     },
 
     // A log file can be created in a certain log folder.
@@ -42,14 +42,14 @@ const plaDefaultConfig = {
         filename: "pla.log",
         folder: "", // Directory where to create the log file.
         wipe: true, // Whether to clean the log file before starting a new operation.
-        logNetworkTraffic: false // Log all HTTP requests/responses. Requires "DEBUG" level.
+        logNetworkTraffic: false, // Log all HTTP requests/responses. Requires "DEBUG" level.
     },
 
     // Connection to the Layout Automation (AILA) service.
     plaServiceUrl: "https://service.aila.woodwing.cloud",
 
     // Error on attempts running scripts on older InDesign versions that are not compatible.
-    minimumRequiredInDesignVersion: "19.0.0"
+    minimumRequiredInDesignVersion: "19.0.0",
 };
 
 module.exports = plaDefaultConfig;

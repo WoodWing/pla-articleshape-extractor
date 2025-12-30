@@ -78,21 +78,21 @@ class PageLayoutSettings {
         return {
             dimensions: {
                 width: this.#roundTo3Decimals(doc.documentPreferences.pageWidth),
-                height: this.#roundTo3Decimals(doc.documentPreferences.pageHeight)
+                height: this.#roundTo3Decimals(doc.documentPreferences.pageHeight),
             },
             margins: {
                 top: this.#roundTo3Decimals(page.marginPreferences.top),
                 bottom: this.#roundTo3Decimals(page.marginPreferences.bottom),
                 inside: this.#roundTo3Decimals(page.marginPreferences.left),
-                outside: this.#roundTo3Decimals(page.marginPreferences.right)
+                outside: this.#roundTo3Decimals(page.marginPreferences.right),
             },
             columns: {
-                gutter: this.#roundTo3Decimals(page.marginPreferences.columnGutter)
+                gutter: this.#roundTo3Decimals(page.marginPreferences.columnGutter),
             },
             "baseline-grid": {
                 start: this.#roundTo3Decimals(baselineStart),
-                increment: this.#roundTo3Decimals(doc.gridPreferences.baselineDivision)
-            }
+                increment: this.#roundTo3Decimals(doc.gridPreferences.baselineDivision),
+            },
         };
     }
 
@@ -120,7 +120,7 @@ class PageLayoutSettings {
             baselineStart += page.marginPreferences.top;
             this.#logger.debug(
                 "Baseline start is configured as relative to top margin, but exported as relative to top of page: "
-                + `${doc.gridPreferences.baselineStart} (=start) + ${page.marginPreferences.top} (=top margin) = ${baselineStart}`
+                + `${doc.gridPreferences.baselineStart} (=start) + ${page.marginPreferences.top} (=top margin) = ${baselineStart}`,
             );
         }
         else {
@@ -183,7 +183,7 @@ class PageLayoutSettings {
     #diffInDesignPageLayoutGrid (lhsSettings, rhsSettings) {
         const pathsToCompare = [
             "columns.gutter",
-            "baseline-grid.increment"
+            "baseline-grid.increment",
             // Keep this list in sync with the diffInDesignPageLayoutGrid function in ArticleShapeUploader/modules/PageLayoutSettings.cjs
         ];
         for (const path of pathsToCompare) {

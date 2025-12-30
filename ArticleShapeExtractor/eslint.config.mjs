@@ -7,8 +7,8 @@ export default [
     // Skip 3rd party files.
     {
         ignores: [
-            "extensions/lodash.min.js"
-        ]
+            "extensions/lodash.min.js",
+        ],
     },
 
     // Base rules for all modules.
@@ -17,13 +17,13 @@ export default [
         plugins: { stylistic }, // code formatter
         ...js.configs.recommended,
         languageOptions: {
-            ecmaVersion: "latest"
+            ecmaVersion: "latest",
         },
         rules: {
             // formatting rules (ALL autofixable)
             "stylistic/brace-style": ["error", "stroustrup"],
             "stylistic/curly-newline": ["error", "always"],
-            "stylistic/comma-dangle": ["error", "never"],
+            "stylistic/comma-dangle": ["error", "always-multiline"],
             "stylistic/comma-spacing": ["error", { "before": false, "after": true }],
             "stylistic/eol-last": ["error", "always"],
             "stylistic/indent": ["error", 4],
@@ -38,9 +38,9 @@ export default [
             "stylistic/space-before-blocks": ["error", "always"],
             "stylistic/space-before-function-paren": ["error", "always"],
             "stylistic/space-in-parens": ["error", "never"],
-            "stylistic/space-infix-ops": "error"
+            "stylistic/space-infix-ops": "error",
             // L> Documentation: https://eslint.style/rules
-        }
+        },
     },
 
     // CommonJS modules.
@@ -57,9 +57,9 @@ export default [
                 alert: "readonly",
                 window: "readonly",
                 await: "readonly",
-                _: "readonly" // set globally by the lodash.min.js extension
-            }
-        }
+                _: "readonly", // set globally by the lodash.min.js extension
+            },
+        },
     },
 
     // Node ESM (only used for dev/tooling)
@@ -67,7 +67,7 @@ export default [
         files: ["**/*.mjs"],
         languageOptions: {
             sourceType: "module",
-            globals: globals.node
-        }
-    }
+            globals: globals.node,
+        },
+    },
 ];

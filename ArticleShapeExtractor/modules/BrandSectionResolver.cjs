@@ -19,7 +19,7 @@ class BrandSectionResolver {
     constructor (
         logger,
         fallbackBrand,
-        fallbackCategory
+        fallbackCategory,
     ) {
         this.#logger = logger;
         this.#fallbackBrand = fallbackBrand;
@@ -38,12 +38,12 @@ class BrandSectionResolver {
         let source = null;
         try {
             brand = app.entSession.getPublication(
-                doc.entMetaData.get("Core_Publication")
+                doc.entMetaData.get("Core_Publication"),
             );
             section = app.entSession.getCategory(
                 doc.entMetaData.get("Core_Publication"),
                 doc.entMetaData.get("Core_Section"),
-                doc.entMetaData.get("Core_Issue")
+                doc.entMetaData.get("Core_Issue"),
             );
             source = "document";
         }
@@ -54,7 +54,7 @@ class BrandSectionResolver {
         }
         this.#logger.info(
             `Resolved brand '${brand.name}' (id=${brand.id}) `
-            + `and category '${section.name}' (id=${section.id}) from ${source}.`
+            + `and category '${section.name}' (id=${section.id}) from ${source}.`,
         );
         return { brand, section };
     }

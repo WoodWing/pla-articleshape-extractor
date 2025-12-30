@@ -101,7 +101,7 @@ class GenreResolver {
             if (!this.#compareArraysOfStrings(this.#genres, genresOfPrecedingOperation)) {
                 this.#logger.error("Detected differences in configured genres:\n"
                     + `1) configured genres: ${JSON.stringify(this.#genres, null, 4)}\n`
-                    + `2) genres.json:\n${JSON.stringify(genresOfPrecedingOperation, null, 4)}\n`
+                    + `2) genres.json:\n${JSON.stringify(genresOfPrecedingOperation, null, 4)}\n`,
                 );
                 const { ConfigurationError } = require("./Errors.cjs");
                 const message = "\n"

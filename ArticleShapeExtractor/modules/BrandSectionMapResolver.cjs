@@ -51,7 +51,7 @@ class BrandSectionMapResolver {
             }
             brandSetup[publicationInfo.Name] =  {
                 id: String(publicationInfo.Id),
-                sections: categories
+                sections: categories,
             };
         }
         return brandSetup;

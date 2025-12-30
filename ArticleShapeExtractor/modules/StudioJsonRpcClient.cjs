@@ -49,7 +49,7 @@ class StudioJsonRpcClient {
     async getPublicationInfos (brandIds, requestInfo) {
         const url = this.#getStudioServerUrl();
         const request = {
-            Ticket: this.#ticket
+            Ticket: this.#ticket,
         };
         if (brandIds) {
             request["IDs"] = brandIds;
@@ -75,13 +75,13 @@ class StudioJsonRpcClient {
             "method": serviceName,
             "id": `${this.#rpcSequenceId}`,
             "params": [request],
-            "jsonrpc": "2.0"
+            "jsonrpc": "2.0",
         };
         const httpRequest = new Request(url, {
             mode: "cors",
             withCredentials: false,
             method: "POST",
-            body: JSON.stringify(rpcRequest)
+            body: JSON.stringify(rpcRequest),
         });
         try {
             const rpcResponse = await this.#fetchRpc(httpRequest, rpcRequest);
@@ -197,7 +197,7 @@ class StudioJsonRpcClient {
             "FirstEntry": firstEntry,
             "MaxEntries": 25,
             "RequestProps": resolveProperties,
-            "Order": [{ Property: "ID", Direction: true, __classname__: "QueryOrder" }] // oldest first
+            "Order": [{ Property: "ID", Direction: true, __classname__: "QueryOrder" }], // oldest first
         };
         const response = await this.#callWebService(url, request, "QueryObjects");
         return response;
@@ -242,10 +242,10 @@ class StudioJsonRpcClient {
                 Property: "StateId",
                 PropertyValues: [{
                     Value: statusId,
-                    __classname__: "PropertyValue"
+                    __classname__: "PropertyValue",
                 }],
-                __classname__: "MetaDataValue"
-            }]
+                __classname__: "MetaDataValue",
+            }],
         };
         await this.#callWebService(url, request, "MultiSetObjectProperties");
     }
@@ -260,7 +260,7 @@ class StudioJsonRpcClient {
         const request = {
             BrandIds: [brandId],
             __classname__: "CsPubGetAccessTokenRequest",
-            Ticket: this.#ticket
+            Ticket: this.#ticket,
         };
         const response = await this.#callWebService(url, request, "GetAccessToken");
         return response.Token;

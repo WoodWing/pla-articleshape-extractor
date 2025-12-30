@@ -93,10 +93,10 @@ class PlaService {
             withCredentials: false,
             headers: {
                 "Authorization": `Bearer ${accessToken}`,
-                "content-type": "application/json"
+                "content-type": "application/json",
             },
             body: body,
-            method: method
+            method: method,
         };
     }
 
@@ -115,7 +115,7 @@ class PlaService {
     composeSuggestArticleShapesRequestBody (
         genreId, shapeType,
         bodyLength, imageCount, quoteCount,
-        width, height, foldLine, shapeCount
+        width, height, foldLine, shapeCount,
     ) {
         // Fields below marked with a "*" have no meaning in the service request.
         // Because some are mandatory for the API/DTO, just some dummy data is provided.
@@ -133,12 +133,12 @@ class PlaService {
                 quote_count: quoteCount,
                 aimed_quote_count: null, // *
                 page_id: null, // *
-                genre_id: genreId
+                genre_id: genreId,
             },
             width: width,
             height: height,
             fold_line: foldLine,
-            shape_count: shapeCount
+            shape_count: shapeCount,
         };
     }
 

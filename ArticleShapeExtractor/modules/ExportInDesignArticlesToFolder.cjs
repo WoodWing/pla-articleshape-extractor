@@ -33,7 +33,7 @@ class ExportInDesignArticlesToFolder {
         inDesignArticleService,
         pageLayoutSettings,
         genreResolver,
-        brandSectionResolver
+        brandSectionResolver,
     ) {
         this.#logger = logger;
         this.#inDesignArticleService = inDesignArticleService;
@@ -137,7 +137,7 @@ class ExportInDesignArticlesToFolder {
                     "words": 0,
                     "characters": 0,
                     "firstParagraphStyle": "",
-                    "frames": []
+                    "frames": [],
                 };
 
                 // Add the name of the first paragraph style used in the chain of threaded frames.
@@ -157,7 +157,7 @@ class ExportInDesignArticlesToFolder {
                             "characters": textStats.charCount,
                             "textWrapMode": this.#getTextWrapMode(frame),
                             "totalLineHeight": this.#roundTo3Decimals(textStats.totalLineHeight),
-                            "text": textStats.text
+                            "text": textStats.text,
                         });
                         textComponent.words += textStats.wordCount;
                         textComponent.characters += textStats.charCount;
@@ -177,7 +177,7 @@ class ExportInDesignArticlesToFolder {
                 pageItems.push(element.itemRef);
                 articleShapeJson.imageComponents.push({
                     "geometricBounds": geometricBounds,
-                    "textWrapMode": this.#getTextWrapMode(element.itemRef)
+                    "textWrapMode": this.#getTextWrapMode(element.itemRef),
                 });
             }
             else if (this.#inDesignArticleService.isValid1DGraphicFrame(element.itemRef)) {
@@ -268,7 +268,7 @@ class ExportInDesignArticlesToFolder {
             "x": this.#roundTo3Decimals(pageItem.geometricBounds[1] - topLeftX),
             "y": this.#roundTo3Decimals(pageItem.geometricBounds[0] - topLeftY),
             "width": this.#roundTo3Decimals(pageItem.geometricBounds[3] - pageItem.geometricBounds[1]),
-            "height": this.#roundTo3Decimals(pageItem.geometricBounds[2] - pageItem.geometricBounds[0])
+            "height": this.#roundTo3Decimals(pageItem.geometricBounds[2] - pageItem.geometricBounds[0]),
         };
     }
 
@@ -312,11 +312,11 @@ class ExportInDesignArticlesToFolder {
                 "x": this.#roundTo3Decimals(outerBounds.topLeftX),
                 "y": this.#roundTo3Decimals(outerBounds.topLeftY),
                 "width": this.#roundTo3Decimals(outerBounds.bottomRightX - outerBounds.topLeftX),
-                "height": this.#roundTo3Decimals(outerBounds.bottomRightY - outerBounds.topLeftY)
+                "height": this.#roundTo3Decimals(outerBounds.bottomRightY - outerBounds.topLeftY),
             },
             "foldLine": null,
             "textComponents": [],
-            "imageComponents": []
+            "imageComponents": [],
         };
         // Set the foldLine property when the article shape does crossover the fold line of the spread.
         const geometricBoundsRight = articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
@@ -389,7 +389,7 @@ class ExportInDesignArticlesToFolder {
                 jpegQuality: idd.JPEGOptionsQuality.HIGH,
                 jpegRenderingStyle: idd.JPEGOptionsFormat.BASELINE_ENCODING,
                 exportResolution: 144, // DPI, screen resolution
-                jpegColorSpace: idd.JpegColorSpaceEnum.RGB
+                jpegColorSpace: idd.JpegColorSpaceEnum.RGB,
             });
             if (pageItems.length === 1) {
                 pageItems[0].exportFile(idd.ExportFormat.JPG, imgFile);
@@ -471,7 +471,7 @@ class ExportInDesignArticlesToFolder {
             wordCount: wordCount,
             charCount: charCount,
             text: text,
-            totalLineHeight: this.#roundTo3Decimals(totalLineHeight)
+            totalLineHeight: this.#roundTo3Decimals(totalLineHeight),
         };
     }
 

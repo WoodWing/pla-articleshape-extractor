@@ -69,7 +69,7 @@ class RegenerateArticleShapesService {
         await this.#studioJsonRpcClient.queryObjects(
             queryParams,
             resolveProperties,
-            (wflObjects) => this.#processQueriedLayouts(wflObjects, fileMap, folder, report)
+            (wflObjects) => this.#processQueriedLayouts(wflObjects, fileMap, folder, report),
         );
         return report;
     };
@@ -290,7 +290,7 @@ class RegenerateArticleShapesService {
             Property: property,
             Operation: operation,
             Value: value,
-            __classname__: "QueryParam"
+            __classname__: "QueryParam",
         };
     }
 }

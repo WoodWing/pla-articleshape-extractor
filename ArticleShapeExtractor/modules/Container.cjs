@@ -35,7 +35,7 @@ const Container = {
         this._registrations[service] = {
             factoryFunction: factoryFunction,
             providerType: providerType,
-            lastInstance: null
+            lastInstance: null,
         };
     },
 
@@ -78,7 +78,7 @@ const Container = {
             return "Unknown";
         }
         return obj.constructor.name;
-    }
+    },
 };
 
 module.exports = Container;
