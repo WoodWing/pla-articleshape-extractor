@@ -15,18 +15,18 @@ class InDesignArticleService {
      */
     addOrRenameInDesignArticle(articleName) {
         if (app.documents.length === 0) {
-            const { NoDocumentOpenedError } = require('./Errors.cjs');
+            const { NoDocumentOpenedError } = require("./Errors.cjs");
             throw new NoDocumentOpenedError();
         }
 
         if (app.selection.length === 0) {
-            const { NoFramesSelectedError } = require('./Errors.cjs');
+            const { NoFramesSelectedError } = require("./Errors.cjs");
             throw new NoFramesSelectedError();
         }
 
         const frame = app.selection[0];
         if (!this.isValidArticleComponentFrame(frame)) {
-            const { NoTextOrGraphicalFramesSelectedError } = require('./Errors.cjs');
+            const { NoTextOrGraphicalFramesSelectedError } = require("./Errors.cjs");
             throw new NoTextOrGraphicalFramesSelectedError();
         }
 

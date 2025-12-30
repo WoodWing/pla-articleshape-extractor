@@ -64,7 +64,7 @@ class HttpLogger {
      * @returns {string}
      */
     #composeHttpHeaders(headers) {
-        let message = '';
+        let message = "";
         if (headers && typeof headers.forEach === "function") {
             message += "Headers:\n";
             headers.forEach((value, key) => {
@@ -79,9 +79,9 @@ class HttpLogger {
      * @returns {string}
      */
     #composeJsonBody(jsonBody) {
-        let message = '';
+        let message = "";
         if (jsonBody) {
-            message += `Body:\n`;
+            message += "Body:\n";
             message += `${JSON.stringify(jsonBody, null, 3)}\n`;
         }
         return message;

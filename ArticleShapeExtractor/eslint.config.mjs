@@ -23,6 +23,7 @@ export default [
             // formatting rules (ALL autofixable)
             "stylistic/indent": ["error", 4],
             "stylistic/semi": ["error", "always"],
+            "stylistic/quotes": ["error", "double"],
             "stylistic/comma-dangle": ["error", "never"],
             "stylistic/object-curly-spacing": ["error", "always"]
         }

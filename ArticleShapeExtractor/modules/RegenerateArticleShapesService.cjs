@@ -55,7 +55,7 @@ class RegenerateArticleShapesService {
 
         // Bail out when user is currently not logged in.
         if (!this.#studioJsonRpcClient.hasSession() ) {
-            const { NoStudioSessionError } = require('./Errors.cjs');
+            const { NoStudioSessionError } = require("./Errors.cjs");
             throw new NoStudioSessionError();
         }
 
@@ -92,7 +92,7 @@ class RegenerateArticleShapesService {
             if (mapItem && mapItem.layoutVersion === wflObject.Version) {
                 this.#logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
                     `Article Shapes (JSON files) for layout id ${wflObject.ID} with version ${wflObject.Version} ` +
-                    'already exists in export folder.');
+                    "already exists in export folder.");
                 skippedLayoutIds.push(wflObject.ID);
             } else {
                 // If query has newer layout version, remove files of old version from disk.
@@ -154,7 +154,7 @@ class RegenerateArticleShapesService {
      * @param {string} statusName 
      */
     #raiseStatusConfigError(statusName) {
-        const { ConfigurationError } = require('./Errors.cjs');
+        const { ConfigurationError } = require("./Errors.cjs");
         const message = `\nStatus '${statusName}' seems not configured for `
             + `brand '${this.#settings.filter.brand}'.\n`
             + "Please check the 'regenerateArticleShapesSettings' option "
@@ -259,7 +259,7 @@ class RegenerateArticleShapesService {
         const queryParams = [];
         for (const setting in settingToProperty) {
             if (Object.prototype.hasOwnProperty.call(settingToProperty, setting)) {
-                if (['issue', 'category'].includes(setting) 
+                if (["issue", "category"].includes(setting) 
                     && this.#settings.filter[setting].length === 0) {
                     continue; // these filters can be left empty, which refers to 'all'
                 }

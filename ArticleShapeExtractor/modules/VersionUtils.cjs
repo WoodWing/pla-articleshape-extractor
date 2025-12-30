@@ -10,8 +10,8 @@ class VersionUtils {
      * @returns {Number} Zero when equal, or -1 when versionLhs is smaller or 1 when bigger.
      */
     versionCompare(versionLhs, versionRhs) {
-        const digitsLhs = versionLhs.split('.').map(Number);
-        const digitsRhs = versionRhs.split('.').map(Number);
+        const digitsLhs = versionLhs.split(".").map(Number);
+        const digitsRhs = versionRhs.split(".").map(Number);
         const length = Math.max(digitsLhs.length, digitsRhs.length);
         for (let i = 0; i < length; i++) {
             const digitLhs = i < digitsLhs.length ? digitsLhs[i] : 0;

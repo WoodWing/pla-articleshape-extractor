@@ -44,7 +44,7 @@ class FitArticleWithAIService {
 
         // Bail out when user is currently not logged in.
         if (!this.#studioJsonRpcClient.hasSession() ) {
-            const { NoStudioSessionError } = require('./Errors.cjs');
+            const { NoStudioSessionError } = require("./Errors.cjs");
             throw new NoStudioSessionError();
         }
 
@@ -83,9 +83,9 @@ class FitArticleWithAIService {
         if (downloadUrls.length === 0) {
             const message = "No article shape suggestions found:\n"
                 + `- within the brand '${brand.name}' (id=${brand.id}) and section '${section.name}' (id=${section.id})`
-                + (genreId ? ` and genre '${genreId}'` : '') + ";\n"
+                + (genreId ? ` and genre '${genreId}'` : "") + ";\n"
                 + `- having dimension of ${width} columns and ${height} rows;\n`
-                + "- having " + (foldLine ? `a fold line between columns ${foldLine} and ${foldLine+1}` : 'no fold line') + ".\n";
+                + "- having " + (foldLine ? `a fold line between columns ${foldLine} and ${foldLine+1}` : "no fold line") + ".\n";
             throw new Error(message);
         }
         const articleShapeFiles = [];
@@ -105,8 +105,8 @@ class FitArticleWithAIService {
      * @returns {File}
      */
     async #writeArticleJsonToTemp(articleJson) {
-        const lfs = require('uxp').storage.localFileSystem;
-        const formats = require('uxp').storage.formats;
+        const lfs = require("uxp").storage.localFileSystem;
+        const formats = require("uxp").storage.formats;
 
         const tempFolder = await lfs.getTemporaryFolder();
         const uniqueName = `article_shape_${Date.now()}_${Math.floor(Math.random() * 1000000)}.json`;

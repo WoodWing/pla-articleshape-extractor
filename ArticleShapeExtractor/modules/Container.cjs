@@ -6,7 +6,7 @@ const Container = {
      * @param {Function} factoryFunction
      */    
     registerFactory: function(service, factoryFunction) {
-        this._register(service, factoryFunction, 'factory');
+        this._register(service, factoryFunction, "factory");
     },
 
     /**
@@ -14,7 +14,7 @@ const Container = {
      * @param {Function} factoryFunction
      */    
     registerSingleton: function(service, factoryFunction) {
-        this._register(service, factoryFunction, 'singleton');
+        this._register(service, factoryFunction, "singleton");
     },
 
     /**
@@ -29,7 +29,7 @@ const Container = {
         if (this._registrations[service]) {
             throw new Error("Service '" + service + "' is already registered.");
         }
-        if (providerType !== 'singleton' && providerType !== 'factory') {
+        if (providerType !== "singleton" && providerType !== "factory") {
             throw new Error("Provider type '" + providerType + "' is unknown.");
         }
         this._registrations[service] = {
@@ -49,8 +49,8 @@ const Container = {
         }
         let registration = this._registrations[service];
         if (
-            (registration.providerType === 'singleton' && registration.lastInstance === null) 
-            || registration.providerType === 'factory'
+            (registration.providerType === "singleton" && registration.lastInstance === null) 
+            || registration.providerType === "factory"
         ) {
             const createdInstance = registration.factoryFunction();
             if(typeof createdInstance !== "object") {

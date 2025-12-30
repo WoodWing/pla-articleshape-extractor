@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require("fs");
 
 /**
  * Understands how to write messages of given severity to a log file.
@@ -143,11 +143,11 @@ class Logger {
         const template = args.shift();
         // Replace undefined arguments with '*undefined*' to distinguish from ''
         args.forEach(function(replacement, i) {
-            if (typeof replacement === 'undefined') {
-                args[i] = '*undefined*';
+            if (typeof replacement === "undefined") {
+                args[i] = "*undefined*";
             }
         });		
-        const message = template.includes('{') && template.includes('}')
+        const message = template.includes("{") && template.includes("}")
             ? template.replace(/{}/g, () => args.shift())
             : template;		
         this.#writeLine(logLevel, message);
@@ -180,7 +180,7 @@ class Logger {
     };
 
     #getLogFilepath() {
-        return `file:${this.#path.rtrim('/')}/${this.#name}`;
+        return `file:${this.#path.rtrim("/")}/${this.#name}`;
     };
 
     /**

@@ -78,16 +78,16 @@ class StudioJsonRpcClient {
             "jsonrpc": "2.0"
         };
         const httpRequest = new Request(url, {
-            mode: 'cors',
+            mode: "cors",
             withCredentials: false,
-            method: 'POST',
+            method: "POST",
             body: JSON.stringify(rpcRequest)
         });
         try {
             const rpcResponse = await this.#fetchRpc(httpRequest, rpcRequest);
             return rpcResponse.result;
         } catch (error) {
-            const { StudioServerCommunicationError } = require('./Errors.cjs');
+            const { StudioServerCommunicationError } = require("./Errors.cjs");
             throw new StudioServerCommunicationError(`${serviceName} service failed.\n${error.message}`);
         }
 
@@ -169,7 +169,7 @@ class StudioJsonRpcClient {
             }
         } while (response.ListedEntries > 0 && queryCount < maxQueryHit);
         if (queryCount === maxQueryHit) {
-            const { PrintLayoutAutomationError } = require('./Errors.cjs');
+            const { PrintLayoutAutomationError } = require("./Errors.cjs");
             throw new PrintLayoutAutomationError(`Too many QueryObjects executed: ${maxQueryHit}.`);
         }
     };
@@ -182,9 +182,9 @@ class StudioJsonRpcClient {
      * @returns {Object} QueryObjectsResponse
      */
     async #queryObjectsOneResultPage(searchParams, resolveProperties, firstEntry) {
-        const startsWithProps = ['ID', 'Type', 'Name']; // service rule: must start with this sequence of props
+        const startsWithProps = ["ID", "Type", "Name"]; // service rule: must start with this sequence of props
         if( !startsWithProps.every((value, index) => resolveProperties[index] === value) ) {
-            const { ArgumentError } = require('./Errors.cjs');
+            const { ArgumentError } = require("./Errors.cjs");
             throw new ArgumentError("The 'resolveProperties' param should start with 'ID', 'Name' and 'Type' values.");
         }
         const url = this.#getStudioServerUrl();
@@ -287,7 +287,7 @@ class StudioJsonRpcClient {
      * @returns {string}
      */
     #getUrlParamSeparator(url) {
-        return url.indexOf("?") === -1 ? '?' : '&';
+        return url.indexOf("?") === -1 ? "?" : "&";
     }
 }
 

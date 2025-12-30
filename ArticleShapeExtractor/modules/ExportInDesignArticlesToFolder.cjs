@@ -52,7 +52,7 @@ class ExportInDesignArticlesToFolder {
             return 0;
         }
 
-        const lfs = require('uxp').storage.localFileSystem;
+        const lfs = require("uxp").storage.localFileSystem;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this.#logger.info("Extracting InDesign Articles for layout document '{}'.", docName);
 
@@ -94,7 +94,7 @@ class ExportInDesignArticlesToFolder {
             let message = null;
             if (genreIds.length === 0) {
                 message = `Article '${article.name}' could not be exported because `
-                    + `it's name does not contain any of the configured genres.`;
+                    + "it's name does not contain any of the configured genres.";
             } else if (genreIds.length > 1) {
                 message = `Article '${article.name}' could not be exported because `
                     + `it's name contains multiple of the configured genres: ${genreIds}.`;
@@ -229,10 +229,10 @@ class ExportInDesignArticlesToFolder {
      * @returns {String}
      */
     async #getFileBaseName(doc, folder, shapeTypeName, articleIndex) {
-        let fileName = doc.name + ' ' + shapeTypeName + ' ' + (articleIndex + 1);
+        let fileName = doc.name + " " + shapeTypeName + " " + (articleIndex + 1);
         try {
             // Get workflow object ID and Version from Studio.
-            fileName = fileName + ' (' + doc.entMetaData.get("Core_ID") + '.v' + doc.entMetaData.get("Version") + ')';
+            fileName = fileName + " (" + doc.entMetaData.get("Core_ID") + ".v" + doc.entMetaData.get("Version") + ")";
         } catch {
             // Use path of layout to make file name unique.
             if (doc.saved) {
@@ -240,7 +240,7 @@ class ExportInDesignArticlesToFolder {
                 let suffix = window.path.dirname(docFile);
                 suffix = suffix.ltrim(window.path.sep).rtrim(window.path.sep);
                 suffix = suffix.replaceAll(window.path.sep, "-");
-                fileName = fileName + ' (' + suffix + ")";
+                fileName = fileName + " (" + suffix + ")";
             }
         }
         return window.path.join(folder, fileName);
@@ -348,7 +348,7 @@ class ExportInDesignArticlesToFolder {
      * @returns {Boolean} Whether or not successful.
      */
     async #exportArticlePageItems(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
-        const lfs = require('uxp').storage.localFileSystem;
+        const lfs = require("uxp").storage.localFileSystem;
 
         const baseFileName = await this.#getFileBaseName(doc, folder, shapeTypeName, articleIndex);
         const snippetFile = await lfs.createEntryWithUrl(baseFileName + ".idms", { overwrite: true });
@@ -365,7 +365,7 @@ class ExportInDesignArticlesToFolder {
         doc.exportPageItemsToSnippet(snippetFile, pageItemsIds);
 
         // Export JPEG image.
-        const PreferencesManager = require('./PreferencesManager.cjs');
+        const PreferencesManager = require("./PreferencesManager.cjs");
         const preferencesManager = new PreferencesManager(app.jpegExportPreferences);
         let originalPreferences = null;
         let group = null;
@@ -420,7 +420,7 @@ class ExportInDesignArticlesToFolder {
             const jsonString = JSON.stringify(jsonData, null, 4);
 
             // Write the JSON string to the file
-            const formats = require('uxp').storage.formats;
+            const formats = require("uxp").storage.formats;
             await file.write(jsonString, { format: formats.utf8 });
             isSaved = true;
         } catch (error) {

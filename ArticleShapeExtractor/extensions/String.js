@@ -4,13 +4,13 @@
  * @returns {String}
  */
 String.prototype.ltrim = function(characters) {
-    const escaped = characters ? this._escapeRegExChars(characters) : '\\s';
-    const regex = new RegExp(`^[${escaped}]+`, 'g');
-    return this.replace(regex, '');
+    const escaped = characters ? this._escapeRegExChars(characters) : "\\s";
+    const regex = new RegExp(`^[${escaped}]+`, "g");
+    return this.replace(regex, "");
 };
 
 String.prototype._escapeRegExChars = function(characters) {
-    return characters.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
+    return characters.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
 };
 
 /**
@@ -19,8 +19,8 @@ String.prototype._escapeRegExChars = function(characters) {
  * @returns {String}
  */
 String.prototype.rtrim = function(characters) {
-    const escaped = characters ? this._escapeRegExChars(characters) : '\\s';
-    const regex = new RegExp(`[${escaped}]+$`, 'g');
-    return this.replace(regex, '');
+    const escaped = characters ? this._escapeRegExChars(characters) : "\\s";
+    const regex = new RegExp(`[${escaped}]+$`, "g");
+    return this.replace(regex, "");
 };
 

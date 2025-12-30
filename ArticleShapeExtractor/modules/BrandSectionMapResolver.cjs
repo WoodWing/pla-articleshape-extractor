@@ -64,8 +64,8 @@ class BrandSectionMapResolver {
     async #saveBrandSectionMapToDisk(brandSectionMap, exportFolder) {
         const filepath = window.path.join(exportFolder, "_manifest", "brand-section-map.json");
         await this.#fileUtils.getOrCreateSubFolder(exportFolder, "_manifest");
-        const lfs = require('uxp').storage.localFileSystem;
-        const formats = require('uxp').storage.formats;
+        const lfs = require("uxp").storage.localFileSystem;
+        const formats = require("uxp").storage.formats;
         const jsonFile = await lfs.createEntryWithUrl(filepath, { overwrite: true });
         const jsonString = JSON.stringify(brandSectionMap, null, 4);
         await jsonFile.write(jsonString, { format: formats.utf8 }); 

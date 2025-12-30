@@ -1,7 +1,7 @@
 const { app } = require("indesign");
 const idd = require("indesign");
-const lfs = require('uxp').storage.localFileSystem;
-const formats = require('uxp').storage.formats;
+const lfs = require("uxp").storage.localFileSystem;
+const formats = require("uxp").storage.formats;
 
 /**
  * Understands how to get the settings from InDesign as shown in the Margins and Columns dialog.
@@ -38,7 +38,7 @@ class PageLayoutSettings{
         app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
         try {
             if (doc.pages.length === 0) {
-                const { NoDocumentPagesError } = require('./Errors.cjs');
+                const { NoDocumentPagesError } = require("./Errors.cjs");
                 throw new NoDocumentPagesError();
             }
             for (let i = 0; i < doc.pages.length; i++) {
@@ -52,7 +52,7 @@ class PageLayoutSettings{
             await this.#saveOrComparePageLayoutSettings(settings, folder);
             exportedSuccessfully = true;
         } catch(error) {
-            const { ConfigurationError } = require('./Errors.cjs');
+            const { ConfigurationError } = require("./Errors.cjs");
             if (error instanceof ConfigurationError) {
                 this.#logger.error(error.message);
             } else {
@@ -116,7 +116,7 @@ class PageLayoutSettings{
         if (isGridRelativeToPageMargins) {
             baselineStart += page.marginPreferences.top;
             this.#logger.debug(
-                `Baseline start is configured as relative to top margin, but exported as relative to top of page: `
+                "Baseline start is configured as relative to top margin, but exported as relative to top of page: "
                 + `${doc.gridPreferences.baselineStart} (=start) + ${page.marginPreferences.top} (=top margin) = ${baselineStart}`
             );
         } else {
@@ -149,7 +149,7 @@ class PageLayoutSettings{
             const settingsJson = JSON.stringify(settings, null, 4);
             const byteCount = await settingsFile.write(settingsJson, { format: formats.utf8 }); 
             if (!byteCount ) {
-                const { ConfigurationError } = require('./Errors.cjs');
+                const { ConfigurationError } = require("./Errors.cjs");
                 const message = `Could not write into file "${manifestFoldername}/${settingsFilename}".\nPlease check access rights.`;
                 throw new ConfigurationError(message);
             }
@@ -157,9 +157,9 @@ class PageLayoutSettings{
             const settingsOfPrecedingLayout = JSON.parse(await settingsFile.read({ format: formats.utf8 }));
             const diff = this.#diffInDesignPageLayoutGrid(settings, settingsOfPrecedingLayout);
             if (diff != null) {
-                const { ConfigurationError } = require('./Errors.cjs');
+                const { ConfigurationError } = require("./Errors.cjs");
                 const message = "\n" 
-                    + `A page setting for the current layout differs from the preceding layout, processed before.\n`
+                    + "A page setting for the current layout differs from the preceding layout, processed before.\n"
                     + `The '${diff.propertyPath}' setting for the current layout is '${diff.lhsValue}' but for the preceding layout is '${diff.rhsValue}'.\n`
                     + `Settings of the preceding layout were saved in '${manifestFoldername}/${settingsFilename}'.\n`
                     + "For both layouts, check settings for menu items 'Document Setup' and 'Margins and Columns'.\n"
@@ -198,7 +198,7 @@ class PageLayoutSettings{
      * @returns {Any}
      */
     #getPropertyValueByPath(obj, path) {
-        return path.split('.').reduce((acc, key) => acc?.[key], obj);
+        return path.split(".").reduce((acc, key) => acc?.[key], obj);
     }
 }
 

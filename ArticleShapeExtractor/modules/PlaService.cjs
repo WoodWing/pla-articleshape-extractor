@@ -32,13 +32,13 @@ class PlaService {
      */
     async getSheetDimensions(accessToken, brandId) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/sheet-dimensions`;
-        const httpRequest = new Request(url, this.#requestInitForPlaService(accessToken, 'GET'));
+        const httpRequest = new Request(url, this.#requestInitForPlaService(accessToken, "GET"));
         try {
             const jsonResponseBody = await this.#fetchJson(httpRequest, null);
             this.#logger.info(`Retrieved ${jsonResponseBody.length} sheet dimensions.`);
             return jsonResponseBody;
         } catch (error) {
-            const { PlaServiceCommunicationError } = require('./Errors.cjs');
+            const { PlaServiceCommunicationError } = require("./Errors.cjs");
             throw new PlaServiceCommunicationError(`Could not retrieve sheet dimensions.\n${error.message}`);
         }
     }
@@ -86,11 +86,11 @@ class PlaService {
      */
     #requestInitForPlaService(accessToken, method, body=null) {
         return {
-            mode: 'cors',
+            mode: "cors",
             withCredentials: false,
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'content-type': 'application/json'
+                "Authorization": `Bearer ${accessToken}`,
+                "content-type": "application/json"
             },
             body: body,
             method: method
@@ -150,7 +150,7 @@ class PlaService {
     async suggestArticleShapes(accessToken, brandId, sectionId, jsonRequestBody) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/sections/${sectionId}/suggest-article-shapes`
             + "?renditions=composition"; // ask for article JSON file
-        const requestInit = this.#requestInitForPlaService(accessToken, 'PUT', JSON.stringify(jsonRequestBody));
+        const requestInit = this.#requestInitForPlaService(accessToken, "PUT", JSON.stringify(jsonRequestBody));
         const httpRequest = new Request(url, requestInit);
         try {
             const jsonResponseBody = await this.#fetchJson(httpRequest, jsonRequestBody);
@@ -163,7 +163,7 @@ class PlaService {
             });
             return downloadUrls;
         } catch (error) {
-            const { PlaServiceCommunicationError } = require('./Errors.cjs');
+            const { PlaServiceCommunicationError } = require("./Errors.cjs");
             throw new PlaServiceCommunicationError(`Could not retrieve shape suggestions.\n${error.message}`);
         }
     }

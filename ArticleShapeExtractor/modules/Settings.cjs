@@ -26,7 +26,7 @@ class Settings {
      * @returns {{{brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}}
      */    
     getRegenerateArticleShapesSettings() {
-        const { ConfigurationError } = require('./Errors.cjs');
+        const { ConfigurationError } = require("./Errors.cjs");
         const settings = this.#configData.regenerateArticleShapesSettings;
         const tip = "Please check your 'config/config.js' and your 'config/config-local.js' files.";
         for (const paramName of ["brand", "issue", "category", "status"]) {
