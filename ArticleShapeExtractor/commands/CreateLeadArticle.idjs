@@ -1,4 +1,4 @@
-await (async function main() {
+await (async function main () {
     const initBootstrap = require("../bootstrap.js");
     const Container = require("../modules/Container.cjs");
 

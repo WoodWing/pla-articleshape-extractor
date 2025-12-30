@@ -34,7 +34,7 @@ class RegenerateArticleShapesService {
      * @param {ExportInDesignArticlesToFolder} exportInDesignArticlesToFolder
      * @param {StudioJsonRpcClient} studioJsonRpcClient
      */
-    constructor(logger, versionUtils, settings, exportInDesignArticlesToFolder, studioJsonRpcClient) {
+    constructor (logger, versionUtils, settings, exportInDesignArticlesToFolder, studioJsonRpcClient) {
         this.#logger = logger;
         this.#versionUtils = versionUtils;
         this.#settings = settings;
@@ -51,7 +51,7 @@ class RegenerateArticleShapesService {
      * optimization. All processed layouts (regardless whether skipped) are sent to their next status in the workflow.
      * @param {Folder} folder
      */
-    async run(folder) {
+    async run (folder) {
 
         // Bail out when user is currently not logged in.
         if (!this.#studioJsonRpcClient.hasSession() ) {
@@ -81,7 +81,7 @@ class RegenerateArticleShapesService {
      * @param {Folder} folder Target folder for exporting.
      * @param {{extracted: number, skipped: number, failed: number}} report
      */
-    async #processQueriedLayouts(wflObjects, fileMap, folder, report) {
+    async #processQueriedLayouts (wflObjects, fileMap, folder, report) {
         const extractedLayoutIds = [];
         const skippedLayoutIds = [];
         const failedLayoutIds = [];
@@ -129,7 +129,7 @@ class RegenerateArticleShapesService {
     /**
      * @param {string} brandId
      */
-    async #resolveLayoutStatusIds(brandId) {
+    async #resolveLayoutStatusIds (brandId) {
         if (this.#layoutStatusIdOnSuccess !== null && this.#layoutStatusIdOnError !== null) {
             return;
         }
@@ -156,7 +156,7 @@ class RegenerateArticleShapesService {
      * Informs the status name in local config file is not setup for the brand.
      * @param {string} statusName
      */
-    #raiseStatusConfigError(statusName) {
+    #raiseStatusConfigError (statusName) {
         const { ConfigurationError } = require("./Errors.cjs");
         const message = `\nStatus '${statusName}' seems not configured for `
             + `brand '${this.#settings.filter.brand}'.\n`
@@ -171,7 +171,7 @@ class RegenerateArticleShapesService {
      * @param {Folder} folder
      * @returns {Promise<Map<string,{layoutVersion:<string>,shapeFiles:Array<File>}>>} Structured map, indexed by layout id.
      */
-    async #buildMapOfLayoutIdsVersionsAndFiles(folder) {
+    async #buildMapOfLayoutIdsVersionsAndFiles (folder) {
         const shapeFiles = await this.#filterArticleShapeFiles(folder);
         //this.#logger.info('Resolved layouts from files: {}', JSON.stringify(Object.fromEntries(shapeFiles), null, 4));
         const fileMap = new Map();
@@ -208,7 +208,7 @@ class RegenerateArticleShapesService {
      * @param {Folder} folder
      * @returns {Promise<Array<{shapeFile: File, layoutId: string, layoutVersion: string}>>}
      */
-    async #filterArticleShapeFiles(folder) {
+    async #filterArticleShapeFiles (folder) {
         const entriesInFolder = await folder.getEntries();
         const filesInFolder = entriesInFolder.filter(entry => entry.isFile);
         const result = [];
@@ -228,7 +228,7 @@ class RegenerateArticleShapesService {
      * @param {string} filename
      * @returns {[string, string] | null} Tuple of [layoutId, version] if matching postfix, null otherwise.
      */
-    #extractLayoutIdAndVersionFromFilename(filename) {
+    #extractLayoutIdAndVersionFromFilename (filename) {
         const filenameRegex = /\(([^)]+)\.v(\d+)\.(\d+)\)\./;
         const match = filename.match(filenameRegex);
         if (!match) {
@@ -243,7 +243,7 @@ class RegenerateArticleShapesService {
      * Remove a file from disk. Log warning on failure.
      * @param {File} file
      */
-    async #deleteFile(file) {
+    async #deleteFile (file) {
         this.#logger.debug(`Deleting file: ${file.name}`);
         try {
             await file.delete();
@@ -257,7 +257,7 @@ class RegenerateArticleShapesService {
      * Use the local filter settings to compose search params (applicable to the QueryObjects workflow service).
      * @returns {Array<{Property: string, Operation: string, Value: string, __classname__: string}>} List of QueryParam objects.
      */
-    #composeQueryParams() {
+    #composeQueryParams () {
         // Map the local filter settings onto the workflow object property names.
         const settingToProperty = { brand: "Publication", issue: "Issue", category: "Category", status: "State" };
         const queryParams = [];
@@ -285,7 +285,7 @@ class RegenerateArticleShapesService {
      * @param {string} value
      * @returns {{Property: string, Operation: string, Value: string, __classname__: string}} QueryParam object.
      */
-    #composeQueryParam(property, operation, value) {
+    #composeQueryParam (property, operation, value) {
         return {
             Property: property,
             Operation: operation,

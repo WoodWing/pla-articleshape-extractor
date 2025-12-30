@@ -28,7 +28,7 @@ class ExportInDesignArticlesToFolder {
      * @param {GenreResolver} genreResolver
      * @param {BrandSectionResolver} brandSectionResolver
      */
-    constructor(
+    constructor (
         logger,
         inDesignArticleService,
         pageLayoutSettings,
@@ -47,7 +47,7 @@ class ExportInDesignArticlesToFolder {
      * @param {Folder} folder
      * @returns {Number} Count of exported article shapes.
      */
-    async run(doc, folder) {
+    async run (doc, folder) {
         if (!(await this.#pageLayoutSettings.exportSettings(doc, folder))) {
             return 0;
         }
@@ -75,7 +75,7 @@ class ExportInDesignArticlesToFolder {
      * @param {Number} articleIndex
      * @returns {Boolean} Whether or not successful.
      */
-    async #exportArticle(doc, folder, article, articleIndex) {
+    async #exportArticle (doc, folder, article, articleIndex) {
         const elements = article.articleMembers.everyItem().getElements();
         const outerBounds = this.#getOuterboundOfArticleShape(elements);
         let articleShapeJson = this.#composeArticleShapeJson(doc, article.name, outerBounds);
@@ -125,7 +125,7 @@ class ExportInDesignArticlesToFolder {
      * @param {Object} articleShapeJson
      * @returns {Array<Object>} Page items.
      */
-    #collectArticlePageItems(article, elements, outerBounds, articleShapeJson) {
+    #collectArticlePageItems (article, elements, outerBounds, articleShapeJson) {
         let pageItems = []; // Collect all associated page items for the article.
         for (let elementIndex = 0; elementIndex < elements.length; elementIndex++) {
             const element = elements[elementIndex];
@@ -203,7 +203,7 @@ class ExportInDesignArticlesToFolder {
      * @param {String} articleName
      * @returns {Object|null}
      */
-    #resolveShapeTypeFromArticleName(articleName) {
+    #resolveShapeTypeFromArticleName (articleName) {
         let shapeType = { id: null, name: null };
         articleName = articleName.toLowerCase();
         if (articleName.indexOf("lead") != -1) {
@@ -237,7 +237,7 @@ class ExportInDesignArticlesToFolder {
      * @param {Number} articleIndex
      * @returns {String}
      */
-    async #getFileBaseName(doc, folder, shapeTypeName, articleIndex) {
+    async #getFileBaseName (doc, folder, shapeTypeName, articleIndex) {
         let fileName = doc.name + " " + shapeTypeName + " " + (articleIndex + 1);
         try {
             // Get workflow object ID and Version from Studio.
@@ -263,7 +263,7 @@ class ExportInDesignArticlesToFolder {
      * @param {PageItem} pageItem - TextFrame, Rectangle, etc
      * @returns {Object}
      */
-    #composeGeometricBounds(topLeftX, topLeftY, pageItem) {
+    #composeGeometricBounds (topLeftX, topLeftY, pageItem) {
         return {
             "x": this.#roundTo3Decimals(pageItem.geometricBounds[1] - topLeftX),
             "y": this.#roundTo3Decimals(pageItem.geometricBounds[0] - topLeftY),
@@ -277,7 +277,7 @@ class ExportInDesignArticlesToFolder {
      * @param {Number} precisionNumber
      * @returns {Number}
      */
-    #roundTo3Decimals(precisionNumber) {
+    #roundTo3Decimals (precisionNumber) {
         return Math.round(precisionNumber * 1000) / 1000;
     }
 
@@ -288,7 +288,7 @@ class ExportInDesignArticlesToFolder {
      * @param {Object} outerBounds
      * @returns {Object|null}
      */
-    #composeArticleShapeJson(doc, articleName, outerBounds) {
+    #composeArticleShapeJson (doc, articleName, outerBounds) {
 
         // Resolve brand and section from layout doc (or use fallback settings).
         const { brand, section } = this.#brandSectionResolver.resolve(doc);
@@ -335,7 +335,7 @@ class ExportInDesignArticlesToFolder {
      * @param {Array} pageItems
      * @returns
      */
-    #arePageItemsOnSameSpread(pageItems) {
+    #arePageItemsOnSameSpread (pageItems) {
         if (pageItems.length === 0) {
             return true;
         }
@@ -357,7 +357,7 @@ class ExportInDesignArticlesToFolder {
      * @param {Object} articleShapeJson
      * @returns {Boolean} Whether or not successful.
      */
-    async #exportArticlePageItems(doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
+    async #exportArticlePageItems (doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
         const lfs = require("uxp").storage.localFileSystem;
 
         const baseFileName = await this.#getFileBaseName(doc, folder, shapeTypeName, articleIndex);
@@ -426,7 +426,7 @@ class ExportInDesignArticlesToFolder {
      * @param {File} file
      * @returns {Boolean} Whether or not successful.
      */
-    async #saveJsonToDisk(jsonData, file) {
+    async #saveJsonToDisk (jsonData, file) {
         let isSaved = false;
         try {
             // Convert JSON object to a string
@@ -449,7 +449,7 @@ class ExportInDesignArticlesToFolder {
      * @param {TextFrame} textFrame - The text frame to analyze.
      * @returns {Object} - An object containing word count, character count and text without overset.
      */
-    #getTextStatisticsWithoutOverset(textFrame) {
+    #getTextStatisticsWithoutOverset (textFrame) {
 
         // Extract only the visible text (not overset)
         const visibleText = textFrame.lines;
@@ -489,7 +489,7 @@ class ExportInDesignArticlesToFolder {
      *                         bottomRightY: {Number} - The largest Y coordinate of the bounding box's bottom-right corner.
      *                     }
      */
-    #getOuterboundOfArticleShape(elements) {
+    #getOuterboundOfArticleShape (elements) {
         let topLeftX = 0;
         let topLeftY = 0;
         let bottomRightX = 0;
@@ -541,7 +541,7 @@ class ExportInDesignArticlesToFolder {
      * @param {TextFrame} textFrame - The starting text frame.
      * @returns {Array} - An array of all threaded text frames, including the starting frame.
      */
-    #getThreadedFrames(textFrame) {
+    #getThreadedFrames (textFrame) {
         let threadedFrames = [];
         let currentFrame = textFrame;
 
@@ -566,7 +566,7 @@ class ExportInDesignArticlesToFolder {
      * @param {PageItem|null} frame - The InDesign frame object (e.g., TextFrame, GraphicFrame).
      * @returns {String} - Name of the text wrap mode
      */
-    #getTextWrapMode(frame) {
+    #getTextWrapMode (frame) {
         if (!this.#inDesignArticleService.isValidArticleComponentFrame(frame)) {
             alert("Invalid frame.");
             return null;
@@ -599,7 +599,7 @@ class ExportInDesignArticlesToFolder {
      * @param {Line} line
      * @returns {Number}
      */
-    #getLineHeight(line) {
+    #getLineHeight (line) {
         if (line.characters.length === 0) {
             return 0;
         }

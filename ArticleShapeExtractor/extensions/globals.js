@@ -4,7 +4,7 @@
  * @param {String|undefined} caption
  * @returns
  */
-globalThis.alert = function(msg, caption) {
+globalThis.alert = function (msg, caption) {
     const { app } = require("indesign");
     const theDialog = app.dialogs.add({ name: caption || "Alert" });
     const col = theDialog.dialogColumns.add();

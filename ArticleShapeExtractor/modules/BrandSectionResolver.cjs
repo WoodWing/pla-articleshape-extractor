@@ -16,7 +16,7 @@ class BrandSectionResolver {
      * @param {{id: string, name: string}} fallbackBrand
      * @param {{id: string, name: string}} fallbackCategory
      */
-    constructor(
+    constructor (
         logger,
         fallbackBrand,
         fallbackCategory
@@ -32,7 +32,7 @@ class BrandSectionResolver {
      * @param {Document} doc
      * @returns {{brand: {id: string, name: string}, section: {id: string, name: string}}}
      */
-    resolve(doc) {
+    resolve (doc) {
         let brand = null;
         let section = null;
         let source = null;

@@ -1,4 +1,4 @@
-await (async function main() {
+await (async function main () {
     const { app } = require("indesign");
     const initBootstrap = require("../bootstrap.js");
     const Container = require("../modules/Container.cjs");
@@ -40,7 +40,7 @@ await (async function main() {
         }
         alert(exportCounter + " articles have been exported as Article Shapes.");
     }
-    catch(error) {
+    catch (error) {
         Container.resolve("Logger").logError(error);
         alert(error.message, "Error");
     }

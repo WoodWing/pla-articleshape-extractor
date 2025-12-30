@@ -17,7 +17,7 @@ class PlaService {
      * @param {HttpLogger} httpLogger
      * @param {string} plaServiceUrl
      */
-    constructor(logger, httpLogger, plaServiceUrl) {
+    constructor (logger, httpLogger, plaServiceUrl) {
         this.#logger = logger;
         this.#httpLogger = httpLogger;
         this.#plaServiceUrl = plaServiceUrl;
@@ -30,7 +30,7 @@ class PlaService {
      * @param {string} brandId
      * @returns {Array<Object>} List of sheet dimension DTOs.
      */
-    async getSheetDimensions(accessToken, brandId) {
+    async getSheetDimensions (accessToken, brandId) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/sheet-dimensions`;
         const httpRequest = new Request(url, this.#requestInitForPlaService(accessToken, "GET"));
         try {
@@ -49,7 +49,7 @@ class PlaService {
      * @param {Object|null} jsonRequestBody JSON request body
      * @returns {Object} JSON response body.
      */
-    async #fetchJson(httpRequest, jsonRequestBody) {
+    async #fetchJson (httpRequest, jsonRequestBody) {
         let httpResponse = null;
         let jsonResponseBody = null;
         try {
@@ -87,7 +87,7 @@ class PlaService {
      * @param {String|null} body
      * @returns {RequestInit}
      */
-    #requestInitForPlaService(accessToken, method, body = null) {
+    #requestInitForPlaService (accessToken, method, body = null) {
         return {
             mode: "cors",
             withCredentials: false,
@@ -112,7 +112,7 @@ class PlaService {
      * @param {number} shapeCount
      * @returns {Object}
      */
-    composeSuggestArticleShapesRequestBody(
+    composeSuggestArticleShapesRequestBody (
         genreId, shapeType,
         bodyLength, imageCount, quoteCount,
         width, height, foldLine, shapeCount
@@ -150,7 +150,7 @@ class PlaService {
      * @param {Object} jsonRequestBody
      * @returns {Array<string>} List of download URLs of the suggested article JSON files.
      */
-    async suggestArticleShapes(accessToken, brandId, sectionId, jsonRequestBody) {
+    async suggestArticleShapes (accessToken, brandId, sectionId, jsonRequestBody) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/sections/${sectionId}/suggest-article-shapes`
             + "?renditions=composition"; // ask for article JSON file
         const requestInit = this.#requestInitForPlaService(accessToken, "PUT", JSON.stringify(jsonRequestBody));

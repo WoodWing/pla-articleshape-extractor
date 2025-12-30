@@ -6,7 +6,7 @@ class FileUtils {
      * @param {string} subfolderName
      * @returns {{entry: Folder, created: boolean}}
      */
-    async getOrCreateSubFolder(parentFolder, subfolderName) {
+    async getOrCreateSubFolder (parentFolder, subfolderName) {
         try {
             return { entry: await parentFolder.getEntry(subfolderName), created: false };
         }
@@ -21,7 +21,7 @@ class FileUtils {
      * @param {string} filename
      * @returns {{entry: File, created: boolean}}
      */
-    async getOrCreateFile(folder, filename) {
+    async getOrCreateFile (folder, filename) {
         try {
             return { entry: await folder.getEntry(filename), created: false };
         }

@@ -5,7 +5,7 @@ const Container = {
      * @param {String} service
      * @param {Function} factoryFunction
      */
-    registerFactory: function(service, factoryFunction) {
+    registerFactory: function (service, factoryFunction) {
         this._register(service, factoryFunction, "factory");
     },
 
@@ -13,7 +13,7 @@ const Container = {
      * @param {String} service
      * @param {Function} factoryFunction
      */
-    registerSingleton: function(service, factoryFunction) {
+    registerSingleton: function (service, factoryFunction) {
         this._register(service, factoryFunction, "singleton");
     },
 
@@ -22,7 +22,7 @@ const Container = {
      * @param {Function} factoryFunction
      * @param {String} providerType
      */
-    _register: function(service, factoryFunction, providerType) {
+    _register: function (service, factoryFunction, providerType) {
         if (typeof factoryFunction !== "function") {
             throw new Error("Factory '" + typeof factoryFunction + "' is not a function.");
         }
@@ -43,7 +43,7 @@ const Container = {
      * @param {String} service
      * @returns {Object}
      */
-    resolve: function(service) {
+    resolve: function (service) {
         if (!this._registrations[service]) {
             throw new Error("Service '" + service + "' not registered.");
         }

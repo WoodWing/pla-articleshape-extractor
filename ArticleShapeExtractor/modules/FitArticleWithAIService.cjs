@@ -21,7 +21,7 @@ class FitArticleWithAIService {
      * @param {PlaService} plaService
      * @param {BrandSectionResolver} brandSectionResolver
      */
-    constructor(logger, studioJsonRpcClient, plaService, brandSectionResolver) {
+    constructor (logger, studioJsonRpcClient, plaService, brandSectionResolver) {
         this.#logger = logger;
         this.#studioJsonRpcClient = studioJsonRpcClient;
         this.#plaService = plaService;
@@ -40,7 +40,7 @@ class FitArticleWithAIService {
      *
      * @param {Document} doc
      */
-    async run(doc) {
+    async run (doc) {
 
         // Bail out when user is currently not logged in.
         if (!this.#studioJsonRpcClient.hasSession() ) {
@@ -69,7 +69,7 @@ class FitArticleWithAIService {
      * @param {{id: string, name: string}} section
      * @returns {Array<File>}
      */
-    async #retrieveArticleShapeSuggestions(accessToken, brand, section) {
+    async #retrieveArticleShapeSuggestions (accessToken, brand, section) {
         // TODO: Take values from extracted shape instead (to compose the request body).
         const width = 2, height = 6, foldLine = null, genreId = null;
         const requestBody = this.#plaService.composeSuggestArticleShapesRequestBody(
@@ -104,7 +104,7 @@ class FitArticleWithAIService {
      * @param {Object} articleJson
      * @returns {File}
      */
-    async #writeArticleJsonToTemp(articleJson) {
+    async #writeArticleJsonToTemp (articleJson) {
         const lfs = require("uxp").storage.localFileSystem;
         const formats = require("uxp").storage.formats;
 

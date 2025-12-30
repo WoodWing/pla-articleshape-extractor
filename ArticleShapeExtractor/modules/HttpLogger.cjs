@@ -13,7 +13,7 @@ class HttpLogger {
      * @param {Logger} logger
      * @param {boolean} logNetworkTraffic
      */
-    constructor(logger, logNetworkTraffic) {
+    constructor (logger, logNetworkTraffic) {
         this.#logger = logger;
         this.#logNetworkTraffic = logNetworkTraffic;
     }
@@ -23,7 +23,7 @@ class HttpLogger {
      * @param {Request} httpRequest
      * @param {Object|null} jsonRequestBody
      */
-    debugLogHttpRequest(httpRequest, jsonRequestBody) {
+    debugLogHttpRequest (httpRequest, jsonRequestBody) {
         if (!this.#logNetworkTraffic || !this.#logger.isDebug()) {
             return;
         }
@@ -35,7 +35,7 @@ class HttpLogger {
         this.#logger.debug(message);
     }
 
-    #dottedLine() {
+    #dottedLine () {
         return "- - - - - - - - - - - - - - - - - - - - - - -";
     }
 
@@ -44,7 +44,7 @@ class HttpLogger {
      * @param {Response|null} httpResponse
      * @param {Object|null} jsonResponseBody
      */
-    debugLogHttpResponse(httpResponse, jsonResponseBody) {
+    debugLogHttpResponse (httpResponse, jsonResponseBody) {
         if (!this.#logNetworkTraffic || !this.#logger.isDebug()) {
             return;
         }
@@ -63,7 +63,7 @@ class HttpLogger {
      * @param {Headers} headers
      * @returns {string}
      */
-    #composeHttpHeaders(headers) {
+    #composeHttpHeaders (headers) {
         let message = "";
         if (headers && typeof headers.forEach === "function") {
             message += "Headers:\n";
@@ -78,7 +78,7 @@ class HttpLogger {
      * @param {Object|null} jsonBody
      * @returns {string}
      */
-    #composeJsonBody(jsonBody) {
+    #composeJsonBody (jsonBody) {
         let message = "";
         if (jsonBody) {
             message += "Body:\n";

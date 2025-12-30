@@ -45,7 +45,7 @@ class Logger {
 	 * @param {String} message
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
-    debug() {
+    debug () {
         if (!this.isDebug())
             return;
         const args = Array.prototype.slice.call(arguments);
@@ -55,7 +55,7 @@ class Logger {
     /**
 	 * @returns {boolean}
 	 */
-    isDebug() {
+    isDebug () {
         return this.#level >= 5;
     }
 
@@ -64,7 +64,7 @@ class Logger {
 	 * @param {String} message
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
-    info() {
+    info () {
         if (!this.isInfo())
             return;
         const args = Array.prototype.slice.call(arguments);
@@ -74,7 +74,7 @@ class Logger {
     /**
 	 * @returns {boolean}
 	 */
-    isInfo() {
+    isInfo () {
         return this.#level >= 4;
     }
 
@@ -83,7 +83,7 @@ class Logger {
 	 * @param {String} message
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
-    warning() {
+    warning () {
         if (!this.isWarning())
             return;
         const args = Array.prototype.slice.call(arguments);
@@ -93,7 +93,7 @@ class Logger {
     /**
 	 * @returns {boolean}
 	 */
-    isWarning() {
+    isWarning () {
         return this.#level >= 3;
     }
 
@@ -102,7 +102,7 @@ class Logger {
 	 * @param {String} message
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
-    error() {
+    error () {
         if (!this.isError())
             return;
         const args = Array.prototype.slice.call(arguments);
@@ -112,7 +112,7 @@ class Logger {
     /**
 	 * @returns {boolean}
 	 */
-    isError() {
+    isError () {
         return this.#level >= 2;
     }
 
@@ -121,7 +121,7 @@ class Logger {
 	 * @param {String} message
 	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
 	 */
-    critical() {
+    critical () {
         if (!this.isCritical())
             return;
         const args = Array.prototype.slice.call(arguments);
@@ -131,7 +131,7 @@ class Logger {
     /**
 	 * @returns {boolean}
 	 */
-    isCritical() {
+    isCritical () {
         return this.#level >= 1;
     }
 
@@ -139,10 +139,10 @@ class Logger {
 	 * @param {String} logLevel
 	 * @param {String} args
 	 */
-    #log(logLevel, args) {
+    #log (logLevel, args) {
         const template = args.shift();
         // Replace undefined arguments with '*undefined*' to distinguish from ''
-        args.forEach(function(replacement, i) {
+        args.forEach(function (replacement, i) {
             if (typeof replacement === "undefined") {
                 args[i] = "*undefined*";
             }
@@ -157,7 +157,7 @@ class Logger {
 	 * @param {String} logLevel
 	 * @param {String} message
 	 */
-    #writeLine(logLevel, message) {
+    #writeLine (logLevel, message) {
         const logLine = `[${this.#getDateTimeWithMsAsString()}] [${this.LOGLEVEL[logLevel].padEnd(8)}] ${message}\n`;
         const logPath = this.#getLogFilepath();
         try {
@@ -168,7 +168,7 @@ class Logger {
             }
             fs.writeFileSync(logPath, logLine, { encoding: "utf-8", flag: mode });
         }
-        catch(error) {
+        catch (error) {
             alert(`Failed to write into log file '${logPath}' - ${error.message}`);
         }
     };
@@ -176,11 +176,11 @@ class Logger {
     /**
 	 * @returns {String} UTC date and time with milliseconds in ISO 8601 format.
 	 */
-    #getDateTimeWithMsAsString() {
+    #getDateTimeWithMsAsString () {
         return new Date().toISOString();
     };
 
-    #getLogFilepath() {
+    #getLogFilepath () {
         return `file:${this.#path.rtrim("/")}/${this.#name}`;
     };
 
@@ -189,7 +189,7 @@ class Logger {
 	 * @param {Error} error
 	 * @returns
 	 */
-    logError(error) {
+    logError (error) {
         let message = error.message + " (" + error.name + ")";
         if (error.stack) {
             message += "\n- stack:\n" + error.stack;

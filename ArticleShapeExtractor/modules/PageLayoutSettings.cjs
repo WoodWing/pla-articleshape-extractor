@@ -18,7 +18,7 @@ class PageLayoutSettings {
      * @param {Logger} logger
      * @param {FileUtils} fileUtils
      */
-    constructor(logger, fileUtils) {
+    constructor (logger, fileUtils) {
         this.#logger = logger;
         this.#fileUtils = fileUtils;
     }
@@ -31,7 +31,7 @@ class PageLayoutSettings {
      * @param {Folder} folder
      * @returns {boolean} True when the settings are matching (or new), false otherwise.
      */
-    async exportSettings(doc, folder) {
+    async exportSettings (doc, folder) {
         let exportedSuccessfully = false;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this.#logger.info("Exporting Document Settings for layout '{}'.", docName);
@@ -52,7 +52,7 @@ class PageLayoutSettings {
             await this.#saveOrComparePageLayoutSettings(settings, folder);
             exportedSuccessfully = true;
         }
-        catch(error) {
+        catch (error) {
             const { ConfigurationError } = require("./Errors.cjs");
             if (error instanceof ConfigurationError) {
                 this.#logger.error(error.message);
@@ -74,7 +74,7 @@ class PageLayoutSettings {
      * @param {Number} baselineStart
      * @returns {dimensions: {width: Number, height: Number}, margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}
      */
-    #composeSettings(doc, page, baselineStart) {
+    #composeSettings (doc, page, baselineStart) {
         return {
             dimensions: {
                 width: this.#roundTo3Decimals(doc.documentPreferences.pageWidth),
@@ -101,7 +101,7 @@ class PageLayoutSettings {
      * @param {Number} precisionNumber
      * @returns {Number}
      */
-    #roundTo3Decimals(precisionNumber) {
+    #roundTo3Decimals (precisionNumber) {
         return Math.round(precisionNumber * 1000) / 1000;
     }
 
@@ -112,7 +112,7 @@ class PageLayoutSettings {
      * @param {Page} page
      * @returns number Baseline start (always relative to top of page).
      */
-    #getBaselineStart(doc, page) {
+    #getBaselineStart (doc, page) {
         let baselineStart = doc.gridPreferences.baselineStart;
         const isGridRelativeToPageMargins = doc.gridPreferences.baselineGridRelativeOption.equals(
             idd.BaselineGridRelativeOption.TOP_OF_MARGIN_OF_BASELINE_GRID_RELATIVE_OPTION);
@@ -144,7 +144,7 @@ class PageLayoutSettings {
      * @param {Object} settings
      * @param {Folder} exportFolder
      */
-    async #saveOrComparePageLayoutSettings(settings, exportFolder) {
+    async #saveOrComparePageLayoutSettings (settings, exportFolder) {
         const manifestFoldername = "_manifest";
         const settingsFilename = "page-layout-settings.json";
         const { entry: settingsFolder } = await this.#fileUtils.getOrCreateSubFolder(exportFolder, manifestFoldername);
@@ -180,7 +180,7 @@ class PageLayoutSettings {
      * @param {PageLayoutSettings} rhsSettings
      * @returns {{propertyPath: string, lhsValue: Any, rhsValue: Any}|null} A property that differs, null otherwise.
      */
-    #diffInDesignPageLayoutGrid(lhsSettings, rhsSettings) {
+    #diffInDesignPageLayoutGrid (lhsSettings, rhsSettings) {
         const pathsToCompare = [
             "columns.gutter",
             "baseline-grid.increment"
@@ -202,7 +202,7 @@ class PageLayoutSettings {
      * @param {string} path
      * @returns {Any}
      */
-    #getPropertyValueByPath(obj, path) {
+    #getPropertyValueByPath (obj, path) {
         return path.split(".").reduce((acc, key) => acc?.[key], obj);
     }
 }

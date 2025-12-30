@@ -18,7 +18,7 @@ class BrandSectionMapResolver {
      * @param {StudioJsonRpcClient} studioJsonRpcClient
      * @param {FileUtils} fileUtils
      */
-    constructor(logger, studioJsonRpcClient, fileUtils) {
+    constructor (logger, studioJsonRpcClient, fileUtils) {
         this.#logger = logger;
         this.#studioJsonRpcClient = studioJsonRpcClient;
         this.#fileUtils = fileUtils;
@@ -29,7 +29,7 @@ class BrandSectionMapResolver {
      * Writes this info into a file named "brand-section-map.json" in the provided folder.
      * @param {Folder} exportFolder
      */
-    async run(exportFolder) {
+    async run (exportFolder) {
         if (!this.#studioJsonRpcClient.hasSession()) {
             return; // only provide info when having a session
         }
@@ -42,7 +42,7 @@ class BrandSectionMapResolver {
      * @param {Array<Object>} publicationInfos List of PublicationInfo data objects.
      * @returns {Object}
      */
-    #composeBrandSectionMap(publicationInfos) {
+    #composeBrandSectionMap (publicationInfos) {
         const brandSetup = {};
         for (const publicationInfo of publicationInfos) {
             const categories = {};
@@ -61,7 +61,7 @@ class BrandSectionMapResolver {
      * @param {Object} brandSectionMap
      * @param {Folder} exportFolder
      */
-    async #saveBrandSectionMapToDisk(brandSectionMap, exportFolder) {
+    async #saveBrandSectionMapToDisk (brandSectionMap, exportFolder) {
         const filepath = window.path.join(exportFolder, "_manifest", "brand-section-map.json");
         await this.#fileUtils.getOrCreateSubFolder(exportFolder, "_manifest");
         const lfs = require("uxp").storage.localFileSystem;

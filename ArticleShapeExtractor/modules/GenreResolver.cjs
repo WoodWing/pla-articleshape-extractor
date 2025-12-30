@@ -20,7 +20,7 @@ class GenreResolver {
      * @param {FileUtils} fileUtils
      * @param {Array<String>} genres
      */
-    constructor(logger, fileUtils, genres) {
+    constructor (logger, fileUtils, genres) {
         this.#logger = logger;
         this.#fileUtils = fileUtils;
         this.#genres = this.#normalizeGenres(genres);
@@ -35,7 +35,7 @@ class GenreResolver {
      *
      * @param {Array<String>} genres
      */
-    #normalizeGenres(genres) {
+    #normalizeGenres (genres) {
         let normalized = genres
             .map(genre => genre.trim().toLowerCase())
             .filter(genre => genre.length > 0) // remove empty values
@@ -50,7 +50,7 @@ class GenreResolver {
      * @param {String} articleName
      * @returns {Array<String>}
      */
-    resolveGenreIds(articleName) {
+    resolveGenreIds (articleName) {
         let genreIds = [];
         for (let genreIndex = 0; genreIndex < this.#genres.length; genreIndex++) {
             const thisGenreId = this.#genres[genreIndex];
@@ -66,7 +66,7 @@ class GenreResolver {
      *
      * @returns {Boolean}
      */
-    isFeatureEnabled() {
+    isFeatureEnabled () {
         return this.#genres.length > 0;
     }
 
@@ -78,7 +78,7 @@ class GenreResolver {
      *
      * @param {Folder} exportFolder
      */
-    async saveGenesToManifest(exportFolder) {
+    async saveGenesToManifest (exportFolder) {
         const manifestFoldername = "_manifest";
         const genresFilename = "genres.json";
         const { entry: manifestFolder } = await this.#fileUtils.getOrCreateSubFolder(exportFolder, manifestFoldername);
@@ -123,7 +123,7 @@ class GenreResolver {
      * @param {Array<String>} rhs
      * @returns {Boolean}
      */
-    #compareArraysOfStrings(lhs, rhs) {
+    #compareArraysOfStrings (lhs, rhs) {
         return lhs.length === rhs.length
             && lhs.every((item, index) => item === rhs[index]);
     }

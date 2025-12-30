@@ -24,7 +24,7 @@ class StudioJsonRpcClient {
      * @param {string|null} serverUrl
      * @param {string|null} ticket
      */
-    constructor(logger, httpLogger, serverUrl, ticket) {
+    constructor (logger, httpLogger, serverUrl, ticket) {
         this.#logger = logger;
         this.#httpLogger = httpLogger;
         this.#serverUrl = serverUrl;
@@ -36,7 +36,7 @@ class StudioJsonRpcClient {
      * Whether or not a session with the Studio Server has been setup.
      * @returns {boolean}
      */
-    hasSession() {
+    hasSession () {
         return this.#serverUrl && this.#ticket;
     }
 
@@ -46,7 +46,7 @@ class StudioJsonRpcClient {
      * @param {Array<string>|null} requestInfo Brand setup info to resolve: "FeatureAccessList", "ObjectTypeProperties", "ActionProperties", "States", "CurrentIssue", "PubChannels", "Categories"
      * @returns {Array<Object>} List of PublicationInfo data objects.
      */
-    async getPublicationInfos(brandIds, requestInfo) {
+    async getPublicationInfos (brandIds, requestInfo) {
         const url = this.#getStudioServerUrl();
         const request = {
             Ticket: this.#ticket
@@ -69,7 +69,7 @@ class StudioJsonRpcClient {
      * @param {string} serviceName
      * @returns {Object} Response
      */
-    async #callWebService(url, request, serviceName) {
+    async #callWebService (url, request, serviceName) {
         this.#rpcSequenceId += 1;
         const rpcRequest = {
             "method": serviceName,
@@ -112,7 +112,7 @@ class StudioJsonRpcClient {
      * @param {Object} rpcRequestBody JSON RPC request body.
      * @returns {Object} JSON RPC response body.
      */
-    async #fetchRpc(httpRequest, rpcRequestBody) {
+    async #fetchRpc (httpRequest, rpcRequestBody) {
         let httpResponse = null;
         let rpcResponseBody = null;
         try {
@@ -153,7 +153,7 @@ class StudioJsonRpcClient {
      * @param {Array<string>} resolveProperties List of workflow object property names to resolve.
      * @param {CallableFunction} callbackObjectsResolved This function is called for each page of retrieved objects.
      */
-    async queryObjects(searchParams, resolveProperties, callbackObjectsResolved) {
+    async queryObjects (searchParams, resolveProperties, callbackObjectsResolved) {
         let firstEntry = 1;
         let queryCount = 0;
         const maxQueryHit = 100; // paranoid prevention of endless loops
@@ -184,7 +184,7 @@ class StudioJsonRpcClient {
      * @param {number} firstEntry Object index to start reading from (in paged results).
      * @returns {Object} QueryObjectsResponse
      */
-    async #queryObjectsOneResultPage(searchParams, resolveProperties, firstEntry) {
+    async #queryObjectsOneResultPage (searchParams, resolveProperties, firstEntry) {
         const startsWithProps = ["ID", "Type", "Name"]; // service rule: must start with this sequence of props
         if ( !startsWithProps.every((value, index) => resolveProperties[index] === value) ) {
             const { ArgumentError } = require("./Errors.cjs");
@@ -209,7 +209,7 @@ class StudioJsonRpcClient {
      * @param {Array<string>} resolveProperties Names of workflow object properties to expect.
      * @returns {Array<Object>} List of resolved objects, each having the properties assigned.
      */
-    #getObjectsFromQueryObjectsResponse(response, resolveProperties) {
+    #getObjectsFromQueryObjectsResponse (response, resolveProperties) {
         const wflObjects = [];
         const columnIndexes = new Map();
         for (var columnIndex = 0; columnIndex < response.Columns.length; columnIndex++) {
@@ -233,7 +233,7 @@ class StudioJsonRpcClient {
      * @param {Array<string>} objectIds
      * @param {string} statusId
      */
-    async sendObjectsToStatus(objectIds, statusId) {
+    async sendObjectsToStatus (objectIds, statusId) {
         const url = this.#getStudioServerUrl();
         const request = {
             Ticket: this.#ticket,
@@ -255,7 +255,7 @@ class StudioJsonRpcClient {
      * @param {string} brandId
      * @returns {string}
      */
-    async getAccessToken(brandId) {
+    async getAccessToken (brandId) {
         const url = this.#getStudioClientServerPluginUrl();
         const request = {
             BrandIds: [brandId],
@@ -270,7 +270,7 @@ class StudioJsonRpcClient {
      * Compose an entry point for the JSON-RPC publishing web services provided by the CS plugin.
      * @returns {string}
      */
-    #getStudioClientServerPluginUrl() {
+    #getStudioClientServerPluginUrl () {
         const pluginUrl = this.#serverUrl.replace("index.php", "pluginindex.php");
         const separator = this.#getUrlParamSeparator(pluginUrl);
         return `${pluginUrl}${separator}plugin=ContentStation&interface=pub&protocol=JSON`;
@@ -280,7 +280,7 @@ class StudioJsonRpcClient {
      * Compose an entry point for the JSON-RPC workflow services provided by Studio Server.
      * @returns {string}
      */
-    #getStudioServerUrl() {
+    #getStudioServerUrl () {
         const separator = this.#getUrlParamSeparator(this.#serverUrl);
         return `${this.#serverUrl}${separator}protocol=JSON`;
     }
@@ -289,7 +289,7 @@ class StudioJsonRpcClient {
      * @param {string} url
      * @returns {string}
      */
-    #getUrlParamSeparator(url) {
+    #getUrlParamSeparator (url) {
         return url.indexOf("?") === -1 ? "?" : "&";
     }
 }
