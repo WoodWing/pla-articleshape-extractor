@@ -75,7 +75,7 @@ class FitArticleWithAIService {
         const requestBody = this.#plaService.composeSuggestArticleShapesRequestBody(
             genreId, 1, // genreId, shapeType, 
             3000, 1, 1, // bodyLength, imageCount, quoteCount,
-            width, height, foldLine, 5, // width, height, foldLine, shapeCount        
+            width, height, foldLine, 5 // width, height, foldLine, shapeCount        
         );
         const downloadUrls = await this.#plaService.suggestArticleShapes(
             accessToken, brand.id, section.id, requestBody

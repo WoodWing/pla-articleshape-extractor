@@ -78,7 +78,7 @@ const Container = {
             return "Unknown";
         }
         return obj.constructor.name;
-    },
+    }
 };
 
 module.exports = Container;

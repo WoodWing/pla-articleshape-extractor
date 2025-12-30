@@ -30,7 +30,7 @@ Container.registerSingleton("HttpLogger", function() {
     const HttpLogger = require("./modules/HttpLogger.cjs");
     return new HttpLogger(
         Container.resolve("Logger"),
-        Container.resolve("Settings").getLogNetworkTraffic(),
+        Container.resolve("Settings").getLogNetworkTraffic()
     );
 });
 
@@ -72,7 +72,7 @@ Container.registerFactory("PageLayoutSettings", function() {
     const PageLayoutSettings = require("./modules/PageLayoutSettings.cjs");
     return new PageLayoutSettings(
         Container.resolve("Logger"),
-        Container.resolve("FileUtils"),
+        Container.resolve("FileUtils")
     );
 });
 
@@ -82,7 +82,7 @@ Container.registerFactory("GenreResolver", function() {
     return new GenreResolver(
         Container.resolve("Logger"),
         Container.resolve("FileUtils"),
-        settings.getGenres(),
+        settings.getGenres()
     );
 });
 
@@ -92,7 +92,7 @@ Container.registerFactory("BrandSectionResolver", function() {
     return new BrandSectionResolver(
         Container.resolve("Logger"),
         settings.getOfflineFallbackConfig().brand,
-        settings.getOfflineFallbackConfig().category,
+        settings.getOfflineFallbackConfig().category
     );
 });
 
@@ -103,7 +103,7 @@ Container.registerFactory("ExportInDesignArticlesToFolder", function() {
         Container.resolve("InDesignArticleService"), 
         Container.resolve("PageLayoutSettings"), 
         Container.resolve("GenreResolver"),
-        Container.resolve("BrandSectionResolver"),
+        Container.resolve("BrandSectionResolver")
     );
 });
 
@@ -114,7 +114,7 @@ Container.registerFactory("StudioJsonRpcClient", function() {
         Container.resolve("Logger"),
         Container.resolve("HttpLogger"),
         app.entSession?.activeUrl, 
-        app.entSession?.activeTicket,
+        app.entSession?.activeTicket
     );
 });
 
@@ -125,7 +125,7 @@ Container.registerFactory("RegenerateArticleShapesService", function() {
         Container.resolve("VersionUtils"),
         Container.resolve("Settings").getRegenerateArticleShapesSettings(),
         Container.resolve("ExportInDesignArticlesToFolder"),
-        Container.resolve("StudioJsonRpcClient"),
+        Container.resolve("StudioJsonRpcClient")
     );
 });
 
@@ -134,7 +134,7 @@ Container.registerFactory("BrandSectionMapResolver", function() {
     return new BrandSectionMapResolver(
         Container.resolve("Logger"),
         Container.resolve("StudioJsonRpcClient"),
-        Container.resolve("FileUtils"),
+        Container.resolve("FileUtils")
     );
 });
 
@@ -143,7 +143,7 @@ Container.registerFactory("PlaService", function() {
     return new PlaService(
         Container.resolve("Logger"), 
         Container.resolve("HttpLogger"), 
-        Container.resolve("Settings").getPlaServiceUrl(),
+        Container.resolve("Settings").getPlaServiceUrl()
     );
 });
 
@@ -153,7 +153,7 @@ Container.registerFactory("FitArticleWithAIService", function() {
         Container.resolve("Logger"), 
         Container.resolve("StudioJsonRpcClient"),
         Container.resolve("PlaService"),
-        Container.resolve("BrandSectionResolver"),        
+        Container.resolve("BrandSectionResolver")        
     );
 });
 

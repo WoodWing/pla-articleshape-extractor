@@ -130,7 +130,7 @@ class PlaService {
                 quote_count: quoteCount,
                 aimed_quote_count: null, // *
                 page_id: null, // *
-                genre_id: genreId,
+                genre_id: genreId
             },
             width: width,
             height: height,

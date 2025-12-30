@@ -33,7 +33,7 @@ class ExportInDesignArticlesToFolder {
         inDesignArticleService,
         pageLayoutSettings,
         genreResolver,
-        brandSectionResolver,
+        brandSectionResolver
     ) {
         this.#logger = logger;
         this.#inDesignArticleService = inDesignArticleService;
@@ -379,7 +379,7 @@ class ExportInDesignArticlesToFolder {
                 jpegQuality: idd.JPEGOptionsQuality.HIGH,
                 jpegRenderingStyle: idd.JPEGOptionsFormat.BASELINE_ENCODING,
                 exportResolution: 144, // DPI, screen resolution
-                jpegColorSpace: idd.JpegColorSpaceEnum.RGB,
+                jpegColorSpace: idd.JpegColorSpaceEnum.RGB
             });
             if (pageItems.length === 1) {
                 pageItems[0].exportFile(idd.ExportFormat.JPG, imgFile);

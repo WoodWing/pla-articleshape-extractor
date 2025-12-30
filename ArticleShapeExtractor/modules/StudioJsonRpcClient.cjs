@@ -194,7 +194,7 @@ class StudioJsonRpcClient {
             "FirstEntry": firstEntry,
             "MaxEntries": 25,
             "RequestProps": resolveProperties,
-            "Order": [{ Property: "ID", Direction: true, __classname__: "QueryOrder" }], // oldest first
+            "Order": [{ Property: "ID", Direction: true, __classname__: "QueryOrder" }] // oldest first
         };
         const response = await this.#callWebService(url, request, "QueryObjects");
         return response;

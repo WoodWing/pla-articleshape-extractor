@@ -19,7 +19,7 @@ class BrandSectionResolver {
     constructor(
         logger,
         fallbackBrand,
-        fallbackCategory,
+        fallbackCategory
     ) {
         this.#logger = logger;
         this.#fallbackBrand = fallbackBrand;

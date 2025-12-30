@@ -286,7 +286,7 @@ class RegenerateArticleShapesService {
             Property: property,
             Operation: operation,
             Value: value,
-            __classname__: "QueryParam",
+            __classname__: "QueryParam"
         } 
     }
 }

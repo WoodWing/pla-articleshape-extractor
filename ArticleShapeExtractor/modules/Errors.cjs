@@ -116,5 +116,5 @@ module.exports = {
     StudioServerCommunicationError,
     PlaServiceCommunicationError,
     PrintLayoutAutomationError,
-    UnexpectedPageSetupError,
+    UnexpectedPageSetupError
 }
