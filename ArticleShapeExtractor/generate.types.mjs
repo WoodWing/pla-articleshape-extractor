@@ -47,7 +47,7 @@ const output = `// IMPORTANT: DO NOT MANUALLY EDIT THIS FILE!
 // Simply run this tool when modules have changed.
 
 /**
- * The following makes VSCode understand how to lookup modules so that 
+ * The following makes VSCode understand how to lookup modules so that
  * Cmd+Click on classes and functions makes its navigation feature work.
  */
 
