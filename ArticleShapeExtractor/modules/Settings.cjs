@@ -30,7 +30,8 @@ class Settings {
         const settings = this.#configData.regenerateArticleShapesSettings;
         const tip = "Please check your 'config/config.js' and your 'config/config-local.js' files.";
         for (const paramName of ["brand", "issue", "category", "status"]) {
-            if (!settings.filter.hasOwnProperty(paramName) || typeof settings.filter[paramName] !== "string") {
+            const settingsFilterHasParam = Object.prototype.hasOwnProperty.call(settings.filter, paramName);
+            if (!settingsFilterHasParam || typeof settings.filter[paramName] !== "string") {
                 throw new ConfigurationError(`The regenerateArticleShapesSettings → filter → ${paramName} option is not set.\n${tip}`);
             }
             if (!["issue", "category"].includes(paramName) && settings.filter[paramName].length === 0) { // these filters may be left empty
@@ -39,7 +40,8 @@ class Settings {
         }
         const layoutStatusFilter = this.#configData.regenerateArticleShapesSettings.filter;
         for (const setting of ["layoutStatusOnSuccess", "layoutStatusOnError"]) {
-            if (!settings.hasOwnProperty(setting) || typeof settings[setting] !== "string" || settings[setting].length === 0) {
+            const settingsHasSetting = Object.prototype.hasOwnProperty.call(settings, setting);
+            if (!settingsHasSetting || typeof settings[setting] !== "string" || settings[setting].length === 0) {
                 throw new ConfigurationError(`The regenerateArticleShapesSettings → ${setting} option is not set.\n${tip}`);
             }
             if (layoutStatusFilter === settings[setting]) {
