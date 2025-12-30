@@ -5,7 +5,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint . --max-warnings=0",
-    "lint:fix": "npm run lint -- --fix"
+    "lint:fix": "npm run lint -- --fix",
+    "generate_types": "node generate.types.mjs",
+    "generate_types:check": "npm run generate_types -- --check"
   },
   "license": "Copyright 2000-2025 (c) - WoodWing Software",
   "devDependencies": {

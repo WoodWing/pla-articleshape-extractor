@@ -41,5 +41,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check if types.d.js is up-to-date
+        run: npm run generate_types:check
+
       - name: Validate code and formatting
         run: npm run lint
