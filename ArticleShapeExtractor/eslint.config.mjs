@@ -33,6 +33,7 @@ export default [
         alert: "readonly",
         window: "readonly",
         await: "readonly",
+        _: "readonly", // set globally by the lodash.min.js extension
       },
     },
   },

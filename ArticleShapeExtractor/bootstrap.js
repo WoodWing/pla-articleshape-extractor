@@ -1,6 +1,6 @@
 require("./extensions/String.js");
 require("./extensions/globals.js");
-const _ = require("./extensions/lodash.min.js");
+require("./extensions/lodash.min.js");
 require("./modules/Errors.cjs");
 const Container = require("./modules/Container.cjs");
 
