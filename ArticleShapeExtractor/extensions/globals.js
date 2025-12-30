@@ -1,8 +1,8 @@
 /**
  * Make an alert() function available on global level.
- * @param {String} msg 
- * @param {String|undefined} caption 
- * @returns 
+ * @param {String} msg
+ * @param {String|undefined} caption
+ * @returns
  */
 globalThis.alert = function(msg, caption) {
     const { app } = require("indesign");

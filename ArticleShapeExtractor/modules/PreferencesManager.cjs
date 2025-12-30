@@ -4,7 +4,7 @@ class PreferencesManager {
     #appPreferences;
 
     /**
-     * @param {Object} appPreferences 
+     * @param {Object} appPreferences
      */
     constructor(appPreferences) {
         this.#appPreferences = appPreferences;
@@ -18,7 +18,7 @@ class PreferencesManager {
         const originalPreferences = {};
         for (const key in updates) {
             originalPreferences[key] =  this.#appPreferences[key];
-            this.#appPreferences[key] = updates[key]; 
+            this.#appPreferences[key] = updates[key];
         }
         return originalPreferences;
     };

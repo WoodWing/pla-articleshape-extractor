@@ -5,13 +5,13 @@ class StudioJsonRpcClient {
 
     /** @type {Logger} */
     #logger;
-    
+
     /** @type {HttpLogger} */
     #httpLogger;
-    
+
     /** @type {string|null} */
     #serverUrl;
-    
+
     /** @type {string|null} */
     #ticket;
 
@@ -19,11 +19,11 @@ class StudioJsonRpcClient {
     #rpcSequenceId;
 
     /**
-     * @param {Logger} logger 
-     * @param {HttpLogger} httpLogger 
-     * @param {string|null} serverUrl 
-     * @param {string|null} ticket 
-     */    
+     * @param {Logger} logger
+     * @param {HttpLogger} httpLogger
+     * @param {string|null} serverUrl
+     * @param {string|null} ticket
+     */
     constructor(logger, httpLogger, serverUrl, ticket) {
         this.#logger = logger;
         this.#httpLogger = httpLogger;
@@ -91,7 +91,7 @@ class StudioJsonRpcClient {
             throw new StudioServerCommunicationError(`${serviceName} service failed.\n${error.message}`);
         }
 
-        // Don't simply use the app.jsonRequest() API provided by SC plugins; That does not seem to work 
+        // Don't simply use the app.jsonRequest() API provided by SC plugins; That does not seem to work
         // for JSON-RPC services provided by server plugins (like the ContentStation plugin).
         // For example:
         //    const rawRequest = JSON.stringify(rpcRequest);
@@ -99,15 +99,15 @@ class StudioJsonRpcClient {
         //    const rpcResponse = JSON.parse(rawResponse);
         //    return rpcResponse.result;
         //
-        // Nevertheless, app.jsonRequest() caters for on-premise SSL certificate configuration in the 
-        // WWSettings.xml file. For now, this.#fetchRpc() calls fetch(), which is implemented by IDJS/UXP, 
-        // hence might lead into SSL problems in the future for on-premise customers using such config. 
-        // However, over time, most likely this will become less of a problem as we are moving to WW Cloud. 
+        // Nevertheless, app.jsonRequest() caters for on-premise SSL certificate configuration in the
+        // WWSettings.xml file. For now, this.#fetchRpc() calls fetch(), which is implemented by IDJS/UXP,
+        // hence might lead into SSL problems in the future for on-premise customers using such config.
+        // However, over time, most likely this will become less of a problem as we are moving to WW Cloud.
         // See also chapter "Known limitations" in the ../README.md file.
     };
 
     /**
-     * @param {Request} httpRequest 
+     * @param {Request} httpRequest
      * @param {Object} rpcRequestBody JSON RPC request body.
      * @returns {Object} JSON RPC response body.
      */
@@ -126,7 +126,7 @@ class StudioJsonRpcClient {
             if (!httpResponse.ok) {
                 throw new Error(`HTTP ${httpResponse.status} ${httpResponse.statusText}`);
             }
-            if (!rpcResponseBody) {            
+            if (!rpcResponseBody) {
                 this.#logger.error("Invalid JSON response:\n{}", responseBodyText);
                 throw new Error("Response does not contain a (valid) JSON.");
             }
@@ -152,7 +152,7 @@ class StudioJsonRpcClient {
      */
     async queryObjects(searchParams, resolveProperties, callbackObjectsResolved) {
         let firstEntry = 1;
-        let queryCount = 0; 
+        let queryCount = 0;
         const maxQueryHit = 100; // paranoid prevention of endless loops
         let response = null;
         do {
@@ -202,7 +202,7 @@ class StudioJsonRpcClient {
 
     /**
      * Build a list of workflow objects from the Columns and Rows of a given QueryObjectsResponse.
-     * @param {Object} response 
+     * @param {Object} response
      * @param {Array<string>} resolveProperties Names of workflow object properties to expect.
      * @returns {Array<Object>} List of resolved objects, each having the properties assigned.
      */
@@ -227,7 +227,7 @@ class StudioJsonRpcClient {
 
     /**
      * Call the MultiSetObjectProperties service to move objects to another status.
-     * @param {Array<string>} objectIds 
+     * @param {Array<string>} objectIds
      * @param {string} statusId
      */
     async sendObjectsToStatus(objectIds, statusId) {

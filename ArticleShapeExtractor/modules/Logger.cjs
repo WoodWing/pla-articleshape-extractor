@@ -18,10 +18,10 @@ class Logger {
     #wipe;
 
     /**
-	 * @param {String} filePath 
-	 * @param {String} filename 
-	 * @param {String} logLevel 
-	 * @param {Boolean} wipe 
+	 * @param {String} filePath
+	 * @param {String} filename
+	 * @param {String} logLevel
+	 * @param {Boolean} wipe
 	 */
     constructor (filePath, filename, logLevel, wipe) {
 
@@ -55,7 +55,7 @@ class Logger {
     /**
 	 * @returns {boolean}
 	 */
-    isDebug() { 
+    isDebug() {
         return this.#level >= 5;
     }
 
@@ -74,7 +74,7 @@ class Logger {
     /**
 	 * @returns {boolean}
 	 */
-    isInfo() { 
+    isInfo() {
         return this.#level >= 4;
     }
 
@@ -93,7 +93,7 @@ class Logger {
     /**
 	 * @returns {boolean}
 	 */
-    isWarning() { 
+    isWarning() {
         return this.#level >= 3;
     }
 
@@ -112,7 +112,7 @@ class Logger {
     /**
 	 * @returns {boolean}
 	 */
-    isError() { 
+    isError() {
         return this.#level >= 2;
     }
 
@@ -131,13 +131,13 @@ class Logger {
     /**
 	 * @returns {boolean}
 	 */
-    isCritical() { 
+    isCritical() {
         return this.#level >= 1;
     }
 
     /**
-	 * @param {String} logLevel 
-	 * @param {String} args 
+	 * @param {String} logLevel
+	 * @param {String} args
 	 */
     #log(logLevel, args) {
         const template = args.shift();
@@ -146,16 +146,16 @@ class Logger {
             if (typeof replacement === "undefined") {
                 args[i] = "*undefined*";
             }
-        });		
+        });
         const message = template.includes("{") && template.includes("}")
             ? template.replace(/{}/g, () => args.shift())
-            : template;		
+            : template;
         this.#writeLine(logLevel, message);
     };
 
     /**
-	 * @param {String} logLevel 
-	 * @param {String} message 
+	 * @param {String} logLevel
+	 * @param {String} message
 	 */
     #writeLine(logLevel, message) {
         const logLine = `[${this.#getDateTimeWithMsAsString()}] [${this.LOGLEVEL[logLevel].padEnd(8)}] ${message}\n`;
@@ -166,7 +166,7 @@ class Logger {
                 mode = "w"; // overwrite or create
                 this.#wipe = false;
             }
-            fs.writeFileSync(logPath, logLine, { encoding: "utf-8", flag: mode });		
+            fs.writeFileSync(logPath, logLine, { encoding: "utf-8", flag: mode });
         } catch(error) {
             alert(`Failed to write into log file '${logPath}' - ${error.message}`);
         }
@@ -185,8 +185,8 @@ class Logger {
 
     /**
 	 * Log an Error object.
-	 * @param {Error} error 
-	 * @returns 
+	 * @param {Error} error
+	 * @returns
 	 */
     logError(error) {
         let message = error.message + " (" + error.name + ")";
@@ -194,7 +194,7 @@ class Logger {
             message += "\n- stack:\n" + error.stack;
         }
         this.error(message);
-    }	
+    }
 }
 
 module.exports = Logger;

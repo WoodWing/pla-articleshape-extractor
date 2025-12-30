@@ -16,7 +16,7 @@ class GenreResolver {
     #genres;
 
     /**
-     * @param {Logger} logger 
+     * @param {Logger} logger
      * @param {FileUtils} fileUtils
      * @param {Array<String>} genres
      */
@@ -32,7 +32,7 @@ class GenreResolver {
      * Genres are normalized as follows:
      * - trimmed, lower-cased and sorted
      * - empty and duplicate genres are removed
-     * 
+     *
      * @param {Array<String>} genres
      */
     #normalizeGenres(genres) {
@@ -46,8 +46,8 @@ class GenreResolver {
     /**
      * Lookup the genre in the article name (case insensitive).
      * When multiple matches found, they are all returned.
-     * 
-     * @param {String} articleName 
+     *
+     * @param {String} articleName
      * @returns {Array<String>}
      */
     resolveGenreIds(articleName) {
@@ -63,7 +63,7 @@ class GenreResolver {
 
     /**
      * When no genres configured, the Genres feature is disabled.
-     * 
+     *
      * @returns {Boolean}
      */
     isFeatureEnabled() {
@@ -75,7 +75,7 @@ class GenreResolver {
      * The genres are trimmed, lower-cased and sorted to ease comparing configurations.
      * If the file already exists, it validates whether the genres to save are the same
      * as the genres in the file, which is expected.
-     * 
+     *
      * @param {Folder} exportFolder
      */
     async saveGenesToManifest(exportFolder) {
@@ -87,7 +87,7 @@ class GenreResolver {
         const configRelativePath = "config/config-local.js";
         if (created) {
             const genresJson = JSON.stringify(this.#genres, null, 4);
-            const byteCount = await genresFile.write(genresJson, { format: formats.utf8 }); 
+            const byteCount = await genresFile.write(genresJson, { format: formats.utf8 });
             if (!byteCount ) {
                 const { ConfigurationError } = require("./Errors.cjs");
                 const message = `Could not write into file '${genresRelativePath}'.\nPlease check access rights.`;
@@ -103,7 +103,7 @@ class GenreResolver {
                     + `2) genres.json:\n${JSON.stringify(genresOfPrecedingOperation, null, 4)}\n`
                 );
                 const { ConfigurationError } = require("./Errors.cjs");
-                const message = "\n" 
+                const message = "\n"
                     + "The genres configured for the current operation differ from the preceding operation.\n"
                     + `Genres configured for the current operation are found in '${configRelativePath}'.\n`
                     + `Genres of the preceding operation were saved in '${genresRelativePath}'.\n`
@@ -117,16 +117,16 @@ class GenreResolver {
 
     /**
      * Check whether two sorted arrays of strings are identical.
-     * 
-     * @param {Array<String>} lhs 
-     * @param {Array<String>} rhs 
+     *
+     * @param {Array<String>} lhs
+     * @param {Array<String>} rhs
      * @returns {Boolean}
      */
     #compareArraysOfStrings(lhs, rhs) {
-        return lhs.length === rhs.length 
+        return lhs.length === rhs.length
             && lhs.every((item, index) => item === rhs[index]);
     }
-    
+
 }
 
 module.exports = GenreResolver;

@@ -15,7 +15,7 @@ class PageLayoutSettings{
     #fileUtils;
 
     /**
-     * @param {Logger} logger 
+     * @param {Logger} logger
      * @param {FileUtils} fileUtils
      */
     constructor(logger, fileUtils) {
@@ -25,10 +25,10 @@ class PageLayoutSettings{
 
     /**
      * Exports the layout settings of the given layout document to a file named
-     * "_manifest/page-layout-settings.json" in the given folder. When this file 
+     * "_manifest/page-layout-settings.json" in the given folder. When this file
      * already exists, the settings are compared instead.
-     * @param {Document} doc 
-     * @param {Folder} folder 
+     * @param {Document} doc
+     * @param {Folder} folder
      * @returns {boolean} True when the settings are matching (or new), false otherwise.
      */
     async exportSettings(doc, folder) {
@@ -66,9 +66,9 @@ class PageLayoutSettings{
     }
 
     /**
-     * @param {Document} doc 
-     * @param {Page} page 
-     * @param {Number} baselineStart 
+     * @param {Document} doc
+     * @param {Page} page
+     * @param {Number} baselineStart
      * @returns {dimensions: {width: Number, height: Number}, margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}
      */
     #composeSettings(doc, page, baselineStart) {
@@ -78,11 +78,11 @@ class PageLayoutSettings{
                 height: this.#roundTo3Decimals(doc.documentPreferences.pageHeight)
             },
             margins: {
-                top: this.#roundTo3Decimals(page.marginPreferences.top), 
-                bottom: this.#roundTo3Decimals(page.marginPreferences.bottom), 
-                inside: this.#roundTo3Decimals(page.marginPreferences.left), 
+                top: this.#roundTo3Decimals(page.marginPreferences.top),
+                bottom: this.#roundTo3Decimals(page.marginPreferences.bottom),
+                inside: this.#roundTo3Decimals(page.marginPreferences.left),
                 outside: this.#roundTo3Decimals(page.marginPreferences.right)
-            }, 
+            },
             columns: {
                 gutter: this.#roundTo3Decimals(page.marginPreferences.columnGutter)
             },
@@ -90,25 +90,25 @@ class PageLayoutSettings{
                 start: this.#roundTo3Decimals(baselineStart),
                 increment: this.#roundTo3Decimals(doc.gridPreferences.baselineDivision)
             }
-        };        
+        };
     }
 
     /**
      * Round a given number to a precision of maximum 3 decimals.
-     * @param {Number} precisionNumber 
+     * @param {Number} precisionNumber
      * @returns {Number}
      */
     #roundTo3Decimals(precisionNumber) {
         return Math.round(precisionNumber * 1000) / 1000;
-    }    
+    }
 
     /**
-     * Retrieve the baseline start field when set relative to top of page. 
+     * Retrieve the baseline start field when set relative to top of page.
      * When set relative to top of margin, the returned value is normalized to top of page.
-     * @param {Document} doc 
-     * @param {Page} page 
+     * @param {Document} doc
+     * @param {Page} page
      * @returns number Baseline start (always relative to top of page).
-     */    
+     */
     #getBaselineStart(doc, page) {
         let baselineStart = doc.gridPreferences.baselineStart;
         const isGridRelativeToPageMargins = doc.gridPreferences.baselineGridRelativeOption.equals(
@@ -128,15 +128,15 @@ class PageLayoutSettings{
     /**
      * Saves page layout settings object to the "_manifest/page-layout-settings.json" file in a provided export folder.
      * If the file already exists, it reads the file instead and validates those settings against the provided ones.
-     * 
-     * Raises an error when the InDesign page layout grid is not tally. It compares the gutter and baseline grid increment 
+     *
+     * Raises an error when the InDesign page layout grid is not tally. It compares the gutter and baseline grid increment
      * settings taken from the current layout and the ones read from the manifest folder.
      * This is about InDesign measurements (in points), not to be confused with the PLA page grid (in column/row counts).
-     * 
-     * In practice, it turned out unworkable to compare all page layout settings (LA-187), and most settings actually 
+     *
+     * In practice, it turned out unworkable to compare all page layout settings (LA-187), and most settings actually
      * rather unimportant to be the same across all layouts of the section. Reason is that an article taken from source
      * layout A will perfectly be placed on target layout B while their margins/dimensions are not exactly matching.
-     * 
+     *
      * @param {Object} settings
      * @param {Folder} exportFolder
      */
@@ -147,7 +147,7 @@ class PageLayoutSettings{
         const { entry: settingsFile, created } = await this.#fileUtils.getOrCreateFile(settingsFolder, settingsFilename);
         if (created) {
             const settingsJson = JSON.stringify(settings, null, 4);
-            const byteCount = await settingsFile.write(settingsJson, { format: formats.utf8 }); 
+            const byteCount = await settingsFile.write(settingsJson, { format: formats.utf8 });
             if (!byteCount ) {
                 const { ConfigurationError } = require("./Errors.cjs");
                 const message = `Could not write into file "${manifestFoldername}/${settingsFilename}".\nPlease check access rights.`;
@@ -158,7 +158,7 @@ class PageLayoutSettings{
             const diff = this.#diffInDesignPageLayoutGrid(settings, settingsOfPrecedingLayout);
             if (diff != null) {
                 const { ConfigurationError } = require("./Errors.cjs");
-                const message = "\n" 
+                const message = "\n"
                     + "A page setting for the current layout differs from the preceding layout, processed before.\n"
                     + `The '${diff.propertyPath}' setting for the current layout is '${diff.lhsValue}' but for the preceding layout is '${diff.rhsValue}'.\n`
                     + `Settings of the preceding layout were saved in '${manifestFoldername}/${settingsFilename}'.\n`
@@ -193,8 +193,8 @@ class PageLayoutSettings{
 
     /**
      * Resolves the value of a property (path) in a deeply nested DTO (obj).
-     * @param {Object} obj 
-     * @param {string} path 
+     * @param {Object} obj
+     * @param {string} path
      * @returns {Any}
      */
     #getPropertyValueByPath(obj, path) {

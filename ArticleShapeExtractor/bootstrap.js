@@ -99,9 +99,9 @@ Container.registerFactory("BrandSectionResolver", function() {
 Container.registerFactory("ExportInDesignArticlesToFolder", function() {
     const ExportInDesignArticlesToFolder = require("./modules/ExportInDesignArticlesToFolder.cjs");
     return new ExportInDesignArticlesToFolder(
-        Container.resolve("Logger"), 
-        Container.resolve("InDesignArticleService"), 
-        Container.resolve("PageLayoutSettings"), 
+        Container.resolve("Logger"),
+        Container.resolve("InDesignArticleService"),
+        Container.resolve("PageLayoutSettings"),
         Container.resolve("GenreResolver"),
         Container.resolve("BrandSectionResolver")
     );
@@ -113,7 +113,7 @@ Container.registerFactory("StudioJsonRpcClient", function() {
     return new StudioJsonRpcClient(
         Container.resolve("Logger"),
         Container.resolve("HttpLogger"),
-        app.entSession?.activeUrl, 
+        app.entSession?.activeUrl,
         app.entSession?.activeTicket
     );
 });
@@ -121,7 +121,7 @@ Container.registerFactory("StudioJsonRpcClient", function() {
 Container.registerFactory("RegenerateArticleShapesService", function() {
     const RegenerateArticleShapesService = require("./modules/RegenerateArticleShapesService.cjs");
     return new RegenerateArticleShapesService(
-        Container.resolve("Logger"), 
+        Container.resolve("Logger"),
         Container.resolve("VersionUtils"),
         Container.resolve("Settings").getRegenerateArticleShapesSettings(),
         Container.resolve("ExportInDesignArticlesToFolder"),
@@ -141,8 +141,8 @@ Container.registerFactory("BrandSectionMapResolver", function() {
 Container.registerFactory("PlaService", function() {
     const PlaService = require("./modules/PlaService.cjs");
     return new PlaService(
-        Container.resolve("Logger"), 
-        Container.resolve("HttpLogger"), 
+        Container.resolve("Logger"),
+        Container.resolve("HttpLogger"),
         Container.resolve("Settings").getPlaServiceUrl()
     );
 });
@@ -150,10 +150,10 @@ Container.registerFactory("PlaService", function() {
 Container.registerFactory("FitArticleWithAIService", function() {
     const FitArticleWithAIService = require("./modules/FitArticleWithAIService.cjs");
     return new FitArticleWithAIService(
-        Container.resolve("Logger"), 
+        Container.resolve("Logger"),
         Container.resolve("StudioJsonRpcClient"),
         Container.resolve("PlaService"),
-        Container.resolve("BrandSectionResolver")        
+        Container.resolve("BrandSectionResolver")
     );
 });
 

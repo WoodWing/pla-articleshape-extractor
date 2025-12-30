@@ -8,22 +8,22 @@ class RegenerateArticleShapesService {
 
     /** @type {Logger} */
     #logger;
-    
+
     /** @type {VersionUtils} */
     #versionUtils;
-    
+
     /** @type {{{brand: <string>, issue: <string>, category: <string>, status: <string>}, layoutStatusOnSuccess: <string>, layoutStatusOnError: <string>}} */
     #settings;
-    
+
     /** @type {ExportInDesignArticlesToFolder} */
     #exportInDesignArticlesToFolder;
-    
+
     /** @type {StudioJsonRpcClient} */
     #studioJsonRpcClient;
-    
+
     /** @type {string|null} */
     #layoutStatusIdOnSuccess;
-    
+
     /** @type {string|null} */
     #layoutStatusIdOnError;
 
@@ -47,9 +47,9 @@ class RegenerateArticleShapesService {
     /**
      * Run the pre-configured Used Query to make an inventory of the layouts to be processed. The layouts are
      * opened (and closed) one-by-one and the placed article shape files are extracted to the given folder.
-     * When a shape files already exist for a certain layout id and version, that layout is skipped for performance 
+     * When a shape files already exist for a certain layout id and version, that layout is skipped for performance
      * optimization. All processed layouts (regardless whether skipped) are sent to their next status in the workflow.
-     * @param {Folder} folder 
+     * @param {Folder} folder
      */
     async run(folder) {
 
@@ -67,8 +67,8 @@ class RegenerateArticleShapesService {
         const resolveProperties = [ "ID", "Type", "Name", "Version", "PublicationId" ];
         const queryParams = this.#composeQueryParams();
         await this.#studioJsonRpcClient.queryObjects(
-            queryParams, 
-            resolveProperties, 
+            queryParams,
+            resolveProperties,
             (wflObjects) => this.#processQueriedLayouts(wflObjects, fileMap, folder, report)
         );
         return report;
@@ -90,7 +90,7 @@ class RegenerateArticleShapesService {
             await this.#resolveLayoutStatusIds(wflObject.PublicationId);
             const mapItem = fileMap.get(wflObject.ID);
             if (mapItem && mapItem.layoutVersion === wflObject.Version) {
-                this.#logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
+                this.#logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` +
                     `Article Shapes (JSON files) for layout id ${wflObject.ID} with version ${wflObject.Version} ` +
                     "already exists in export folder.");
                 skippedLayoutIds.push(wflObject.ID);
@@ -125,7 +125,7 @@ class RegenerateArticleShapesService {
     }
 
     /**
-     * @param {string} brandId 
+     * @param {string} brandId
      */
     async #resolveLayoutStatusIds(brandId) {
         if (this.#layoutStatusIdOnSuccess !== null && this.#layoutStatusIdOnError !== null) {
@@ -151,7 +151,7 @@ class RegenerateArticleShapesService {
 
     /**
      * Informs the status name in local config file is not setup for the brand.
-     * @param {string} statusName 
+     * @param {string} statusName
      */
     #raiseStatusConfigError(statusName) {
         const { ConfigurationError } = require("./Errors.cjs");
@@ -159,13 +159,13 @@ class RegenerateArticleShapesService {
             + `brand '${this.#settings.filter.brand}'.\n`
             + "Please check the 'regenerateArticleShapesSettings' option "
             + "in your 'config/config.js' or 'config/config-local.js' file.";
-        throw new ConfigurationError(message);        
+        throw new ConfigurationError(message);
     }
 
     /**
      * Collect article shape files from a given folder and build a structure map.
      * Those files assumed to have a postfix "(<layout_id>.v<major>.<minor>).".
-     * @param {Folder} folder 
+     * @param {Folder} folder
      * @returns {Promise<Map<string,{layoutVersion:<string>,shapeFiles:Array<File>}>>} Structured map, indexed by layout id.
      */
     async #buildMapOfLayoutIdsVersionsAndFiles(folder) {
@@ -218,7 +218,7 @@ class RegenerateArticleShapesService {
             result.push({ shapeFile, layoutId, layoutVersion });
         }
         return result;
-    };    
+    };
 
     /**
      * Extract the layout id and version from a filename with postfix "(<layout_id>.v<major>.<minor>).".
@@ -238,7 +238,7 @@ class RegenerateArticleShapesService {
 
     /**
      * Remove a file from disk. Log warning on failure.
-     * @param {File} file 
+     * @param {File} file
      */
     async #deleteFile(file) {
         this.#logger.debug(`Deleting file: ${file.name}`);
@@ -259,13 +259,13 @@ class RegenerateArticleShapesService {
         const queryParams = [];
         for (const setting in settingToProperty) {
             if (Object.prototype.hasOwnProperty.call(settingToProperty, setting)) {
-                if (["issue", "category"].includes(setting) 
+                if (["issue", "category"].includes(setting)
                     && this.#settings.filter[setting].length === 0) {
                     continue; // these filters can be left empty, which refers to 'all'
                 }
                 const queryParam = this.#composeQueryParam(
-                    settingToProperty[setting], 
-                    "=", 
+                    settingToProperty[setting],
+                    "=",
                     this.#settings.filter[setting]);
                 queryParams.push(queryParam);
             }
@@ -276,9 +276,9 @@ class RegenerateArticleShapesService {
 
     /**
      * Compose a QueryParam data object (applicable to the QueryObjects workflow service).
-     * @param {string} property 
-     * @param {string} operation 
-     * @param {string} value 
+     * @param {string} property
+     * @param {string} operation
+     * @param {string} value
      * @returns {{Property: string, Operation: string, Value: string, __classname__: string}} QueryParam object.
      */
     #composeQueryParam(property, operation, value) {
@@ -287,7 +287,7 @@ class RegenerateArticleShapesService {
             Operation: operation,
             Value: value,
             __classname__: "QueryParam"
-        }; 
+        };
     }
 }
 

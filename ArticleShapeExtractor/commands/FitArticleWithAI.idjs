@@ -16,7 +16,7 @@ await (async function main() {
             throw new NoArticlesInDocumentError();
         }
 
-        await Container.resolve("FitArticleWithAIService").run(doc); 
+        await Container.resolve("FitArticleWithAIService").run(doc);
     } catch(error) {
         Container.resolve("Logger").logError(error);
         alert(error.message);

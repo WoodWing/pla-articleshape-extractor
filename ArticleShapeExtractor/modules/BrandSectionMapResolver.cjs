@@ -14,7 +14,7 @@ class BrandSectionMapResolver {
     #fileUtils;
 
     /**
-     * @param {Logger} logger 
+     * @param {Logger} logger
      * @param {StudioJsonRpcClient} studioJsonRpcClient
      * @param {FileUtils} fileUtils
      */
@@ -27,7 +27,7 @@ class BrandSectionMapResolver {
     /**
      * Resolves all brand ids/names and their section ids/names from Studio Server.
      * Writes this info into a file named "brand-section-map.json" in the provided folder.
-     * @param {Folder} exportFolder 
+     * @param {Folder} exportFolder
      */
     async run(exportFolder) {
         if (!this.#studioJsonRpcClient.hasSession()) {
@@ -68,7 +68,7 @@ class BrandSectionMapResolver {
         const formats = require("uxp").storage.formats;
         const jsonFile = await lfs.createEntryWithUrl(filepath, { overwrite: true });
         const jsonString = JSON.stringify(brandSectionMap, null, 4);
-        await jsonFile.write(jsonString, { format: formats.utf8 }); 
+        await jsonFile.write(jsonString, { format: formats.utf8 });
         this.#logger.info(`Saved the ids/names of brands and their sections to "${filepath}".`);
     }
 }

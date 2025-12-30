@@ -24,7 +24,7 @@ class Settings {
 
     /**
      * @returns {{{brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}}
-     */    
+     */
     getRegenerateArticleShapesSettings() {
         const { ConfigurationError } = require("./Errors.cjs");
         const settings = this.#configData.regenerateArticleShapesSettings;
@@ -65,14 +65,14 @@ class Settings {
     getLogNetworkTraffic() {
         return this.#configData.logger.logNetworkTraffic;
     }
-    
+
     /**
      * @returns {String}
      */
     getMinimumRequiredInDesignVersion() {
         return this.#configData.minimumRequiredInDesignVersion;
     }
-    
+
     /**
      * @return {Array<String>}
      */
@@ -81,7 +81,7 @@ class Settings {
     }
 
     /**
-     * 
+     *
      * @returns {string}
      */
     getPlaServiceUrl() {

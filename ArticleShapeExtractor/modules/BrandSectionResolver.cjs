@@ -29,7 +29,7 @@ class BrandSectionResolver {
     /**
      * When there is a valid session and the layout is stored in Studio, take the brand and section from
      * the layout, otherwise take the brand- and section fallback settings from the config files.
-     * @param {Document} doc 
+     * @param {Document} doc
      * @returns {{brand: {id: string, name: string}, section: {id: string, name: string}}}
      */
     resolve(doc) {

@@ -10,8 +10,8 @@ class HttpLogger {
     #logNetworkTraffic;
 
     /**
-     * @param {Logger} logger 
-     * @param {boolean} logNetworkTraffic 
+     * @param {Logger} logger
+     * @param {boolean} logNetworkTraffic
      */
     constructor(logger, logNetworkTraffic) {
         this.#logger = logger;
@@ -21,7 +21,7 @@ class HttpLogger {
     /**
      * Log the HTTP URL, request headers and JSON body.
      * @param {Request} httpRequest
-     * @param {Object|null} jsonRequestBody 
+     * @param {Object|null} jsonRequestBody
      */
     debugLogHttpRequest(httpRequest, jsonRequestBody) {
         if (!this.#logNetworkTraffic || !this.#logger.isDebug()) {
@@ -41,8 +41,8 @@ class HttpLogger {
 
     /**
      * Log the HTTP status, response headers and JSON body.
-     * @param {Response|null} httpResponse 
-     * @param {Object|null} jsonResponseBody 
+     * @param {Response|null} httpResponse
+     * @param {Object|null} jsonResponseBody
      */
     debugLogHttpResponse(httpResponse, jsonResponseBody) {
         if (!this.#logNetworkTraffic || !this.#logger.isDebug()) {
@@ -75,7 +75,7 @@ class HttpLogger {
     }
 
     /**
-     * @param {Object|null} jsonBody 
+     * @param {Object|null} jsonBody
      * @returns {string}
      */
     #composeJsonBody(jsonBody) {

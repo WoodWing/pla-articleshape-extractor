@@ -63,7 +63,7 @@ class NoFolderSelectedError extends Error {
 
 class StudioServerCommunicationError extends Error {
     /**
-     * @param {string|null} details 
+     * @param {string|null} details
      */
     constructor(details=null) {
         let message = "Communication error with WoodWing Studio Server.";
@@ -77,7 +77,7 @@ class StudioServerCommunicationError extends Error {
 
 class PlaServiceCommunicationError extends Error {
     /**
-     * @param {string|null} details 
+     * @param {string|null} details
      */
     constructor(details=null) {
         let message = "Communication error with AI Layout Automation service.";

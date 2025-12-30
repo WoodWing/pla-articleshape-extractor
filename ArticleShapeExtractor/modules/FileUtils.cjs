@@ -16,8 +16,8 @@ class FileUtils {
 
     /**
      * Creates a file in a given folder. Returns the file if already exists.
-     * @param {Folder} folder 
-     * @param {string} filename 
+     * @param {Folder} folder
+     * @param {string} filename
      * @returns {{entry: File, created: boolean}}
      */
     async getOrCreateFile(folder, filename) {
@@ -26,7 +26,7 @@ class FileUtils {
         } catch {
             return { entry: await folder.createFile(filename, { overwrite: false }), created: true };
         }
-    }    
+    }
 }
 
 module.exports = FileUtils;

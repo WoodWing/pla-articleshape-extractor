@@ -43,7 +43,7 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * @param {Document} doc 
+     * @param {Document} doc
      * @param {Folder} folder
      * @returns {Number} Count of exported article shapes.
      */
@@ -69,7 +69,7 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * @param {Document} doc 
+     * @param {Document} doc
      * @param {Folder} folder
      * @param {Object} article
      * @param {Number} articleIndex
@@ -169,7 +169,7 @@ class ExportInDesignArticlesToFolder {
                     + "Hence the item is excluded from the article composition (JSON file). "
                     + "Set it to TextFrame or Graphic via Object->Content",
                 article.name, element.itemRef.constructorName,
-                element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);               
+                element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);
             } else if (this.#inDesignArticleService.isValid2DGraphicFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
                 articleShapeJson.imageComponents.push({
@@ -195,7 +195,7 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * @param {String} articleName 
+     * @param {String} articleName
      * @returns {Object|null}
      */
     #resolveShapeTypeFromArticleName(articleName) {
@@ -222,10 +222,10 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Compose a unique name that can be used as a base to compose export filenames.
-     * @param {Document} doc 
-     * @param {Folder} folder 
-     * @param {String} shapeTypeName 
-     * @param {Number} articleIndex 
+     * @param {Document} doc
+     * @param {Folder} folder
+     * @param {String} shapeTypeName
+     * @param {Number} articleIndex
      * @returns {String}
      */
     async #getFileBaseName(doc, folder, shapeTypeName, articleIndex) {
@@ -264,7 +264,7 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Round a given number to a precision of maximum 3 decimals.
-     * @param {Number} precisionNumber 
+     * @param {Number} precisionNumber
      * @returns {Number}
      */
     #roundTo3Decimals(precisionNumber) {
@@ -272,9 +272,9 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * 
-     * @param {Document} doc 
-     * @param {String} articleName 
+     *
+     * @param {Document} doc
+     * @param {String} articleName
      * @param {Object} outerBounds
      * @returns {Object|null}
      */
@@ -322,8 +322,8 @@ class ExportInDesignArticlesToFolder {
     /**
      * Tells whether all given page items are placed on the same spread. If this is not the case,
      * the items can not be selected nor grouped which is required by _exportArticlePageItems().
-     * @param {Array} pageItems 
-     * @returns 
+     * @param {Array} pageItems
+     * @returns
      */
     #arePageItemsOnSameSpread(pageItems) {
         if (pageItems.length === 0) {
@@ -339,10 +339,10 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * @param {Document} doc 
-     * @param {Folder} folder 
-     * @param {String} shapeTypeName 
-     * @param {Number} articleIndex 
+     * @param {Document} doc
+     * @param {Folder} folder
+     * @param {String} shapeTypeName
+     * @param {Number} articleIndex
      * @param {Array} pageItems
      * @param {Object} articleShapeJson
      * @returns {Boolean} Whether or not successful.

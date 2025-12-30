@@ -13,9 +13,9 @@ class PlaService {
     #plaServiceUrl;
 
     /**
-     * @param {Logger} logger 
-     * @param {HttpLogger} httpLogger 
-     * @param {string} plaServiceUrl 
+     * @param {Logger} logger
+     * @param {HttpLogger} httpLogger
+     * @param {string} plaServiceUrl
      */
     constructor(logger, httpLogger, plaServiceUrl) {
         this.#logger = logger;
@@ -26,8 +26,8 @@ class PlaService {
     /**
      * Retrieve the sheet dimensions from PLA service.
      * Those are set once blueprints are configured.
-     * @param {string} accessToken 
-     * @param {string} brandId 
+     * @param {string} accessToken
+     * @param {string} brandId
      * @returns {Array<Object>} List of sheet dimension DTOs.
      */
     async getSheetDimensions(accessToken, brandId) {
@@ -44,7 +44,7 @@ class PlaService {
     }
 
     /**
-     * @param {Request} httpRequest 
+     * @param {Request} httpRequest
      * @param {Object|null} jsonRequestBody JSON request body
      * @returns {Object} JSON response body.
      */
@@ -54,8 +54,8 @@ class PlaService {
         try {
             this.#httpLogger.debugLogHttpRequest(httpRequest, jsonRequestBody);
             httpResponse = await fetch(httpRequest);
-            const responseBodyText = await httpResponse.text(); 
-            try {            
+            const responseBodyText = await httpResponse.text();
+            try {
                 jsonResponseBody = JSON.parse(responseBodyText);
             } catch {
                 // Intentionally ignored
@@ -79,9 +79,9 @@ class PlaService {
 
     /**
      * Compose request options for the PLA service.
-     * @param {string} accessToken 
-     * @param {string} method 
-     * @param {String|null} body 
+     * @param {string} accessToken
+     * @param {string} method
+     * @param {String|null} body
      * @returns {RequestInit}
      */
     #requestInitForPlaService(accessToken, method, body=null) {
@@ -98,21 +98,21 @@ class PlaService {
     }
 
     /**
-     * @param {string|null} genreId 
+     * @param {string|null} genreId
      * @param {number} shapeType [1..4]
-     * @param {number} bodyLength 
-     * @param {number} imageCount 
-     * @param {number} quoteCount 
-     * @param {number} width Column count. 
+     * @param {number} bodyLength
+     * @param {number} imageCount
+     * @param {number} quoteCount
+     * @param {number} width Column count.
      * @param {number} height Row count.
-     * @param {number|null} foldLine 
-     * @param {number} shapeCount 
+     * @param {number|null} foldLine
+     * @param {number} shapeCount
      * @returns {Object}
      */
     composeSuggestArticleShapesRequestBody(
-        genreId, shapeType, 
+        genreId, shapeType,
         bodyLength, imageCount, quoteCount,
-        width, height, foldLine, shapeCount        
+        width, height, foldLine, shapeCount
     ) {
         // Fields below marked with a "*" have no meaning in the service request.
         // Because some are mandatory for the API/DTO, just some dummy data is provided.
@@ -141,7 +141,7 @@ class PlaService {
 
     /**
      * Invoke the PLA service that suggests alternative article shapes for a give shape.
-     * @param {string} accessToken 
+     * @param {string} accessToken
      * @param {string} brandId
      * @param {string} sectionId
      * @param {Object} jsonRequestBody

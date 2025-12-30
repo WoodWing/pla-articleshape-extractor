@@ -5,16 +5,16 @@ class FitArticleWithAIService {
 
     /** @type {Logger} */
     #logger;
-    
+
     /** @type {StudioJsonRpcClient} */
     #studioJsonRpcClient;
-    
+
     /** @type {PlaService} */
     #plaService;
 
     /** @type {BrandSectionResolver} */
     #brandSectionResolver;
-    
+
     /**
      * @param {Logger} logger
      * @param {StudioJsonRpcClient} studioJsonRpcClient
@@ -30,14 +30,14 @@ class FitArticleWithAIService {
 
     /**
      * Fit the currently selected unfitted InDesign article.
-     * 
+     *
      * Procedure:
      * - Extract unfitted shape from article.
      * - Retrieve access token from Studio Server CS plugin.
      * - Retrieve suggestions for the article from AILA service.
      * - Retrieve fitted shape from AI fitting service.
      * - Update the unfitted article with fitted shape (on the layout).
-     * 
+     *
      * @param {Document} doc
      */
     async run(doc) {
@@ -64,8 +64,8 @@ class FitArticleWithAIService {
 
     /**
      * Request for shape suggestions and retrieve the article JSON files into temp folder.
-     * @param {string} accessToken 
-     * @param {{id: string, name: string}} brand 
+     * @param {string} accessToken
+     * @param {{id: string, name: string}} brand
      * @param {{id: string, name: string}} section
      * @returns {Array<File>}
      */
@@ -73,9 +73,9 @@ class FitArticleWithAIService {
         // TODO: Take values from extracted shape instead (to compose the request body).
         const width = 2, height = 6, foldLine = null, genreId = null;
         const requestBody = this.#plaService.composeSuggestArticleShapesRequestBody(
-            genreId, 1, // genreId, shapeType, 
+            genreId, 1, // genreId, shapeType,
             3000, 1, 1, // bodyLength, imageCount, quoteCount,
-            width, height, foldLine, 5 // width, height, foldLine, shapeCount        
+            width, height, foldLine, 5 // width, height, foldLine, shapeCount
         );
         const downloadUrls = await this.#plaService.suggestArticleShapes(
             accessToken, brand.id, section.id, requestBody
@@ -101,7 +101,7 @@ class FitArticleWithAIService {
 
     /**
      * Create a new file in the temp folder and write the provided JSON data into it.
-     * @param {Object} articleJson 
+     * @param {Object} articleJson
      * @returns {File}
      */
     async #writeArticleJsonToTemp(articleJson) {
