@@ -53,7 +53,7 @@ function validateHost() {
             + `running on OS ${os.platform()}/${os.arch()} v${os.release()}`);
         if (versionUtils.versionCompare(host.version, minRequiredVersion) < 0) {
             throw new Error(`InDesign ${host.version} is not supported. `
-                +`Minimum required version is ${minRequiredVersion}.`);
+                + `Minimum required version is ${minRequiredVersion}.`);
         }
     }
     catch(error) { // This may happen when debugging with the Adobe UXP Developer Tool.

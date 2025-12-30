@@ -85,7 +85,7 @@ class FitArticleWithAIService {
                 + `- within the brand '${brand.name}' (id=${brand.id}) and section '${section.name}' (id=${section.id})`
                 + (genreId ? ` and genre '${genreId}'` : "") + ";\n"
                 + `- having dimension of ${width} columns and ${height} rows;\n`
-                + "- having " + (foldLine ? `a fold line between columns ${foldLine} and ${foldLine+1}` : "no fold line") + ".\n";
+                + "- having " + (foldLine ? `a fold line between columns ${foldLine} and ${foldLine + 1}` : "no fold line") + ".\n";
             throw new Error(message);
         }
         const articleShapeFiles = [];

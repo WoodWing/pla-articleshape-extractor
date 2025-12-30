@@ -28,7 +28,7 @@ class HttpLogger {
             return;
         }
         const message = `HTTP request:\n${this.#dottedLine()}\n`
-            +`Status: HTTP ${httpRequest.method} ${httpRequest.url}\n`
+            + `Status: HTTP ${httpRequest.method} ${httpRequest.url}\n`
             + this.#composeHttpHeaders(httpRequest.headers)
             + this.#composeJsonBody(jsonRequestBody)
             + `${this.#dottedLine()}`;

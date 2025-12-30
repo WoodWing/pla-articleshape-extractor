@@ -33,7 +33,8 @@ export default [
             "stylistic/brace-style": ["error", "stroustrup"],
             "stylistic/curly-newline": ["error", "always"],
             "stylistic/comma-spacing": ["error", { "before": false, "after": true }],
-            "stylistic/key-spacing": ["error", { "beforeColon": false, "afterColon": true }]
+            "stylistic/key-spacing": ["error", { "beforeColon": false, "afterColon": true }],
+            "stylistic/space-infix-ops": "error"
             // L> Documentation: https://eslint.style/rules
         }
     },

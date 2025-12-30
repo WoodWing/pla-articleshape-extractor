@@ -65,7 +65,7 @@ class StudioServerCommunicationError extends Error {
     /**
      * @param {string|null} details
      */
-    constructor(details=null) {
+    constructor(details = null) {
         let message = "Communication error with WoodWing Studio Server.";
         if (details) {
             message += `\n${details}`;
@@ -79,7 +79,7 @@ class PlaServiceCommunicationError extends Error {
     /**
      * @param {string|null} details
      */
-    constructor(details=null) {
+    constructor(details = null) {
         let message = "Communication error with AI Layout Automation service.";
         if (details) {
             message += `\n${details}`;

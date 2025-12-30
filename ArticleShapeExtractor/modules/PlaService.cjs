@@ -87,7 +87,7 @@ class PlaService {
      * @param {String|null} body
      * @returns {RequestInit}
      */
-    #requestInitForPlaService(accessToken, method, body=null) {
+    #requestInitForPlaService(accessToken, method, body = null) {
         return {
             mode: "cors",
             withCredentials: false,
