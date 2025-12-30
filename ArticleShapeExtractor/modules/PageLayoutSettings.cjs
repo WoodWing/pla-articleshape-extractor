@@ -6,7 +6,7 @@ const formats = require("uxp").storage.formats;
 /**
  * Understands how to get the settings from InDesign as shown in the Margins and Columns dialog.
  */
-class PageLayoutSettings{
+class PageLayoutSettings {
 
     /** @type {Logger} */
     #logger;

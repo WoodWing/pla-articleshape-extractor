@@ -27,7 +27,8 @@ export default [
             "stylistic/comma-dangle": ["error", "never"],
             "stylistic/object-curly-spacing": ["error", "always"],
             "stylistic/no-trailing-spaces": "error",
-            "stylistic/eol-last": ["error", "always"]
+            "stylistic/eol-last": ["error", "always"],
+            "stylistic/space-before-blocks": ["error", "always"]
         }
     },
 
