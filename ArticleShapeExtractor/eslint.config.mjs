@@ -36,7 +36,9 @@ export default [
             "stylistic/key-spacing": ["error", { "beforeColon": false, "afterColon": true }],
             "stylistic/space-infix-ops": "error",
             "stylistic/space-before-function-paren": ["error", "always"],
-            "stylistic/space-in-parens": ["error", "never"]
+            "stylistic/space-in-parens": ["error", "never"],
+            "stylistic/no-mixed-spaces-and-tabs": ["error", true],
+            "stylistic/no-tabs": ["error", {}]
             // L> Documentation: https://eslint.style/rules
         }
     },

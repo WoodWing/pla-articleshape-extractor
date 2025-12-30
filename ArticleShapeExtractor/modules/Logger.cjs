@@ -18,11 +18,11 @@ class Logger {
     #wipe;
 
     /**
-	 * @param {String} filePath
-	 * @param {String} filename
-	 * @param {String} logLevel
-	 * @param {Boolean} wipe
-	 */
+     * @param {String} filePath
+     * @param {String} filename
+     * @param {String} logLevel
+     * @param {Boolean} wipe
+     */
     constructor (filePath, filename, logLevel, wipe) {
 
         this.LOGLEVEL = ["DISABLED", "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"];
@@ -41,10 +41,10 @@ class Logger {
     }
 
     /**
-	 * Log a debug message, to provide diagnostically helpful information.
-	 * @param {String} message
-	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
-	 */
+     * Log a debug message, to provide diagnostically helpful information.
+     * @param {String} message
+     * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
+     */
     debug () {
         if (!this.isDebug())
             return;
@@ -53,17 +53,17 @@ class Logger {
     };
 
     /**
-	 * @returns {boolean}
-	 */
+     * @returns {boolean}
+     */
     isDebug () {
         return this.#level >= 5;
     }
 
     /**
-	 * Log an info message, in case of an achievement or major state changes.
-	 * @param {String} message
-	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
-	 */
+     * Log an info message, in case of an achievement or major state changes.
+     * @param {String} message
+     * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
+     */
     info () {
         if (!this.isInfo())
             return;
@@ -72,17 +72,17 @@ class Logger {
     };
 
     /**
-	 * @returns {boolean}
-	 */
+     * @returns {boolean}
+     */
     isInfo () {
         return this.#level >= 4;
     }
 
     /**
-	 * Log a warning message, in case of an unwanted state.
-	 * @param {String} message
-	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
-	 */
+     * Log a warning message, in case of an unwanted state.
+     * @param {String} message
+     * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
+     */
     warning () {
         if (!this.isWarning())
             return;
@@ -91,17 +91,17 @@ class Logger {
     };
 
     /**
-	 * @returns {boolean}
-	 */
+     * @returns {boolean}
+     */
     isWarning () {
         return this.#level >= 3;
     }
 
     /**
-	 * Log an error message, in case the process can not continue.
-	 * @param {String} message
-	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
-	 */
+     * Log an error message, in case the process can not continue.
+     * @param {String} message
+     * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
+     */
     error () {
         if (!this.isError())
             return;
@@ -110,17 +110,17 @@ class Logger {
     };
 
     /**
-	 * @returns {boolean}
-	 */
+     * @returns {boolean}
+     */
     isError () {
         return this.#level >= 2;
     }
 
     /**
-	 * Log a critical message, in case the application can not continue.
-	 * @param {String} message
-	 * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
-	 */
+     * Log a critical message, in case the application can not continue.
+     * @param {String} message
+     * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
+     */
     critical () {
         if (!this.isCritical())
             return;
@@ -129,16 +129,16 @@ class Logger {
     };
 
     /**
-	 * @returns {boolean}
-	 */
+     * @returns {boolean}
+     */
     isCritical () {
         return this.#level >= 1;
     }
 
     /**
-	 * @param {String} logLevel
-	 * @param {String} args
-	 */
+     * @param {String} logLevel
+     * @param {String} args
+     */
     #log (logLevel, args) {
         const template = args.shift();
         // Replace undefined arguments with '*undefined*' to distinguish from ''
@@ -154,9 +154,9 @@ class Logger {
     };
 
     /**
-	 * @param {String} logLevel
-	 * @param {String} message
-	 */
+     * @param {String} logLevel
+     * @param {String} message
+     */
     #writeLine (logLevel, message) {
         const logLine = `[${this.#getDateTimeWithMsAsString()}] [${this.LOGLEVEL[logLevel].padEnd(8)}] ${message}\n`;
         const logPath = this.#getLogFilepath();
@@ -174,8 +174,8 @@ class Logger {
     };
 
     /**
-	 * @returns {String} UTC date and time with milliseconds in ISO 8601 format.
-	 */
+     * @returns {String} UTC date and time with milliseconds in ISO 8601 format.
+     */
     #getDateTimeWithMsAsString () {
         return new Date().toISOString();
     };
@@ -185,10 +185,10 @@ class Logger {
     };
 
     /**
-	 * Log an Error object.
-	 * @param {Error} error
-	 * @returns
-	 */
+     * Log an Error object.
+     * @param {Error} error
+     * @returns
+     */
     logError (error) {
         let message = error.message + " (" + error.name + ")";
         if (error.stack) {
