@@ -51,15 +51,18 @@ class PageLayoutSettings {
             const settings = this.#composeSettings(doc, page, baselineStart);
             await this.#saveOrComparePageLayoutSettings(settings, folder);
             exportedSuccessfully = true;
-        } catch(error) {
+        }
+        catch(error) {
             const { ConfigurationError } = require("./Errors.cjs");
             if (error instanceof ConfigurationError) {
                 this.#logger.error(error.message);
-            } else {
+            }
+            else {
                 this.#logger.logError(error);
             }
             alert("An error occurred: " + error.message);
-        } finally {
+        }
+        finally {
             app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
         }
         return exportedSuccessfully;
@@ -119,7 +122,8 @@ class PageLayoutSettings {
                 "Baseline start is configured as relative to top margin, but exported as relative to top of page: "
                 + `${doc.gridPreferences.baselineStart} (=start) + ${page.marginPreferences.top} (=top margin) = ${baselineStart}`
             );
-        } else {
+        }
+        else {
             this.#logger.debug(`Baseline start is configured and exported as relative to top of page: ${baselineStart}`);
         }
         return baselineStart;
@@ -153,7 +157,8 @@ class PageLayoutSettings {
                 const message = `Could not write into file "${manifestFoldername}/${settingsFilename}".\nPlease check access rights.`;
                 throw new ConfigurationError(message);
             }
-        } else {
+        }
+        else {
             const settingsOfPrecedingLayout = JSON.parse(await settingsFile.read({ format: formats.utf8 }));
             const diff = this.#diffInDesignPageLayoutGrid(settings, settingsOfPrecedingLayout);
             if (diff != null) {

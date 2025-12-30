@@ -17,7 +17,8 @@ await (async function main() {
         }
 
         await Container.resolve("FitArticleWithAIService").run(doc);
-    } catch(error) {
+    }
+    catch(error) {
         Container.resolve("Logger").logError(error);
         alert(error.message);
     }

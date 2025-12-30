@@ -95,7 +95,8 @@ class ExportInDesignArticlesToFolder {
             if (genreIds.length === 0) {
                 message = `Article '${article.name}' could not be exported because `
                     + "it's name does not contain any of the configured genres.";
-            } else if (genreIds.length > 1) {
+            }
+            else if (genreIds.length > 1) {
                 message = `Article '${article.name}' could not be exported because `
                     + `it's name contains multiple of the configured genres: ${genreIds}.`;
             }
@@ -163,27 +164,31 @@ class ExportInDesignArticlesToFolder {
                     }
                 }
                 articleShapeJson.textComponents.push(textComponent);
-            } else if (this.#inDesignArticleService.isUnassignedFrame(element.itemRef)) {
+            }
+            else if (this.#inDesignArticleService.isUnassignedFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
                 this.#logger.info("Article '{}' has a unassigned frame item '{}' placed at ({},{},{},{}). "
                     + "Hence the item is excluded from the article composition (JSON file). "
                     + "Set it to TextFrame or Graphic via Object->Content",
                 article.name, element.itemRef.constructorName,
                 element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);
-            } else if (this.#inDesignArticleService.isValid2DGraphicFrame(element.itemRef)) {
+            }
+            else if (this.#inDesignArticleService.isValid2DGraphicFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
                 articleShapeJson.imageComponents.push({
                     "geometricBounds": geometricBounds,
                     "textWrapMode": this.#getTextWrapMode(element.itemRef)
                 });
-            } else if (this.#inDesignArticleService.isValid1DGraphicFrame(element.itemRef)) {
+            }
+            else if (this.#inDesignArticleService.isValid1DGraphicFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
                 this.#logger.info("Article '{}' has a graphic frame item '{}' placed at ({},{},{},{}). "
                     + "The graphic is too slim. It is either a line or a very slim rectangle. "
                     + "Hence the item is excluded from the article composition (JSON file).",
                 article.name, element.itemRef.constructorName,
                 element.itemRef.geometricBounds[1], element.itemRef.geometricBounds[0], geometricBounds.height, geometricBounds.width);
-            } else {
+            }
+            else {
                 this.#logger.info("Article '{}' has a page item '{}' placed at ({},{}). "
                     + "The page item is either not valid or not a text/graphic frame. "
                     + "Hence the item is excluded from the article export operation.",
@@ -204,16 +209,20 @@ class ExportInDesignArticlesToFolder {
         if (articleName.indexOf("lead") != -1) {
             shapeType.name = "lead";
             shapeType.id = "1";
-        } else if (articleName.indexOf("secondary") != -1) {
+        }
+        else if (articleName.indexOf("secondary") != -1) {
             shapeType.name = "secondary";
             shapeType.id = "2";
-        } else if (articleName.indexOf("third") != -1) {
+        }
+        else if (articleName.indexOf("third") != -1) {
             shapeType.name = "third";
             shapeType.id = "3";
-        } else if (articleName.indexOf("filler") != -1) {
+        }
+        else if (articleName.indexOf("filler") != -1) {
             shapeType.name = "filler";
             shapeType.id = "4";
-        } else {
+        }
+        else {
             this.#logger.warning("Shape type could not be resolved from article '{}' due to bad naming convention.", articleName);
             shapeType = null;
         }
@@ -233,7 +242,8 @@ class ExportInDesignArticlesToFolder {
         try {
             // Get workflow object ID and Version from Studio.
             fileName = fileName + " (" + doc.entMetaData.get("Core_ID") + ".v" + doc.entMetaData.get("Version") + ")";
-        } catch {
+        }
+        catch {
             // Use path of layout to make file name unique.
             if (doc.saved) {
                 const docFile = await doc.fullName;
@@ -383,15 +393,18 @@ class ExportInDesignArticlesToFolder {
             });
             if (pageItems.length === 1) {
                 pageItems[0].exportFile(idd.ExportFormat.JPG, imgFile);
-            } else {
+            }
+            else {
                 group = doc.groups.add(pageItems);
                 group.exportFile(idd.ExportFormat.JPG, imgFile);
             }
             isExported = true;
-        } catch (error) {
+        }
+        catch (error) {
             this.#logger.logError(error);
             alert("Error exporting the snippet: " + error.message);
-        } finally {
+        }
+        finally {
             if (group) {
                 group.ungroup();
             }
@@ -423,7 +436,8 @@ class ExportInDesignArticlesToFolder {
             const formats = require("uxp").storage.formats;
             await file.write(jsonString, { format: formats.utf8 });
             isSaved = true;
-        } catch (error) {
+        }
+        catch (error) {
             this.#logger.logError(error);
             alert("An error occurred: " + error.message);
         }
@@ -495,7 +509,8 @@ class ExportInDesignArticlesToFolder {
             //Create an array with all thread frames (images dont have threaded frames)
             if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
                 threadedFrames = this.#getThreadedFrames(element.itemRef);
-            } else {
+            }
+            else {
                 threadedFrames = [element.itemRef];
             }
 
@@ -561,15 +576,20 @@ class ExportInDesignArticlesToFolder {
 
         if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.NONE)) {
             return "none";
-        } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.BOUNDING_BOX_TEXT_WRAP)) {
+        }
+        else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.BOUNDING_BOX_TEXT_WRAP)) {
             return "bounding_box";
-        } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.CONTOUR)) {
+        }
+        else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.CONTOUR)) {
             return "contour";
-        } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.JUMP_OBJECT_TEXT_WRAP)) {
+        }
+        else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.JUMP_OBJECT_TEXT_WRAP)) {
             return "jump_object";
-        } else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.NEXT_COLUMN_TEXT_WRAP)) {
+        }
+        else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.NEXT_COLUMN_TEXT_WRAP)) {
             return "jump_to_next_column";
-        } else {
+        }
+        else {
             return "";
         }
     }

@@ -31,7 +31,8 @@ await (async function main() {
         Container.resolve("Logger").info(`${completedMessage} => ${reportMessage}`);
         alert(`${completedMessage}\n${reportMessage}`, "Completed");
 
-    } catch(error) {
+    }
+    catch(error) {
         // First enable the user interaction again to able to show the alert.
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
         Container.resolve("Logger").logError(error);

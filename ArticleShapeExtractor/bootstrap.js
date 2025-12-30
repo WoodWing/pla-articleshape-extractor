@@ -10,7 +10,8 @@ Container.registerSingleton("Settings", function() {
     let plaLocalConfig = {};
     try {
         plaLocalConfig = require("./config/config-local.js");
-    } catch {
+    }
+    catch {
         // Intentionally ignored
     }
     return new Settings(plaDefaultConfig, plaLocalConfig);
@@ -21,7 +22,8 @@ Container.registerSingleton("Logger", function() {
     const config = Container.resolve("Settings").getLoggerConfig();
     try {
         return new Logger(config.folder, config.filename, config.level, config.wipe);
-    } catch(error) {
+    }
+    catch(error) {
         throw new Error(error + " Please check your settings in config/config.js and config/config-local.js files.");
     }
 });
@@ -53,7 +55,8 @@ function validateHost() {
             throw new Error(`InDesign ${host.version} is not supported. `
                 +`Minimum required version is ${minRequiredVersion}.`);
         }
-    } catch(error) { // This may happen when debugging with the Adobe UXP Developer Tool.
+    }
+    catch(error) { // This may happen when debugging with the Adobe UXP Developer Tool.
         logger.error(error.toString());
     }
 };

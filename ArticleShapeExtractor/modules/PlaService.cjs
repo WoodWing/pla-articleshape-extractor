@@ -37,7 +37,8 @@ class PlaService {
             const jsonResponseBody = await this.#fetchJson(httpRequest, null);
             this.#logger.info(`Retrieved ${jsonResponseBody.length} sheet dimensions.`);
             return jsonResponseBody;
-        } catch (error) {
+        }
+        catch (error) {
             const { PlaServiceCommunicationError } = require("./Errors.cjs");
             throw new PlaServiceCommunicationError(`Could not retrieve sheet dimensions.\n${error.message}`);
         }
@@ -57,7 +58,8 @@ class PlaService {
             const responseBodyText = await httpResponse.text();
             try {
                 jsonResponseBody = JSON.parse(responseBodyText);
-            } catch {
+            }
+            catch {
                 // Intentionally ignored
             }
             if (!httpResponse.ok) {
@@ -71,7 +73,8 @@ class PlaService {
                 this.#logger.error("Invalid JSON response: {}", responseBodyText);
                 throw new Error("Response does not contain a (valid) JSON.");
             }
-        } finally {
+        }
+        finally {
             this.#httpLogger.debugLogHttpResponse(httpResponse, jsonResponseBody);
         }
         return jsonResponseBody;
@@ -162,7 +165,8 @@ class PlaService {
                 });
             });
             return downloadUrls;
-        } catch (error) {
+        }
+        catch (error) {
             const { PlaServiceCommunicationError } = require("./Errors.cjs");
             throw new PlaServiceCommunicationError(`Could not retrieve shape suggestions.\n${error.message}`);
         }

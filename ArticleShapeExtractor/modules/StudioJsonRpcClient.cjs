@@ -86,7 +86,8 @@ class StudioJsonRpcClient {
         try {
             const rpcResponse = await this.#fetchRpc(httpRequest, rpcRequest);
             return rpcResponse.result;
-        } catch (error) {
+        }
+        catch (error) {
             const { StudioServerCommunicationError } = require("./Errors.cjs");
             throw new StudioServerCommunicationError(`${serviceName} service failed.\n${error.message}`);
         }
@@ -120,7 +121,8 @@ class StudioJsonRpcClient {
             const responseBodyText = await httpResponse.text();
             try {
                 rpcResponseBody = JSON.parse(responseBodyText);
-            } catch {
+            }
+            catch {
                 // Intentionally ignored
             }
             if (!httpResponse.ok) {
@@ -138,7 +140,8 @@ class StudioJsonRpcClient {
                 this.#logger.error("JSON RPC result missing:\n{}", JSON.stringify(rpcResponseBody, null, 3));
                 throw new Error("Response has no JSON RPC result.");
             }
-        } finally {
+        }
+        finally {
             this.#httpLogger.debugLogHttpResponse(httpResponse, rpcResponseBody);
         }
         return rpcResponseBody;

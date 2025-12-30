@@ -95,7 +95,8 @@ class GenreResolver {
             }
             this.#logger.info(`Saved the configured genres to "${genresRelativePath}".`);
 
-        } else {
+        }
+        else {
             const genresOfPrecedingOperation = JSON.parse(await genresFile.read({ format: formats.utf8 }));
             if (!this.#compareArraysOfStrings(this.#genres, genresOfPrecedingOperation)) {
                 this.#logger.error("Detected differences in configured genres:\n"

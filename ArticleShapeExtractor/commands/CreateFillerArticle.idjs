@@ -5,7 +5,8 @@ await (async function main() {
     try {
         initBootstrap();
         Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Filler");
-    } catch (error) {
+    }
+    catch (error) {
         Container.resolve("Logger").logError(error);
         alert(error.message, "Error");
     }

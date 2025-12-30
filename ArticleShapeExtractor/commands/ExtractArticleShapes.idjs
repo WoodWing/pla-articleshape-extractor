@@ -39,7 +39,8 @@ await (async function main() {
             throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.");
         }
         alert(exportCounter + " articles have been exported as Article Shapes.");
-    } catch(error) {
+    }
+    catch(error) {
         Container.resolve("Logger").logError(error);
         alert(error.message, "Error");
     }

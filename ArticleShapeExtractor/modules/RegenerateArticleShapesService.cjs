@@ -94,7 +94,8 @@ class RegenerateArticleShapesService {
                     `Article Shapes (JSON files) for layout id ${wflObject.ID} with version ${wflObject.Version} ` +
                     "already exists in export folder.");
                 skippedLayoutIds.push(wflObject.ID);
-            } else {
+            }
+            else {
                 // If query has newer layout version, remove files of old version from disk.
                 if (mapItem) for (const oldFile of mapItem.shapeFiles) {
                     await this.#deleteFile(oldFile);
@@ -104,7 +105,8 @@ class RegenerateArticleShapesService {
                 theOpenDoc.close(idd.SaveOptions.no);
                 if (shapeCount > 0) {
                     extractedLayoutIds.push(wflObject.ID);
-                } else { // no article shapes extracted means error; this layout has nothing for us
+                }
+                else { // no article shapes extracted means error; this layout has nothing for us
                     failedLayoutIds.push(wflObject.ID);
                 }
             }
@@ -137,7 +139,8 @@ class RegenerateArticleShapesService {
         for (const layoutStatus of layoutStatuses) {
             if (layoutStatus.Name === this.#settings.layoutStatusOnSuccess) {
                 this.#layoutStatusIdOnSuccess = layoutStatus.Id;
-            } else if (layoutStatus.Name === this.#settings.layoutStatusOnError) {
+            }
+            else if (layoutStatus.Name === this.#settings.layoutStatusOnError) {
                 this.#layoutStatusIdOnError = layoutStatus.Id;
             }
         }
@@ -244,7 +247,8 @@ class RegenerateArticleShapesService {
         this.#logger.debug(`Deleting file: ${file.name}`);
         try {
             await file.delete();
-        } catch (err) {
+        }
+        catch (err) {
             this.#logger.warning(`Failed to delete file: ${file.name}`, err);
         }
     }
