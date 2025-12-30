@@ -186,13 +186,13 @@ Settings are made in:
 Validate whole project at once:
 ```bash
 cd ArticleShapeExtractor
-npm lint
+npm run lint
 ```
 
 Auto fix whole project at once:
 ```bash
 cd ArticleShapeExtractor
-npm lint:fix
+npm run lint:fix
 ```
 
 In VS Code:
