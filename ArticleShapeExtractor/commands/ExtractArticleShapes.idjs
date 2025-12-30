@@ -20,7 +20,7 @@ await (async function main() {
         alert("Select a folder to save the Article Shapes.");
         const lfs = require('uxp').storage.localFileSystem;
         const domains = require('uxp').storage.domains;
-        const folder = await lfs.getFolder({initialDomain: domains.userDocuments});
+        const folder = await lfs.getFolder({ initialDomain: domains.userDocuments });
         if (!folder || !folder.isFolder) {
             const { NoFolderSelectedError } = require('../modules/Errors.cjs');
             throw new NoFolderSelectedError();

@@ -11,7 +11,7 @@ globalThis.alert = function(msg, caption) {
     const lines = ("" + msg).split('\n');
     for (const line of lines) {
         const row = col.dialogRows.add();
-        row.staticTexts.add({staticLabel: line});
+        row.staticTexts.add({ staticLabel: line });
     }
     theDialog.canCancel = false;
     theDialog.show();

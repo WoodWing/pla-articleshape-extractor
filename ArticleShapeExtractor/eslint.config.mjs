@@ -22,7 +22,8 @@ export default [
         rules: {
             // formatting rules (ALL autofixable)
             "stylistic/indent": ["error", 4],
-            "stylistic/comma-dangle": ["error", "never"]
+            "stylistic/comma-dangle": ["error", "never"],
+            "stylistic/object-curly-spacing": ["error", "always"]
         }
     },
 

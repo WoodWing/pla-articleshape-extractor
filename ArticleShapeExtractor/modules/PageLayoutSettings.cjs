@@ -147,14 +147,14 @@ class PageLayoutSettings{
         const { entry: settingsFile, created } = await this.#fileUtils.getOrCreateFile(settingsFolder, settingsFilename);
         if (created) {
             const settingsJson = JSON.stringify(settings, null, 4);
-            const byteCount = await settingsFile.write(settingsJson, {format: formats.utf8}); 
+            const byteCount = await settingsFile.write(settingsJson, { format: formats.utf8 }); 
             if (!byteCount ) {
                 const { ConfigurationError } = require('./Errors.cjs');
                 const message = `Could not write into file "${manifestFoldername}/${settingsFilename}".\nPlease check access rights.`;
                 throw new ConfigurationError(message);
             }
         } else {
-            const settingsOfPrecedingLayout = JSON.parse(await settingsFile.read({format: formats.utf8}));
+            const settingsOfPrecedingLayout = JSON.parse(await settingsFile.read({ format: formats.utf8 }));
             const diff = this.#diffInDesignPageLayoutGrid(settings, settingsOfPrecedingLayout);
             if (diff != null) {
                 const { ConfigurationError } = require('./Errors.cjs');
@@ -185,7 +185,7 @@ class PageLayoutSettings{
             const thisValue = this.#getPropertyValueByPath(lhsSettings, path);
             const thatValue = this.#getPropertyValueByPath(rhsSettings, path);
             if (thisValue != thatValue) {
-                return {"propertyPath": path, "lhsValue": thisValue, "rhsValue": thatValue};
+                return { "propertyPath": path, "lhsValue": thisValue, "rhsValue": thatValue };
             }
         }
         return null;

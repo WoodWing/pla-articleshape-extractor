@@ -281,7 +281,7 @@ class ExportInDesignArticlesToFolder {
     #composeArticleShapeJson(doc, articleName, outerBounds) {
 
         // Resolve brand and section from layout doc (or use fallback settings).
-        const {brand, section} = this.#brandSectionResolver.resolve(doc);
+        const { brand, section } = this.#brandSectionResolver.resolve(doc);
 
         // Resolve the shape type. Bail out when article has bad naming convention.
         const shapeType = this.#resolveShapeTypeFromArticleName(articleName)

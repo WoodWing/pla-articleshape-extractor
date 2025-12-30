@@ -166,7 +166,7 @@ class Logger {
                 mode = "w"; // overwrite or create
                 this.#wipe = false;
             }
-            fs.writeFileSync(logPath, logLine, {encoding: "utf-8", flag: mode});		
+            fs.writeFileSync(logPath, logLine, { encoding: "utf-8", flag: mode });		
         } catch(error) {
             alert(`Failed to write into log file '${logPath}' - ${error.message}`);
         }

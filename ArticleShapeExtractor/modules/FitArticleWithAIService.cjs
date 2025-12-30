@@ -49,7 +49,7 @@ class FitArticleWithAIService {
         }
 
         // Resolve brand and section from layout doc (or use fallback settings).
-        const {brand, section} = this.#brandSectionResolver.resolve(doc);
+        const { brand, section } = this.#brandSectionResolver.resolve(doc);
 
         /*const pubInfos =*/ await this.#studioJsonRpcClient.getPublicationInfos([brand.id]);
         const accessToken = await this.#studioJsonRpcClient.getAccessToken(brand.id);

@@ -55,7 +55,7 @@ class BrandSectionResolver {
             `Resolved brand '${brand.name}' (id=${brand.id}) `
             + `and category '${section.name}' (id=${section.id}) from ${source}.`
         );
-        return {brand, section};
+        return { brand, section };
     }
 }
 

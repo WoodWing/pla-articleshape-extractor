@@ -175,7 +175,7 @@ class RegenerateArticleShapesService {
         for (const { shapeFile: shapeFile, layoutId, layoutVersion } of shapeFiles) {
             const mapItem = fileMap.get(layoutId);
             if (!mapItem) {
-                fileMap.set(layoutId, {layoutVersion: layoutVersion, shapeFiles: [shapeFile]});
+                fileMap.set(layoutId, { layoutVersion: layoutVersion, shapeFiles: [shapeFile] });
                 continue;
             }
             // Only allow one version per layout. Assure that version is the latest.

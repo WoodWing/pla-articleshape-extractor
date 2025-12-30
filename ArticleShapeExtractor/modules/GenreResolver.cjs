@@ -87,7 +87,7 @@ class GenreResolver {
         const configRelativePath = "config/config-local.js";
         if (created) {
             const genresJson = JSON.stringify(this.#genres, null, 4);
-            const byteCount = await genresFile.write(genresJson, {format: formats.utf8}); 
+            const byteCount = await genresFile.write(genresJson, { format: formats.utf8 }); 
             if (!byteCount ) {
                 const { ConfigurationError } = require('./Errors.cjs');
                 const message = `Could not write into file '${genresRelativePath}'.\nPlease check access rights.`;
@@ -96,7 +96,7 @@ class GenreResolver {
             this.#logger.info(`Saved the configured genres to "${genresRelativePath}".`);
 
         } else {
-            const genresOfPrecedingOperation = JSON.parse(await genresFile.read({format: formats.utf8}));
+            const genresOfPrecedingOperation = JSON.parse(await genresFile.read({ format: formats.utf8 }));
             if (!this.#compareArraysOfStrings(this.#genres, genresOfPrecedingOperation)) {
                 this.#logger.error("Detected differences in configured genres:\n"
                     + `1) configured genres: ${JSON.stringify(this.#genres, null, 4)}\n`
