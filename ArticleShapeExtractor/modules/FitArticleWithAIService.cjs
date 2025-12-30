@@ -6,9 +6,6 @@ class FitArticleWithAIService {
     /** @type {Logger} */
     #logger;
     
-    /** @type {{{brand: <string>, issue: <string>, category: <string>, status: <string>}, layoutStatusOnSuccess: <string>, layoutStatusOnError: <string>}} */
-    #settings;
-    
     /** @type {StudioJsonRpcClient} */
     #studioJsonRpcClient;
     
@@ -20,14 +17,12 @@ class FitArticleWithAIService {
     
     /**
      * @param {Logger} logger
-     * @param {{{brand: <string>, issue: <string>, category: <string>, status: <string>}, layoutStatusOnSuccess: <string>, layoutStatusOnError: <string>}} settings
      * @param {StudioJsonRpcClient} studioJsonRpcClient
      * @param {PlaService} plaService
      * @param {BrandSectionResolver} brandSectionResolver
      */
-    constructor(logger, settings, studioJsonRpcClient, plaService, brandSectionResolver) {
+    constructor(logger, studioJsonRpcClient, plaService, brandSectionResolver) {
         this.#logger = logger;
-        this.#settings = settings;
         this.#studioJsonRpcClient = studioJsonRpcClient;
         this.#plaService = plaService;
         this.#brandSectionResolver = brandSectionResolver;
@@ -56,9 +51,9 @@ class FitArticleWithAIService {
         // Resolve brand and section from layout doc (or use fallback settings).
         const {brand, section} = this.#brandSectionResolver.resolve(doc);
 
-        const pubInfos = await this.#studioJsonRpcClient.getPublicationInfos([brand.id]);
+        /*const pubInfos =*/ await this.#studioJsonRpcClient.getPublicationInfos([brand.id]);
         const accessToken = await this.#studioJsonRpcClient.getAccessToken(brand.id);
-        const dimensions = await this.#plaService.getSheetDimensions(accessToken, brand.id);
+        /*const dimensions =*/ await this.#plaService.getSheetDimensions(accessToken, brand.id);
         // TODO: Error when layout does not occur in any of the dimensions.
         const shapeFiles = await this.#retrieveArticleShapeSuggestions(accessToken, brand, section);
         for (const shapeFile of shapeFiles) {

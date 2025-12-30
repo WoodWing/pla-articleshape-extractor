@@ -1,5 +1,3 @@
-const { app } = require("indesign");
-
 /**
  * Understands how to communicate with Studio Server using the JSON-RPC protocol.
  */

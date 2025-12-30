@@ -81,7 +81,7 @@ class GenreResolver {
     async saveGenesToManifest(exportFolder) {
         const manifestFoldername = "_manifest";
         const genresFilename = "genres.json";
-        const { entry: manifestFolder, _ } = await this.#fileUtils.getOrCreateSubFolder(exportFolder, manifestFoldername);
+        const { entry: manifestFolder } = await this.#fileUtils.getOrCreateSubFolder(exportFolder, manifestFoldername);
         const { entry: genresFile, created } = await this.#fileUtils.getOrCreateFile(manifestFolder, genresFilename);
         const genresRelativePath = `${manifestFoldername}/${genresFilename}`;
         const configRelativePath = "config/config-local.js";

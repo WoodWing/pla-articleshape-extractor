@@ -151,7 +151,6 @@ Container.registerFactory("FitArticleWithAIService", function() {
     const FitArticleWithAIService = require("./modules/FitArticleWithAIService.cjs");
     return new FitArticleWithAIService(
         Container.resolve("Logger"), 
-        Container.resolve("Settings"),
         Container.resolve("StudioJsonRpcClient"),
         Container.resolve("PlaService"),
         Container.resolve("BrandSectionResolver"),        
