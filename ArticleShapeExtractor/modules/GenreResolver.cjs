@@ -89,7 +89,7 @@ class GenreResolver {
             const genresJson = JSON.stringify(this.#genres, null, 4);
             const byteCount = await genresFile.write(genresJson, {format: formats.utf8}); 
             if (!byteCount ) {
-                const { ConfigurationError } = require('./Errors.mjs');
+                const { ConfigurationError } = require('./Errors.cjs');
                 const message = `Could not write into file '${genresRelativePath}'.\nPlease check access rights.`;
                 throw new ConfigurationError(message);
             }
@@ -102,7 +102,7 @@ class GenreResolver {
                     + `1) configured genres: ${JSON.stringify(this.#genres, null, 4)}\n`
                     + `2) genres.json:\n${JSON.stringify(genresOfPrecedingOperation, null, 4)}\n`
                 );
-                const { ConfigurationError } = require('./Errors.mjs');
+                const { ConfigurationError } = require('./Errors.cjs');
                 const message = "\n" 
                     + "The genres configured for the current operation differ from the preceding operation.\n"
                     + `Genres configured for the current operation are found in '${configRelativePath}'.\n`

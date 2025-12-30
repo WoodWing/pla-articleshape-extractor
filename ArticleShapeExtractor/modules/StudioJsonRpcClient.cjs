@@ -89,7 +89,7 @@ class StudioJsonRpcClient {
             const rpcResponse = await this.#fetchRpc(httpRequest, rpcRequest);
             return rpcResponse.result;
         } catch (error) {
-            const { StudioServerCommunicationError } = require('./Errors.mjs');
+            const { StudioServerCommunicationError } = require('./Errors.cjs');
             throw new StudioServerCommunicationError(`${serviceName} service failed.\n${error.message}`);
         }
 
@@ -170,7 +170,7 @@ class StudioJsonRpcClient {
             }
         } while (response.ListedEntries > 0 && queryCount < maxQueryHit);
         if (queryCount === maxQueryHit) {
-            const { PrintLayoutAutomationError } = require('./Errors.mjs');
+            const { PrintLayoutAutomationError } = require('./Errors.cjs');
             throw new PrintLayoutAutomationError(`Too many QueryObjects executed: ${maxQueryHit}.`);
         }
     };
@@ -185,7 +185,7 @@ class StudioJsonRpcClient {
     async #queryObjectsOneResultPage(searchParams, resolveProperties, firstEntry) {
         const startsWithProps = ['ID', 'Type', 'Name']; // service rule: must start with this sequence of props
         if( !startsWithProps.every((value, index) => resolveProperties[index] === value) ) {
-            const { ArgumentError } = require('./Errors.mjs');
+            const { ArgumentError } = require('./Errors.cjs');
             throw new ArgumentError("The 'resolveProperties' param should start with 'ID', 'Name' and 'Type' values.");
         }
         const url = this.#getStudioServerUrl();

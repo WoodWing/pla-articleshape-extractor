@@ -1,12 +1,24 @@
 {
   "compilerOptions": {
-    "module": "es2022",
     "moduleResolution": "node",
-    "target": "es2022",
+    
+    // VS Code only — not runtime
+    "target": "esnext",
+
+    // Let VS Code understand require() AND import
+    "allowJs": true,
+
+    // No fake path aliases
     "baseUrl": ".", // root folder
+    
     "paths": {
       "*": ["./*"]
     }
   },
-  "include": ["./**/*.mjs", "./**/*.idjs", "./**/*.js"]
+  "include": [
+    "./**/*.cjs",
+    "./**/*.mjs",
+    "./**/*.idjs",
+    "./**/*.js"
+  ]
 }

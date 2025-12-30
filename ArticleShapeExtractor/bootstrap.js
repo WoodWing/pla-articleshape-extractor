@@ -1,11 +1,11 @@
 require("./extensions/String.js");
 require("./extensions/globals.js");
 const _ = require("./extensions/lodash.min.js");
-require("./modules/Errors.mjs");
-const Container = require("./modules/Container.mjs");
+require("./modules/Errors.cjs");
+const Container = require("./modules/Container.cjs");
 
 Container.registerSingleton("Settings", function() {
-    const Settings = require("./modules/Settings.mjs");
+    const Settings = require("./modules/Settings.cjs");
     const plaDefaultConfig = require("./config/config.js");
     let plaLocalConfig = {}
     try {
@@ -16,7 +16,7 @@ Container.registerSingleton("Settings", function() {
 });
 
 Container.registerSingleton("Logger", function() {
-    const Logger = require("./modules/Logger.mjs");
+    const Logger = require("./modules/Logger.cjs");
     const config = Container.resolve("Settings").getLoggerConfig();
     try {
         return new Logger(config.folder, config.filename, config.level, config.wipe);
@@ -26,7 +26,7 @@ Container.registerSingleton("Logger", function() {
 });
 
 Container.registerSingleton("HttpLogger", function() {
-    const HttpLogger = require("./modules/HttpLogger.mjs");
+    const HttpLogger = require("./modules/HttpLogger.cjs");
     return new HttpLogger(
         Container.resolve("Logger"),
         Container.resolve("Settings").getLogNetworkTraffic(),
@@ -34,7 +34,7 @@ Container.registerSingleton("HttpLogger", function() {
 });
 
 Container.registerSingleton("VersionUtils", function() {
-    const VersionUtils = require("./modules/VersionUtils.mjs");
+    const VersionUtils = require("./modules/VersionUtils.cjs");
     return new VersionUtils();
 });
 
@@ -58,17 +58,17 @@ function validateHost() {
 };
 
 Container.registerFactory("InDesignArticleService", function() {
-    const InDesignArticleService = require("./modules/InDesignArticleService.mjs");
+    const InDesignArticleService = require("./modules/InDesignArticleService.cjs");
     return new InDesignArticleService();
 });
 
 Container.registerFactory("FileUtils", function() {
-    const FileUtils = require("./modules/FileUtils.mjs");
+    const FileUtils = require("./modules/FileUtils.cjs");
     return new FileUtils();
 });
 
 Container.registerFactory("PageLayoutSettings", function() {
-    const PageLayoutSettings = require("./modules/PageLayoutSettings.mjs");
+    const PageLayoutSettings = require("./modules/PageLayoutSettings.cjs");
     return new PageLayoutSettings(
         Container.resolve("Logger"),
         Container.resolve("FileUtils"),
@@ -76,7 +76,7 @@ Container.registerFactory("PageLayoutSettings", function() {
 });
 
 Container.registerFactory("GenreResolver", function() {
-    const GenreResolver = require("./modules/GenreResolver.mjs");
+    const GenreResolver = require("./modules/GenreResolver.cjs");
     const settings = Container.resolve("Settings");
     return new GenreResolver(
         Container.resolve("Logger"),
@@ -86,7 +86,7 @@ Container.registerFactory("GenreResolver", function() {
 });
 
 Container.registerFactory("BrandSectionResolver", function() {
-    const BrandSectionResolver = require("./modules/BrandSectionResolver.mjs");
+    const BrandSectionResolver = require("./modules/BrandSectionResolver.cjs");
     const settings = Container.resolve("Settings");
     return new BrandSectionResolver(
         Container.resolve("Logger"),
@@ -96,7 +96,7 @@ Container.registerFactory("BrandSectionResolver", function() {
 });
 
 Container.registerFactory("ExportInDesignArticlesToFolder", function() {
-    const ExportInDesignArticlesToFolder = require("./modules/ExportInDesignArticlesToFolder.mjs");
+    const ExportInDesignArticlesToFolder = require("./modules/ExportInDesignArticlesToFolder.cjs");
     return new ExportInDesignArticlesToFolder(
         Container.resolve("Logger"), 
         Container.resolve("InDesignArticleService"), 
@@ -108,7 +108,7 @@ Container.registerFactory("ExportInDesignArticlesToFolder", function() {
 
 Container.registerFactory("StudioJsonRpcClient", function() {
     const { app } = require("indesign");
-    const StudioJsonRpcClient = require("./modules/StudioJsonRpcClient.mjs");
+    const StudioJsonRpcClient = require("./modules/StudioJsonRpcClient.cjs");
     return new StudioJsonRpcClient(
         Container.resolve("Logger"),
         Container.resolve("HttpLogger"),
@@ -118,7 +118,7 @@ Container.registerFactory("StudioJsonRpcClient", function() {
 });
 
 Container.registerFactory("RegenerateArticleShapesService", function() {
-    const RegenerateArticleShapesService = require("./modules/RegenerateArticleShapesService.mjs");
+    const RegenerateArticleShapesService = require("./modules/RegenerateArticleShapesService.cjs");
     return new RegenerateArticleShapesService(
         Container.resolve("Logger"), 
         Container.resolve("VersionUtils"),
@@ -129,7 +129,7 @@ Container.registerFactory("RegenerateArticleShapesService", function() {
 });
 
 Container.registerFactory("BrandSectionMapResolver", function() {
-    const BrandSectionMapResolver = require("./modules/BrandSectionMapResolver.mjs");
+    const BrandSectionMapResolver = require("./modules/BrandSectionMapResolver.cjs");
     return new BrandSectionMapResolver(
         Container.resolve("Logger"),
         Container.resolve("StudioJsonRpcClient"),
@@ -138,7 +138,7 @@ Container.registerFactory("BrandSectionMapResolver", function() {
 });
 
 Container.registerFactory("PlaService", function() {
-    const PlaService = require("./modules/PlaService.mjs");
+    const PlaService = require("./modules/PlaService.cjs");
     return new PlaService(
         Container.resolve("Logger"), 
         Container.resolve("HttpLogger"), 
@@ -147,7 +147,7 @@ Container.registerFactory("PlaService", function() {
 });
 
 Container.registerFactory("FitArticleWithAIService", function() {
-    const FitArticleWithAIService = require("./modules/FitArticleWithAIService.mjs");
+    const FitArticleWithAIService = require("./modules/FitArticleWithAIService.cjs");
     return new FitArticleWithAIService(
         Container.resolve("Logger"), 
         Container.resolve("Settings"),
