@@ -3,7 +3,22 @@
         "*.idjs": "javascript"
     },
     "cSpell.words": [
+        "aila",
         "idms",
-        "malpositioned"
+        "idjs",
+        "malpositioned",
+        "stroustrup"
+    ],
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "[javascript]": {
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
+    "eslint.format.enable": true,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    "eslint.validate": [
+        "javascript"
     ]
 }

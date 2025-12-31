@@ -11,22 +11,22 @@ class Settings {
      * @param {Object} defaultConfig Factory default settings.
      * @param {Object} localConfig Local override settings.
      */
-    constructor(defaultConfig, localConfig) {
+    constructor (defaultConfig, localConfig) {
         this.#configData = _.merge({}, defaultConfig, localConfig);
     }
 
     /**
      * @returns {Object}
      */
-    getOfflineFallbackConfig() {
+    getOfflineFallbackConfig () {
         return this.#configData.offlineFallback;
     }
 
     /**
      * @returns {{{brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}}
-     */    
-    getRegenerateArticleShapesSettings() {
-        const { ConfigurationError } = require('./Errors.cjs');
+     */
+    getRegenerateArticleShapesSettings () {
+        const { ConfigurationError } = require("./Errors.cjs");
         const settings = this.#configData.regenerateArticleShapesSettings;
         const tip = "Please check your 'config/config.js' and your 'config/config-local.js' files.";
         for (const paramName of ["brand", "issue", "category", "status"]) {
@@ -55,36 +55,36 @@ class Settings {
     /**
      * @returns {Object}
      */
-    getLoggerConfig() {
+    getLoggerConfig () {
         return this.#configData.logger;
     }
 
     /**
      * @returns {boolean}
      */
-    getLogNetworkTraffic() {
+    getLogNetworkTraffic () {
         return this.#configData.logger.logNetworkTraffic;
     }
-    
+
     /**
      * @returns {String}
      */
-    getMinimumRequiredInDesignVersion() {
+    getMinimumRequiredInDesignVersion () {
         return this.#configData.minimumRequiredInDesignVersion;
     }
-    
+
     /**
      * @return {Array<String>}
      */
-    getGenres() {
+    getGenres () {
         return this.#configData.genres;
     }
 
     /**
-     * 
+     *
      * @returns {string}
      */
-    getPlaServiceUrl() {
+    getPlaServiceUrl () {
         return this.#configData.plaServiceUrl;
     }
 }

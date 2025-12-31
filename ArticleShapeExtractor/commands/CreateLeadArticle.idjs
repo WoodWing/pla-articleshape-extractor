@@ -1,11 +1,12 @@
-await (async function main() {
-    const initBootstrap = require('../bootstrap.js');
+await (async function main () {
+    const initBootstrap = require("../bootstrap.js");
     const Container = require("../modules/Container.cjs");
 
     try {
         initBootstrap();
         Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Lead");
-    } catch (error) {
+    }
+    catch (error) {
         Container.resolve("Logger").logError(error);
         alert(error.message, "Error");
     }

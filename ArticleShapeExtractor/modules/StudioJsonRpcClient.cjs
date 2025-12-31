@@ -5,13 +5,13 @@ class StudioJsonRpcClient {
 
     /** @type {Logger} */
     #logger;
-    
+
     /** @type {HttpLogger} */
     #httpLogger;
-    
+
     /** @type {string|null} */
     #serverUrl;
-    
+
     /** @type {string|null} */
     #ticket;
 
@@ -19,12 +19,12 @@ class StudioJsonRpcClient {
     #rpcSequenceId;
 
     /**
-     * @param {Logger} logger 
-     * @param {HttpLogger} httpLogger 
-     * @param {string|null} serverUrl 
-     * @param {string|null} ticket 
-     */    
-    constructor(logger, httpLogger, serverUrl, ticket) {
+     * @param {Logger} logger
+     * @param {HttpLogger} httpLogger
+     * @param {string|null} serverUrl
+     * @param {string|null} ticket
+     */
+    constructor (logger, httpLogger, serverUrl, ticket) {
         this.#logger = logger;
         this.#httpLogger = httpLogger;
         this.#serverUrl = serverUrl;
@@ -36,7 +36,7 @@ class StudioJsonRpcClient {
      * Whether or not a session with the Studio Server has been setup.
      * @returns {boolean}
      */
-    hasSession() {
+    hasSession () {
         return this.#serverUrl && this.#ticket;
     }
 
@@ -46,11 +46,11 @@ class StudioJsonRpcClient {
      * @param {Array<string>|null} requestInfo Brand setup info to resolve: "FeatureAccessList", "ObjectTypeProperties", "ActionProperties", "States", "CurrentIssue", "PubChannels", "Categories"
      * @returns {Array<Object>} List of PublicationInfo data objects.
      */
-    async getPublicationInfos(brandIds, requestInfo) {
+    async getPublicationInfos (brandIds, requestInfo) {
         const url = this.#getStudioServerUrl();
         const request = {
-            Ticket: this.#ticket
-        }
+            Ticket: this.#ticket,
+        };
         if (brandIds) {
             request["IDs"] = brandIds;
         }
@@ -69,29 +69,30 @@ class StudioJsonRpcClient {
      * @param {string} serviceName
      * @returns {Object} Response
      */
-    async #callWebService(url, request, serviceName) {
+    async #callWebService (url, request, serviceName) {
         this.#rpcSequenceId += 1;
         const rpcRequest = {
             "method": serviceName,
             "id": `${this.#rpcSequenceId}`,
             "params": [request],
-            "jsonrpc": "2.0"
+            "jsonrpc": "2.0",
         };
         const httpRequest = new Request(url, {
-            mode: 'cors',
+            mode: "cors",
             withCredentials: false,
-            method: 'POST',
-            body: JSON.stringify(rpcRequest)
+            method: "POST",
+            body: JSON.stringify(rpcRequest),
         });
         try {
             const rpcResponse = await this.#fetchRpc(httpRequest, rpcRequest);
             return rpcResponse.result;
-        } catch (error) {
-            const { StudioServerCommunicationError } = require('./Errors.cjs');
+        }
+        catch (error) {
+            const { StudioServerCommunicationError } = require("./Errors.cjs");
             throw new StudioServerCommunicationError(`${serviceName} service failed.\n${error.message}`);
         }
 
-        // Don't simply use the app.jsonRequest() API provided by SC plugins; That does not seem to work 
+        // Don't simply use the app.jsonRequest() API provided by SC plugins; That does not seem to work
         // for JSON-RPC services provided by server plugins (like the ContentStation plugin).
         // For example:
         //    const rawRequest = JSON.stringify(rpcRequest);
@@ -99,19 +100,19 @@ class StudioJsonRpcClient {
         //    const rpcResponse = JSON.parse(rawResponse);
         //    return rpcResponse.result;
         //
-        // Nevertheless, app.jsonRequest() caters for on-premise SSL certificate configuration in the 
-        // WWSettings.xml file. For now, this.#fetchRpc() calls fetch(), which is implemented by IDJS/UXP, 
-        // hence might lead into SSL problems in the future for on-premise customers using such config. 
-        // However, over time, most likely this will become less of a problem as we are moving to WW Cloud. 
+        // Nevertheless, app.jsonRequest() caters for on-premise SSL certificate configuration in the
+        // WWSettings.xml file. For now, this.#fetchRpc() calls fetch(), which is implemented by IDJS/UXP,
+        // hence might lead into SSL problems in the future for on-premise customers using such config.
+        // However, over time, most likely this will become less of a problem as we are moving to WW Cloud.
         // See also chapter "Known limitations" in the ../README.md file.
     };
 
     /**
-     * @param {Request} httpRequest 
+     * @param {Request} httpRequest
      * @param {Object} rpcRequestBody JSON RPC request body.
      * @returns {Object} JSON RPC response body.
      */
-    async #fetchRpc(httpRequest, rpcRequestBody) {
+    async #fetchRpc (httpRequest, rpcRequestBody) {
         let httpResponse = null;
         let rpcResponseBody = null;
         try {
@@ -120,15 +121,16 @@ class StudioJsonRpcClient {
             const responseBodyText = await httpResponse.text();
             try {
                 rpcResponseBody = JSON.parse(responseBodyText);
-            } catch {
+            }
+            catch {
                 // Intentionally ignored
             }
             if (!httpResponse.ok) {
                 throw new Error(`HTTP ${httpResponse.status} ${httpResponse.statusText}`);
             }
-            if (!rpcResponseBody) {            
+            if (!rpcResponseBody) {
                 this.#logger.error("Invalid JSON response:\n{}", responseBodyText);
-                throw new Error("Response does not contain a (valid) JSON.")
+                throw new Error("Response does not contain a (valid) JSON.");
             }
             if (rpcResponseBody?.error) {
                 this.#logger.error("JSON RPC error:\n{}", JSON.stringify(rpcResponseBody, null, 3));
@@ -136,9 +138,10 @@ class StudioJsonRpcClient {
             }
             if (!rpcResponseBody.result) {
                 this.#logger.error("JSON RPC result missing:\n{}", JSON.stringify(rpcResponseBody, null, 3));
-                throw new Error("Response has no JSON RPC result.")
+                throw new Error("Response has no JSON RPC result.");
             }
-        } finally {
+        }
+        finally {
             this.#httpLogger.debugLogHttpResponse(httpResponse, rpcResponseBody);
         }
         return rpcResponseBody;
@@ -150,9 +153,9 @@ class StudioJsonRpcClient {
      * @param {Array<string>} resolveProperties List of workflow object property names to resolve.
      * @param {CallableFunction} callbackObjectsResolved This function is called for each page of retrieved objects.
      */
-    async queryObjects(searchParams, resolveProperties, callbackObjectsResolved) {
+    async queryObjects (searchParams, resolveProperties, callbackObjectsResolved) {
         let firstEntry = 1;
-        let queryCount = 0; 
+        let queryCount = 0;
         const maxQueryHit = 100; // paranoid prevention of endless loops
         let response = null;
         do {
@@ -169,7 +172,7 @@ class StudioJsonRpcClient {
             }
         } while (response.ListedEntries > 0 && queryCount < maxQueryHit);
         if (queryCount === maxQueryHit) {
-            const { PrintLayoutAutomationError } = require('./Errors.cjs');
+            const { PrintLayoutAutomationError } = require("./Errors.cjs");
             throw new PrintLayoutAutomationError(`Too many QueryObjects executed: ${maxQueryHit}.`);
         }
     };
@@ -181,10 +184,10 @@ class StudioJsonRpcClient {
      * @param {number} firstEntry Object index to start reading from (in paged results).
      * @returns {Object} QueryObjectsResponse
      */
-    async #queryObjectsOneResultPage(searchParams, resolveProperties, firstEntry) {
-        const startsWithProps = ['ID', 'Type', 'Name']; // service rule: must start with this sequence of props
-        if( !startsWithProps.every((value, index) => resolveProperties[index] === value) ) {
-            const { ArgumentError } = require('./Errors.cjs');
+    async #queryObjectsOneResultPage (searchParams, resolveProperties, firstEntry) {
+        const startsWithProps = ["ID", "Type", "Name"]; // service rule: must start with this sequence of props
+        if (!startsWithProps.every((value, index) => resolveProperties[index] === value)) {
+            const { ArgumentError } = require("./Errors.cjs");
             throw new ArgumentError("The 'resolveProperties' param should start with 'ID', 'Name' and 'Type' values.");
         }
         const url = this.#getStudioServerUrl();
@@ -202,13 +205,13 @@ class StudioJsonRpcClient {
 
     /**
      * Build a list of workflow objects from the Columns and Rows of a given QueryObjectsResponse.
-     * @param {Object} response 
+     * @param {Object} response
      * @param {Array<string>} resolveProperties Names of workflow object properties to expect.
      * @returns {Array<Object>} List of resolved objects, each having the properties assigned.
      */
-    #getObjectsFromQueryObjectsResponse(response, resolveProperties) {
+    #getObjectsFromQueryObjectsResponse (response, resolveProperties) {
         const wflObjects = [];
-        const columnIndexes = new Map()
+        const columnIndexes = new Map();
         for (var columnIndex = 0; columnIndex < response.Columns.length; columnIndex++) {
             const columnName = response.Columns[columnIndex].Name;
             if (resolveProperties.includes(columnName)) {
@@ -218,7 +221,7 @@ class StudioJsonRpcClient {
         for (var rowIndex = 0; rowIndex < response.Rows.length; rowIndex++) {
             let wflObject = {};
             for (const property of resolveProperties) {
-                wflObject[property] = response.Rows[rowIndex][columnIndexes.get(property)]
+                wflObject[property] = response.Rows[rowIndex][columnIndexes.get(property)];
             }
             wflObjects.push(wflObject);
         }
@@ -227,10 +230,10 @@ class StudioJsonRpcClient {
 
     /**
      * Call the MultiSetObjectProperties service to move objects to another status.
-     * @param {Array<string>} objectIds 
+     * @param {Array<string>} objectIds
      * @param {string} statusId
      */
-    async sendObjectsToStatus(objectIds, statusId) {
+    async sendObjectsToStatus (objectIds, statusId) {
         const url = this.#getStudioServerUrl();
         const request = {
             Ticket: this.#ticket,
@@ -239,11 +242,11 @@ class StudioJsonRpcClient {
                 Property: "StateId",
                 PropertyValues: [{
                     Value: statusId,
-                    __classname__: "PropertyValue"
+                    __classname__: "PropertyValue",
                 }],
-                __classname__: "MetaDataValue"
-            }]
-        }
+                __classname__: "MetaDataValue",
+            }],
+        };
         await this.#callWebService(url, request, "MultiSetObjectProperties");
     }
 
@@ -252,13 +255,13 @@ class StudioJsonRpcClient {
      * @param {string} brandId
      * @returns {string}
      */
-    async getAccessToken(brandId) {
+    async getAccessToken (brandId) {
         const url = this.#getStudioClientServerPluginUrl();
         const request = {
             BrandIds: [brandId],
             __classname__: "CsPubGetAccessTokenRequest",
-            Ticket: this.#ticket
-        }
+            Ticket: this.#ticket,
+        };
         const response = await this.#callWebService(url, request, "GetAccessToken");
         return response.Token;
     }
@@ -267,7 +270,7 @@ class StudioJsonRpcClient {
      * Compose an entry point for the JSON-RPC publishing web services provided by the CS plugin.
      * @returns {string}
      */
-    #getStudioClientServerPluginUrl() {
+    #getStudioClientServerPluginUrl () {
         const pluginUrl = this.#serverUrl.replace("index.php", "pluginindex.php");
         const separator = this.#getUrlParamSeparator(pluginUrl);
         return `${pluginUrl}${separator}plugin=ContentStation&interface=pub&protocol=JSON`;
@@ -277,7 +280,7 @@ class StudioJsonRpcClient {
      * Compose an entry point for the JSON-RPC workflow services provided by Studio Server.
      * @returns {string}
      */
-    #getStudioServerUrl() {
+    #getStudioServerUrl () {
         const separator = this.#getUrlParamSeparator(this.#serverUrl);
         return `${this.#serverUrl}${separator}protocol=JSON`;
     }
@@ -286,8 +289,8 @@ class StudioJsonRpcClient {
      * @param {string} url
      * @returns {string}
      */
-    #getUrlParamSeparator(url) {
-        return url.indexOf("?") === -1 ? '?' : '&';
+    #getUrlParamSeparator (url) {
+        return url.indexOf("?") === -1 ? "?" : "&";
     }
 }
 

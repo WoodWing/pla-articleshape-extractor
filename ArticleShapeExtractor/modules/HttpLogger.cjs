@@ -10,10 +10,10 @@ class HttpLogger {
     #logNetworkTraffic;
 
     /**
-     * @param {Logger} logger 
-     * @param {boolean} logNetworkTraffic 
+     * @param {Logger} logger
+     * @param {boolean} logNetworkTraffic
      */
-    constructor(logger, logNetworkTraffic) {
+    constructor (logger, logNetworkTraffic) {
         this.#logger = logger;
         this.#logNetworkTraffic = logNetworkTraffic;
     }
@@ -21,30 +21,30 @@ class HttpLogger {
     /**
      * Log the HTTP URL, request headers and JSON body.
      * @param {Request} httpRequest
-     * @param {Object|null} jsonRequestBody 
+     * @param {Object|null} jsonRequestBody
      */
-    debugLogHttpRequest(httpRequest, jsonRequestBody) {
+    debugLogHttpRequest (httpRequest, jsonRequestBody) {
         if (!this.#logNetworkTraffic || !this.#logger.isDebug()) {
             return;
         }
         const message = `HTTP request:\n${this.#dottedLine()}\n`
-            +`Status: HTTP ${httpRequest.method} ${httpRequest.url}\n`
+            + `Status: HTTP ${httpRequest.method} ${httpRequest.url}\n`
             + this.#composeHttpHeaders(httpRequest.headers)
             + this.#composeJsonBody(jsonRequestBody)
             + `${this.#dottedLine()}`;
         this.#logger.debug(message);
     }
 
-    #dottedLine() {
+    #dottedLine () {
         return "- - - - - - - - - - - - - - - - - - - - - - -";
     }
 
     /**
      * Log the HTTP status, response headers and JSON body.
-     * @param {Response|null} httpResponse 
-     * @param {Object|null} jsonResponseBody 
+     * @param {Response|null} httpResponse
+     * @param {Object|null} jsonResponseBody
      */
-    debugLogHttpResponse(httpResponse, jsonResponseBody) {
+    debugLogHttpResponse (httpResponse, jsonResponseBody) {
         if (!this.#logNetworkTraffic || !this.#logger.isDebug()) {
             return;
         }
@@ -63,8 +63,8 @@ class HttpLogger {
      * @param {Headers} headers
      * @returns {string}
      */
-    #composeHttpHeaders(headers) {
-        let message = '';
+    #composeHttpHeaders (headers) {
+        let message = "";
         if (headers && typeof headers.forEach === "function") {
             message += "Headers:\n";
             headers.forEach((value, key) => {
@@ -75,13 +75,13 @@ class HttpLogger {
     }
 
     /**
-     * @param {Object|null} jsonBody 
+     * @param {Object|null} jsonBody
      * @returns {string}
      */
-    #composeJsonBody(jsonBody) {
-        let message = '';
+    #composeJsonBody (jsonBody) {
+        let message = "";
         if (jsonBody) {
-            message += `Body:\n`;
+            message += "Body:\n";
             message += `${JSON.stringify(jsonBody, null, 3)}\n`;
         }
         return message;

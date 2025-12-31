@@ -1,61 +1,61 @@
 class ArgumentError extends Error {
-    constructor(message) {
+    constructor (message) {
         super(`Bad argument provided. ${message}`);
         this.name = this.constructor.name;
     }
 }
 
 class ConfigurationError extends Error {
-    constructor(message) {
+    constructor (message) {
         super(`Invalid configuration. ${message}`);
         this.name = this.constructor.name;
     }
 }
 
 class NoStudioSessionError extends Error {
-    constructor() {
+    constructor () {
         super("Not logged in to WoodWing Studio.");
         this.name = this.constructor.name;
     }
 }
 
 class NoDocumentOpenedError extends Error {
-    constructor() {
+    constructor () {
         super("No document opened.");
         this.name = this.constructor.name;
     }
 }
 
 class NoDocumentPagesError extends Error {
-    constructor() {
+    constructor () {
         super("Document does not have pages.");
         this.name = this.constructor.name;
     }
 }
 
 class NoFramesSelectedError extends Error {
-    constructor() {
+    constructor () {
         super("No frames selected.");
         this.name = this.constructor.name;
     }
 }
 
 class NoTextOrGraphicalFramesSelectedError extends Error {
-    constructor() {
+    constructor () {
         super("No text/graphical frame selected.");
         this.name = this.constructor.name;
     }
 }
 
 class NoArticlesInDocumentError extends Error {
-    constructor() {
+    constructor () {
         super("No articles found in the document.");
         this.name = this.constructor.name;
     }
 }
 
 class NoFolderSelectedError extends Error {
-    constructor() {
+    constructor () {
         super("No folder selected.");
         this.name = this.constructor.name;
     }
@@ -63,9 +63,9 @@ class NoFolderSelectedError extends Error {
 
 class StudioServerCommunicationError extends Error {
     /**
-     * @param {string|null} details 
+     * @param {string|null} details
      */
-    constructor(details=null) {
+    constructor (details = null) {
         let message = "Communication error with WoodWing Studio Server.";
         if (details) {
             message += `\n${details}`;
@@ -77,9 +77,9 @@ class StudioServerCommunicationError extends Error {
 
 class PlaServiceCommunicationError extends Error {
     /**
-     * @param {string|null} details 
+     * @param {string|null} details
      */
-    constructor(details=null) {
+    constructor (details = null) {
         let message = "Communication error with AI Layout Automation service.";
         if (details) {
             message += `\n${details}`;
@@ -90,14 +90,14 @@ class PlaServiceCommunicationError extends Error {
 }
 
 class PrintLayoutAutomationError extends Error {
-    constructor(message) {
+    constructor (message) {
         super(message);
         this.name = this.constructor.name;
     }
 }
 
 class UnexpectedPageSetupError extends Error {
-    constructor(message) {
+    constructor (message) {
         super(message);
         this.name = this.constructor.name;
     }
@@ -117,4 +117,4 @@ module.exports = {
     PlaServiceCommunicationError,
     PrintLayoutAutomationError,
     UnexpectedPageSetupError,
-}
+};

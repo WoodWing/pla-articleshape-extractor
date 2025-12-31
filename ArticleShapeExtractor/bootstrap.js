@@ -4,29 +4,31 @@ require("./extensions/lodash.min.js");
 require("./modules/Errors.cjs");
 const Container = require("./modules/Container.cjs");
 
-Container.registerSingleton("Settings", function() {
+Container.registerSingleton("Settings", function () {
     const Settings = require("./modules/Settings.cjs");
     const plaDefaultConfig = require("./config/config.js");
-    let plaLocalConfig = {}
+    let plaLocalConfig = {};
     try {
         plaLocalConfig = require("./config/config-local.js");
-    } catch {
+    }
+    catch {
         // Intentionally ignored
     }
     return new Settings(plaDefaultConfig, plaLocalConfig);
 });
 
-Container.registerSingleton("Logger", function() {
+Container.registerSingleton("Logger", function () {
     const Logger = require("./modules/Logger.cjs");
     const config = Container.resolve("Settings").getLoggerConfig();
     try {
         return new Logger(config.folder, config.filename, config.level, config.wipe);
-    } catch(error) {
+    }
+    catch (error) {
         throw new Error(error + " Please check your settings in config/config.js and config/config-local.js files.");
     }
 });
 
-Container.registerSingleton("HttpLogger", function() {
+Container.registerSingleton("HttpLogger", function () {
     const HttpLogger = require("./modules/HttpLogger.cjs");
     return new HttpLogger(
         Container.resolve("Logger"),
@@ -34,41 +36,42 @@ Container.registerSingleton("HttpLogger", function() {
     );
 });
 
-Container.registerSingleton("VersionUtils", function() {
+Container.registerSingleton("VersionUtils", function () {
     const VersionUtils = require("./modules/VersionUtils.cjs");
     return new VersionUtils();
 });
 
 // Assure this script is running on a compatible InDesign version.
-function validateHost() {
+function validateHost () {
     const logger = Container.resolve("Logger");
     try {
         const versionUtils = Container.resolve("VersionUtils");
         const minRequiredVersion = Container.resolve("Settings").getMinimumRequiredInDesignVersion();
-        const host = require('uxp').host;
-        const os = require('os');
+        const host = require("uxp").host;
+        const os = require("os");
         logger.info(`Started log for host ${host.name} v${host.version} (${host.uiLocale}) `
             + `running on OS ${os.platform()}/${os.arch()} v${os.release()}`);
         if (versionUtils.versionCompare(host.version, minRequiredVersion) < 0) {
             throw new Error(`InDesign ${host.version} is not supported. `
-                +`Minimum required version is ${minRequiredVersion}.`);
+                + `Minimum required version is ${minRequiredVersion}.`);
         }
-    } catch(error) { // This may happen when debugging with the Adobe UXP Developer Tool.
+    }
+    catch (error) { // This may happen when debugging with the Adobe UXP Developer Tool.
         logger.error(error.toString());
     }
 };
 
-Container.registerFactory("InDesignArticleService", function() {
+Container.registerFactory("InDesignArticleService", function () {
     const InDesignArticleService = require("./modules/InDesignArticleService.cjs");
     return new InDesignArticleService();
 });
 
-Container.registerFactory("FileUtils", function() {
+Container.registerFactory("FileUtils", function () {
     const FileUtils = require("./modules/FileUtils.cjs");
     return new FileUtils();
 });
 
-Container.registerFactory("PageLayoutSettings", function() {
+Container.registerFactory("PageLayoutSettings", function () {
     const PageLayoutSettings = require("./modules/PageLayoutSettings.cjs");
     return new PageLayoutSettings(
         Container.resolve("Logger"),
@@ -76,7 +79,7 @@ Container.registerFactory("PageLayoutSettings", function() {
     );
 });
 
-Container.registerFactory("GenreResolver", function() {
+Container.registerFactory("GenreResolver", function () {
     const GenreResolver = require("./modules/GenreResolver.cjs");
     const settings = Container.resolve("Settings");
     return new GenreResolver(
@@ -86,7 +89,7 @@ Container.registerFactory("GenreResolver", function() {
     );
 });
 
-Container.registerFactory("BrandSectionResolver", function() {
+Container.registerFactory("BrandSectionResolver", function () {
     const BrandSectionResolver = require("./modules/BrandSectionResolver.cjs");
     const settings = Container.resolve("Settings");
     return new BrandSectionResolver(
@@ -96,32 +99,32 @@ Container.registerFactory("BrandSectionResolver", function() {
     );
 });
 
-Container.registerFactory("ExportInDesignArticlesToFolder", function() {
+Container.registerFactory("ExportInDesignArticlesToFolder", function () {
     const ExportInDesignArticlesToFolder = require("./modules/ExportInDesignArticlesToFolder.cjs");
     return new ExportInDesignArticlesToFolder(
-        Container.resolve("Logger"), 
-        Container.resolve("InDesignArticleService"), 
-        Container.resolve("PageLayoutSettings"), 
+        Container.resolve("Logger"),
+        Container.resolve("InDesignArticleService"),
+        Container.resolve("PageLayoutSettings"),
         Container.resolve("GenreResolver"),
         Container.resolve("BrandSectionResolver"),
     );
 });
 
-Container.registerFactory("StudioJsonRpcClient", function() {
+Container.registerFactory("StudioJsonRpcClient", function () {
     const { app } = require("indesign");
     const StudioJsonRpcClient = require("./modules/StudioJsonRpcClient.cjs");
     return new StudioJsonRpcClient(
         Container.resolve("Logger"),
         Container.resolve("HttpLogger"),
-        app.entSession?.activeUrl, 
+        app.entSession?.activeUrl,
         app.entSession?.activeTicket,
     );
 });
 
-Container.registerFactory("RegenerateArticleShapesService", function() {
+Container.registerFactory("RegenerateArticleShapesService", function () {
     const RegenerateArticleShapesService = require("./modules/RegenerateArticleShapesService.cjs");
     return new RegenerateArticleShapesService(
-        Container.resolve("Logger"), 
+        Container.resolve("Logger"),
         Container.resolve("VersionUtils"),
         Container.resolve("Settings").getRegenerateArticleShapesSettings(),
         Container.resolve("ExportInDesignArticlesToFolder"),
@@ -129,7 +132,7 @@ Container.registerFactory("RegenerateArticleShapesService", function() {
     );
 });
 
-Container.registerFactory("BrandSectionMapResolver", function() {
+Container.registerFactory("BrandSectionMapResolver", function () {
     const BrandSectionMapResolver = require("./modules/BrandSectionMapResolver.cjs");
     return new BrandSectionMapResolver(
         Container.resolve("Logger"),
@@ -138,26 +141,26 @@ Container.registerFactory("BrandSectionMapResolver", function() {
     );
 });
 
-Container.registerFactory("PlaService", function() {
+Container.registerFactory("PlaService", function () {
     const PlaService = require("./modules/PlaService.cjs");
     return new PlaService(
-        Container.resolve("Logger"), 
-        Container.resolve("HttpLogger"), 
+        Container.resolve("Logger"),
+        Container.resolve("HttpLogger"),
         Container.resolve("Settings").getPlaServiceUrl(),
     );
 });
 
-Container.registerFactory("FitArticleWithAIService", function() {
+Container.registerFactory("FitArticleWithAIService", function () {
     const FitArticleWithAIService = require("./modules/FitArticleWithAIService.cjs");
     return new FitArticleWithAIService(
-        Container.resolve("Logger"), 
+        Container.resolve("Logger"),
         Container.resolve("StudioJsonRpcClient"),
         Container.resolve("PlaService"),
-        Container.resolve("BrandSectionResolver"),        
+        Container.resolve("BrandSectionResolver"),
     );
 });
 
-function initBootstrap() {
+function initBootstrap () {
     validateHost();
 }
 

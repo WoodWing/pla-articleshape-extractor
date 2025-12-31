@@ -1,7 +1,7 @@
 // DO NOT CHANGE THIS FILE! See README.md for instructions.
 
 const plaDefaultConfig = {
-    
+
     // Settings for the Regenerate Article Shapes process.
     regenerateArticleShapesSettings: {
 
@@ -18,7 +18,7 @@ const plaDefaultConfig = {
         layoutStatusOnError: "", // when process failed
     },
 
-    // List of genres (that are applicable to the brand). 
+    // List of genres (that are applicable to the brand).
     // Leave empty to disable the Genres feature.
     genres: [
     ],

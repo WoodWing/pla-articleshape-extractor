@@ -24,6 +24,7 @@ Install the tool in your InDesign application:
 5. Restart InDesign to auto install a menu item. To verify:
    1. Open a layout and locate a placed article.
    2. Right mouse click any of its frames to open the context menu.
+      * Note that the frame needs to be part on an InDesign article.
    3. Click the `Fitting` submenu.
    4. The submenu should list a menu item named `Fit Article with AI`.
 
@@ -130,58 +131,3 @@ An example - By default, the logging feature is disabled. To enable it:
 
 # Known limitations
 - The [SSL certificate configuration](https://helpcenter.woodwing.com/hc/en-us/articles/360041017752-Using-SSL-to-secure-the-connection-between-Studio-Server-and-Studio-for-InDesign-and-InCopy) in the WWSettings.xml file is not supported by the Article Shape Extractor.
-
-# Development notes
-
-## How to debug an IDJS script?
-1. Open the `Adobe UXP Developer Tools` application.
-2. Click on the `Connected Apps` icon in the side panel.
-3. InDesign should be listed. Click the `Debug Script` button.
-4. Drag & Drop any of the IDJS scripts from the `commands` folder onto the dialog.
-5. Add your breakpoints and/or step through the code.
-> Note that in this context, accessing `host` and `os` properties cause fatal errors.
-
-## How to link the GitHub project straight into InDesign?
-Assumed that `~/git` is your local GitHub root folder:
-```bash
-cd /Applications/Adobe\ InDesign\ 2024/Scripts/Scripts\ Panel
-ln -s ~/git/pla-articleshape-extractor/ArticleShapeExtractor
-
-cd /Applications/Adobe\ InDesign\ 2024/Scripts/startup\ scripts
-ln -s ~/git/pla-articleshape-extractor/ArticleShapeExtractor/startup\ scripts/ArticleShapeExtractorStartup.jsx
-```
-Now your modifications to the scripts are directly reflected to both GitHub and InDesign.
-
-## Known Adobe limitations for UXP/IDJS
-1. An IDJS script requires InDesign 18.0 and an UXP plugin requires InDesign 18.5.
-2. InDesign 18.5 does not make the WoodWing InDesign plugin API available. InDesign 19.0 is required.
-3. There are no startup/shutdown or init/exit events for UXP plugins.
-4. A JSX script can not invoke an IDJS script (e.g. via `app.doScript(...)`).
-5. IDJS scripts in the `Startup Scripts` folder are not recognized/executed by InDesign.
-6. Bullets 3, 4 and 5 make it impossible to add a menu item or shortcut key for a UXP/IDJS script.
-
-## ESLint checker
-
-### Installation
-
-Install ESLint:
-```bash
-cd ArticleShapeExtractor
-npm install
-```
-
-Install `ESLint` extension for VS Code.
-
-### Configuration
-
-Settings are made in the [eslint.config.mjs](eslint.config.mjs) file.
-
-### Usage
-
-Validate whole project at once:
-```bash
-cd ArticleShapeExtractor
-npx eslint .
-```
-
-In VS Code, ESLint errors are reported via red curly underlines in the editor.

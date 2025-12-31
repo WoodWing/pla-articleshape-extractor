@@ -6,27 +6,27 @@ class InDesignArticleService {
     /**
      * Create a new InDesign Article for the currently selected frames. Or, when the frames are
      * already member of existing articles, rename the articles instead.
-     * 
+     *
      * For the provided article name, pass in the story type (Lead, Secondary, Third or Filler).
-     * This name will be applied to new articles. For existing articles, it replaces previously 
+     * This name will be applied to new articles. For existing articles, it replaces previously
      * set story type (in the existing article names) with the new/provided story type.
-     * 
-     * @param {String} articleName 
+     *
+     * @param {String} articleName
      */
-    addOrRenameInDesignArticle(articleName) {
+    addOrRenameInDesignArticle (articleName) {
         if (app.documents.length === 0) {
-            const { NoDocumentOpenedError } = require('./Errors.cjs');
+            const { NoDocumentOpenedError } = require("./Errors.cjs");
             throw new NoDocumentOpenedError();
         }
 
         if (app.selection.length === 0) {
-            const { NoFramesSelectedError } = require('./Errors.cjs');
+            const { NoFramesSelectedError } = require("./Errors.cjs");
             throw new NoFramesSelectedError();
         }
 
         const frame = app.selection[0];
         if (!this.isValidArticleComponentFrame(frame)) {
-            const { NoTextOrGraphicalFramesSelectedError } = require('./Errors.cjs');
+            const { NoTextOrGraphicalFramesSelectedError } = require("./Errors.cjs");
             throw new NoTextOrGraphicalFramesSelectedError();
         }
 
@@ -49,7 +49,7 @@ class InDesignArticleService {
             // Rename article that was previously tagged with a story type
             for (let storyTypeIndex = 0; storyTypeIndex < storyTypeNames.length; storyTypeIndex++) {
                 const storyTypeName = storyTypeNames[storyTypeIndex];
-                newName = this.#replaceTextCaseInsensitive(newName, storyTypeName, articleName);                
+                newName = this.#replaceTextCaseInsensitive(newName, storyTypeName, articleName);
             };
 
             // Rename article when it does NOT contain any of the story types.
@@ -57,7 +57,7 @@ class InDesignArticleService {
                 newName = articleName + " " + newName;
             }
 
-            newName = this.#cleanWhitespaces(newName)
+            newName = this.#cleanWhitespaces(newName);
 
             if (newName != oldName) {
                 article.name = newName;
@@ -66,12 +66,12 @@ class InDesignArticleService {
         }
     }
 
-    #containsCaseInsensitive(stringValue, listOfStringValues) {
+    #containsCaseInsensitive (stringValue, listOfStringValues) {
         for (let storyTypeIndex = 0; storyTypeIndex < listOfStringValues.length; storyTypeIndex++) {
             if (stringValue.toLowerCase().includes (listOfStringValues[storyTypeIndex].toLowerCase())) {
                 return true;
             }
-        }    
+        }
 
         return false;
     }
@@ -81,7 +81,7 @@ class InDesignArticleService {
      * @param {PageItem} Valid text/graphic frame.
      * @returns {Array<Article>}
      */
-    getInDesignArticles(doc, frame) {
+    getInDesignArticles (doc, frame) {
         const docArticles = doc.articles;
         let frameArticles = [];
 
@@ -103,7 +103,7 @@ class InDesignArticleService {
      * @param {PageItem} frame - The frame to check for membership.
      * @returns {Boolean} - True if the frame is already a member of the article, false otherwise.
      */
-    #isFrameMemberOfInDesignArticle(article, frame) {
+    #isFrameMemberOfInDesignArticle (article, frame) {
         const articleMembers = article.articleMembers.everyItem().getElements(); // Get all members as an array
         for (let i = 0; i < articleMembers.length; i++) {
             if (articleMembers[i].itemRef.equals(frame)) {
@@ -117,7 +117,7 @@ class InDesignArticleService {
      * Create a new InDesign Article with the given name. Add the selected frames to the article.
      * @param {String} articleName
      */
-    #createNewInDesignArticleWithSelectedFrames(doc, articleName) {
+    #createNewInDesignArticleWithSelectedFrames (doc, articleName) {
 
         // Create a new InDesign Article (even if an article with the same name already exists).
         const article = doc.articles.add();
@@ -129,7 +129,8 @@ class InDesignArticleService {
             if (this.isValidArticleComponentFrame(frame)) {
                 try {
                     article.articleMembers.add(frame);
-                } catch {
+                }
+                catch {
                     // Intentionally ignored
                 }
             }
@@ -138,22 +139,22 @@ class InDesignArticleService {
 
     /**
      * Search for a text fragment (case insensitive) and substitute any found match with a replacement.
-     * @param {String} text 
-     * @param {String} search 
-     * @param {String} replacement 
+     * @param {String} text
+     * @param {String} search
+     * @param {String} replacement
      * @returns {String} Text with substitutes.
      */
-    #replaceTextCaseInsensitive(text, search, replacement) {
+    #replaceTextCaseInsensitive (text, search, replacement) {
         const regex = new RegExp(search, "gi"); // "g" = global, "i" = case insensitive
         return text.replace(regex, replacement);
     }
 
     /**
      * Remove any leading or trailing whitespaces. Replace multiple inner whitespaces with a single space.
-     * @param {String} text 
+     * @param {String} text
      * @returns {String} Cleaned text.
      */
-    #cleanWhitespaces(text) {
+    #cleanWhitespaces (text) {
         return text.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
     }
 
@@ -163,9 +164,9 @@ class InDesignArticleService {
      * @param {Array<String>} frameTypes
      * @returns {Boolean}
      */
-    #isValidFrameOfType(pageItem, frameTypes) {
-        return pageItem 
-            && pageItem.isValid 
+    #isValidFrameOfType (pageItem, frameTypes) {
+        return pageItem
+            && pageItem.isValid
             && frameTypes.includes(pageItem.constructorName);
     };
 
@@ -174,8 +175,8 @@ class InDesignArticleService {
      * @param {Object|null} pageItem
      * @returns {Boolean}
      */
-    isValidTextFrame(pageItem) {
-        return this.#isValidFrameOfType(pageItem, ["TextFrame"]) 
+    isValidTextFrame (pageItem) {
+        return this.#isValidFrameOfType(pageItem, ["TextFrame"])
             && pageItem.contentType.toString() === idd.ContentType.TEXT_TYPE.toString();
     }
 
@@ -184,20 +185,20 @@ class InDesignArticleService {
      * @param {Object|null} pageItem
      * @returns {Boolean}
      */
-    isValidGraphicFrame(pageItem) {
-        //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString() 
+    isValidGraphicFrame (pageItem) {
+        //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString()
         // check just like text frames however the side-effects are unclear
         return this.#isValidFrameOfType(pageItem, ["Oval", "Polygon", "Rectangle", "GraphicLine"]);
     }
 
     /**
-     * Tells whether the given page item is a Rectangle graphic frame, but very slim, hence 
+     * Tells whether the given page item is a Rectangle graphic frame, but very slim, hence
      * should be interpreted as a work-around of the layouter to compose a line (GraphicLine).
      * @param {Object|null} pageItem
      * @returns {Boolean}
      */
-    #isValid1DRectangleFrame(pageItem) {
-        //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString() 
+    #isValid1DRectangleFrame (pageItem) {
+        //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString()
         // check just like text frames however the side-effects are unclear
         if (!this.#isValidFrameOfType(pageItem, ["Rectangle"])) {
             return false;
@@ -216,10 +217,10 @@ class InDesignArticleService {
      * @param {Object|null} pageItem
      * @returns {Boolean}
      */
-    isValid1DGraphicFrame(pageItem) {
-        //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString() 
-        // check just like text frames however the side-effects are unclear        
-        return this.#isValidFrameOfType(pageItem, ["GraphicLine"]) 
+    isValid1DGraphicFrame (pageItem) {
+        //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString()
+        // check just like text frames however the side-effects are unclear
+        return this.#isValidFrameOfType(pageItem, ["GraphicLine"])
             || this.#isValid1DRectangleFrame(pageItem);
     }
 
@@ -230,35 +231,35 @@ class InDesignArticleService {
      * @param {Object|null} pageItem
      * @returns {Boolean}
      */
-    isValid2DGraphicFrame(pageItem) {
-        //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString() 
-        // check just like text frames however the side-effects are unclear        
+    isValid2DGraphicFrame (pageItem) {
+        //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString()
+        // check just like text frames however the side-effects are unclear
         if (this.#isValidFrameOfType(pageItem, ["Oval", "Polygon"])) {
             return true;
         }
-        return this.#isValidFrameOfType(pageItem, ["Rectangle"]) 
+        return this.#isValidFrameOfType(pageItem, ["Rectangle"])
             && !this.#isValid1DRectangleFrame(pageItem);
     }
 
-     /**
+    /**
      * Tells whether the given page item is an unassigned frame (InDesign->Object->Content)
      * @param {Object|null} pageItem
      * @returns {Boolean}
      */
-    isUnassignedFrame(pageItem) {
-        return pageItem 
-            && pageItem.isValid 
+    isUnassignedFrame (pageItem) {
+        return pageItem
+            && pageItem.isValid
             && pageItem.contentType.toString() === idd.ContentType.UNASSIGNED.toString();
     }
 
     /**
-     * Tells whether the given page item is a valid text- or graphic frame to be part 
+     * Tells whether the given page item is a valid text- or graphic frame to be part
      * of an "article definition" file (IDMS), also called InDesign Snippet.
      * @param {Object|null} pageItem
      * @returns {Boolean}
      */
-    isValidArticleComponentFrame(pageItem) {
-        return this.isValidTextFrame(pageItem) 
+    isValidArticleComponentFrame (pageItem) {
+        return this.isValidTextFrame(pageItem)
             || this.isValidGraphicFrame(pageItem);
     }
 }

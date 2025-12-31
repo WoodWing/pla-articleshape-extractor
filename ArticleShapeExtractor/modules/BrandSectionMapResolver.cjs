@@ -14,11 +14,11 @@ class BrandSectionMapResolver {
     #fileUtils;
 
     /**
-     * @param {Logger} logger 
+     * @param {Logger} logger
      * @param {StudioJsonRpcClient} studioJsonRpcClient
      * @param {FileUtils} fileUtils
      */
-    constructor(logger, studioJsonRpcClient, fileUtils) {
+    constructor (logger, studioJsonRpcClient, fileUtils) {
         this.#logger = logger;
         this.#studioJsonRpcClient = studioJsonRpcClient;
         this.#fileUtils = fileUtils;
@@ -27,9 +27,9 @@ class BrandSectionMapResolver {
     /**
      * Resolves all brand ids/names and their section ids/names from Studio Server.
      * Writes this info into a file named "brand-section-map.json" in the provided folder.
-     * @param {Folder} exportFolder 
+     * @param {Folder} exportFolder
      */
-    async run(exportFolder) {
+    async run (exportFolder) {
         if (!this.#studioJsonRpcClient.hasSession()) {
             return; // only provide info when having a session
         }
@@ -42,7 +42,7 @@ class BrandSectionMapResolver {
      * @param {Array<Object>} publicationInfos List of PublicationInfo data objects.
      * @returns {Object}
      */
-    #composeBrandSectionMap(publicationInfos) {
+    #composeBrandSectionMap (publicationInfos) {
         const brandSetup = {};
         for (const publicationInfo of publicationInfos) {
             const categories = {};
@@ -51,8 +51,8 @@ class BrandSectionMapResolver {
             }
             brandSetup[publicationInfo.Name] =  {
                 id: String(publicationInfo.Id),
-                sections: categories
-            }
+                sections: categories,
+            };
         }
         return brandSetup;
     }
@@ -61,14 +61,14 @@ class BrandSectionMapResolver {
      * @param {Object} brandSectionMap
      * @param {Folder} exportFolder
      */
-    async #saveBrandSectionMapToDisk(brandSectionMap, exportFolder) {
+    async #saveBrandSectionMapToDisk (brandSectionMap, exportFolder) {
         const filepath = window.path.join(exportFolder, "_manifest", "brand-section-map.json");
         await this.#fileUtils.getOrCreateSubFolder(exportFolder, "_manifest");
-        const lfs = require('uxp').storage.localFileSystem;
-        const formats = require('uxp').storage.formats;
+        const lfs = require("uxp").storage.localFileSystem;
+        const formats = require("uxp").storage.formats;
         const jsonFile = await lfs.createEntryWithUrl(filepath, { overwrite: true });
         const jsonString = JSON.stringify(brandSectionMap, null, 4);
-        await jsonFile.write(jsonString, {format: formats.utf8}); 
+        await jsonFile.write(jsonString, { format: formats.utf8 });
         this.#logger.info(`Saved the ids/names of brands and their sections to "${filepath}".`);
     }
 }

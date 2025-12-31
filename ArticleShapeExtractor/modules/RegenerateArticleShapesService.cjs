@@ -8,22 +8,22 @@ class RegenerateArticleShapesService {
 
     /** @type {Logger} */
     #logger;
-    
+
     /** @type {VersionUtils} */
     #versionUtils;
-    
+
     /** @type {{{brand: <string>, issue: <string>, category: <string>, status: <string>}, layoutStatusOnSuccess: <string>, layoutStatusOnError: <string>}} */
     #settings;
-    
+
     /** @type {ExportInDesignArticlesToFolder} */
     #exportInDesignArticlesToFolder;
-    
+
     /** @type {StudioJsonRpcClient} */
     #studioJsonRpcClient;
-    
+
     /** @type {string|null} */
     #layoutStatusIdOnSuccess;
-    
+
     /** @type {string|null} */
     #layoutStatusIdOnError;
 
@@ -34,7 +34,7 @@ class RegenerateArticleShapesService {
      * @param {ExportInDesignArticlesToFolder} exportInDesignArticlesToFolder
      * @param {StudioJsonRpcClient} studioJsonRpcClient
      */
-    constructor(logger, versionUtils, settings, exportInDesignArticlesToFolder, studioJsonRpcClient) {
+    constructor (logger, versionUtils, settings, exportInDesignArticlesToFolder, studioJsonRpcClient) {
         this.#logger = logger;
         this.#versionUtils = versionUtils;
         this.#settings = settings;
@@ -47,15 +47,15 @@ class RegenerateArticleShapesService {
     /**
      * Run the pre-configured Used Query to make an inventory of the layouts to be processed. The layouts are
      * opened (and closed) one-by-one and the placed article shape files are extracted to the given folder.
-     * When a shape files already exist for a certain layout id and version, that layout is skipped for performance 
+     * When a shape files already exist for a certain layout id and version, that layout is skipped for performance
      * optimization. All processed layouts (regardless whether skipped) are sent to their next status in the workflow.
-     * @param {Folder} folder 
+     * @param {Folder} folder
      */
-    async run(folder) {
+    async run (folder) {
 
         // Bail out when user is currently not logged in.
-        if (!this.#studioJsonRpcClient.hasSession() ) {
-            const { NoStudioSessionError } = require('./Errors.cjs');
+        if (!this.#studioJsonRpcClient.hasSession()) {
+            const { NoStudioSessionError } = require("./Errors.cjs");
             throw new NoStudioSessionError();
         }
 
@@ -67,9 +67,9 @@ class RegenerateArticleShapesService {
         const resolveProperties = [ "ID", "Type", "Name", "Version", "PublicationId" ];
         const queryParams = this.#composeQueryParams();
         await this.#studioJsonRpcClient.queryObjects(
-            queryParams, 
-            resolveProperties, 
-            (wflObjects) => this.#processQueriedLayouts(wflObjects, fileMap, folder, report)
+            queryParams,
+            resolveProperties,
+            (wflObjects) => this.#processQueriedLayouts(wflObjects, fileMap, folder, report),
         );
         return report;
     };
@@ -81,7 +81,7 @@ class RegenerateArticleShapesService {
      * @param {Folder} folder Target folder for exporting.
      * @param {{extracted: number, skipped: number, failed: number}} report
      */
-    async #processQueriedLayouts(wflObjects, fileMap, folder, report) {
+    async #processQueriedLayouts (wflObjects, fileMap, folder, report) {
         const extractedLayoutIds = [];
         const skippedLayoutIds = [];
         const failedLayoutIds = [];
@@ -90,11 +90,12 @@ class RegenerateArticleShapesService {
             await this.#resolveLayoutStatusIds(wflObject.PublicationId);
             const mapItem = fileMap.get(wflObject.ID);
             if (mapItem && mapItem.layoutVersion === wflObject.Version) {
-                this.#logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
+                this.#logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` +
                     `Article Shapes (JSON files) for layout id ${wflObject.ID} with version ${wflObject.Version} ` +
-                    'already exists in export folder.');
+                    "already exists in export folder.");
                 skippedLayoutIds.push(wflObject.ID);
-            } else {
+            }
+            else {
                 // If query has newer layout version, remove files of old version from disk.
                 if (mapItem) for (const oldFile of mapItem.shapeFiles) {
                     await this.#deleteFile(oldFile);
@@ -104,7 +105,8 @@ class RegenerateArticleShapesService {
                 theOpenDoc.close(idd.SaveOptions.no);
                 if (shapeCount > 0) {
                     extractedLayoutIds.push(wflObject.ID);
-                } else { // no article shapes extracted means error; this layout has nothing for us
+                }
+                else { // no article shapes extracted means error; this layout has nothing for us
                     failedLayoutIds.push(wflObject.ID);
                 }
             }
@@ -125,9 +127,9 @@ class RegenerateArticleShapesService {
     }
 
     /**
-     * @param {string} brandId 
+     * @param {string} brandId
      */
-    async #resolveLayoutStatusIds(brandId) {
+    async #resolveLayoutStatusIds (brandId) {
         if (this.#layoutStatusIdOnSuccess !== null && this.#layoutStatusIdOnError !== null) {
             return;
         }
@@ -137,7 +139,8 @@ class RegenerateArticleShapesService {
         for (const layoutStatus of layoutStatuses) {
             if (layoutStatus.Name === this.#settings.layoutStatusOnSuccess) {
                 this.#layoutStatusIdOnSuccess = layoutStatus.Id;
-            } else if (layoutStatus.Name === this.#settings.layoutStatusOnError) {
+            }
+            else if (layoutStatus.Name === this.#settings.layoutStatusOnError) {
                 this.#layoutStatusIdOnError = layoutStatus.Id;
             }
         }
@@ -151,31 +154,31 @@ class RegenerateArticleShapesService {
 
     /**
      * Informs the status name in local config file is not setup for the brand.
-     * @param {string} statusName 
+     * @param {string} statusName
      */
-    #raiseStatusConfigError(statusName) {
-        const { ConfigurationError } = require('./Errors.cjs');
+    #raiseStatusConfigError (statusName) {
+        const { ConfigurationError } = require("./Errors.cjs");
         const message = `\nStatus '${statusName}' seems not configured for `
             + `brand '${this.#settings.filter.brand}'.\n`
             + "Please check the 'regenerateArticleShapesSettings' option "
             + "in your 'config/config.js' or 'config/config-local.js' file.";
-        throw new ConfigurationError(message);        
+        throw new ConfigurationError(message);
     }
 
     /**
      * Collect article shape files from a given folder and build a structure map.
      * Those files assumed to have a postfix "(<layout_id>.v<major>.<minor>).".
-     * @param {Folder} folder 
+     * @param {Folder} folder
      * @returns {Promise<Map<string,{layoutVersion:<string>,shapeFiles:Array<File>}>>} Structured map, indexed by layout id.
      */
-    async #buildMapOfLayoutIdsVersionsAndFiles(folder) {
+    async #buildMapOfLayoutIdsVersionsAndFiles (folder) {
         const shapeFiles = await this.#filterArticleShapeFiles(folder);
         //this.#logger.info('Resolved layouts from files: {}', JSON.stringify(Object.fromEntries(shapeFiles), null, 4));
         const fileMap = new Map();
         for (const { shapeFile: shapeFile, layoutId, layoutVersion } of shapeFiles) {
             const mapItem = fileMap.get(layoutId);
             if (!mapItem) {
-                fileMap.set(layoutId, {layoutVersion: layoutVersion, shapeFiles: [shapeFile]});
+                fileMap.set(layoutId, { layoutVersion: layoutVersion, shapeFiles: [shapeFile] });
                 continue;
             }
             // Only allow one version per layout. Assure that version is the latest.
@@ -186,7 +189,7 @@ class RegenerateArticleShapesService {
                     break;
                 case 1: // File on disk is newer.
                     for (const oldFile of mapItem.shapeFiles) {
-                         await this.#deleteFile(oldFile);
+                        await this.#deleteFile(oldFile);
                     }
                     mapItem.shapeFiles = [shapeFile];
                     mapItem.layoutVersion = layoutVersion;
@@ -205,7 +208,7 @@ class RegenerateArticleShapesService {
      * @param {Folder} folder
      * @returns {Promise<Array<{shapeFile: File, layoutId: string, layoutVersion: string}>>}
      */
-    async #filterArticleShapeFiles(folder) {
+    async #filterArticleShapeFiles (folder) {
         const entriesInFolder = await folder.getEntries();
         const filesInFolder = entriesInFolder.filter(entry => entry.isFile);
         const result = [];
@@ -218,14 +221,14 @@ class RegenerateArticleShapesService {
             result.push({ shapeFile, layoutId, layoutVersion });
         }
         return result;
-    };    
+    };
 
     /**
      * Extract the layout id and version from a filename with postfix "(<layout_id>.v<major>.<minor>).".
      * @param {string} filename
      * @returns {[string, string] | null} Tuple of [layoutId, version] if matching postfix, null otherwise.
      */
-    #extractLayoutIdAndVersionFromFilename(filename) {
+    #extractLayoutIdAndVersionFromFilename (filename) {
         const filenameRegex = /\(([^)]+)\.v(\d+)\.(\d+)\)\./;
         const match = filename.match(filenameRegex);
         if (!match) {
@@ -238,13 +241,14 @@ class RegenerateArticleShapesService {
 
     /**
      * Remove a file from disk. Log warning on failure.
-     * @param {File} file 
+     * @param {File} file
      */
-    async #deleteFile(file) {
+    async #deleteFile (file) {
         this.#logger.debug(`Deleting file: ${file.name}`);
         try {
             await file.delete();
-        } catch (err) {
+        }
+        catch (err) {
             this.#logger.warning(`Failed to delete file: ${file.name}`, err);
         }
     }
@@ -253,19 +257,19 @@ class RegenerateArticleShapesService {
      * Use the local filter settings to compose search params (applicable to the QueryObjects workflow service).
      * @returns {Array<{Property: string, Operation: string, Value: string, __classname__: string}>} List of QueryParam objects.
      */
-    #composeQueryParams() {
+    #composeQueryParams () {
         // Map the local filter settings onto the workflow object property names.
         const settingToProperty = { brand: "Publication", issue: "Issue", category: "Category", status: "State" };
         const queryParams = [];
         for (const setting in settingToProperty) {
             if (Object.prototype.hasOwnProperty.call(settingToProperty, setting)) {
-                if (['issue', 'category'].includes(setting) 
+                if (["issue", "category"].includes(setting)
                     && this.#settings.filter[setting].length === 0) {
                     continue; // these filters can be left empty, which refers to 'all'
                 }
                 const queryParam = this.#composeQueryParam(
-                    settingToProperty[setting], 
-                    "=", 
+                    settingToProperty[setting],
+                    "=",
                     this.#settings.filter[setting]);
                 queryParams.push(queryParam);
             }
@@ -276,18 +280,18 @@ class RegenerateArticleShapesService {
 
     /**
      * Compose a QueryParam data object (applicable to the QueryObjects workflow service).
-     * @param {string} property 
-     * @param {string} operation 
-     * @param {string} value 
+     * @param {string} property
+     * @param {string} operation
+     * @param {string} value
      * @returns {{Property: string, Operation: string, Value: string, __classname__: string}} QueryParam object.
      */
-    #composeQueryParam(property, operation, value) {
+    #composeQueryParam (property, operation, value) {
         return {
             Property: property,
             Operation: operation,
             Value: value,
             __classname__: "QueryParam",
-        } 
+        };
     }
 }
 
