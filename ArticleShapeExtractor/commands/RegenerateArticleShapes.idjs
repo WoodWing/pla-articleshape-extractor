@@ -3,6 +3,7 @@ await (async function main () {
     const idd = require("indesign");
     const initBootstrap = require("../bootstrap.js");
     const Container = require("../modules/Container.cjs");
+    const Errors = require("../modules/Errors.cjs");
     const logger = /** @type Logger */ (Container.resolve("Logger"));
     try {
         initBootstrap();
@@ -13,8 +14,7 @@ await (async function main () {
         const domains = require("uxp").storage.domains;
         const folder = await lfs.getFolder({ initialDomain: domains.userDocuments });
         if (!folder || !folder.isFolder) {
-            const { NoFolderSelectedError } = require("../modules/Errors.cjs");
-            throw new NoFolderSelectedError();
+            throw new Errors.NoFolderSelectedError();
         }
 
         // Resolve the brand and sections and save them to disk.

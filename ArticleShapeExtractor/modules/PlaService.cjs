@@ -1,3 +1,5 @@
+const Errors = require("./Errors.cjs");
+
 /**
  * Understands the REST API of the PLA service.
  */
@@ -39,8 +41,7 @@ class PlaService {
             return jsonResponseBody;
         }
         catch (error) {
-            const { PlaServiceCommunicationError } = require("./Errors.cjs");
-            throw new PlaServiceCommunicationError(`Could not retrieve sheet dimensions.\n${error.message}`);
+            throw new Errors.PlaServiceCommunicationError(`Could not retrieve sheet dimensions.\n${error.message}`);
         }
     }
 
@@ -167,8 +168,7 @@ class PlaService {
             return downloadUrls;
         }
         catch (error) {
-            const { PlaServiceCommunicationError } = require("./Errors.cjs");
-            throw new PlaServiceCommunicationError(`Could not retrieve shape suggestions.\n${error.message}`);
+            throw new Errors.PlaServiceCommunicationError(`Could not retrieve shape suggestions.\n${error.message}`);
         }
     }
 }

@@ -1,5 +1,6 @@
 const { app } = require("indesign");
 const idd = require("indesign");
+const Errors = require("../modules/Errors.cjs");
 
 class InDesignArticleService {
 
@@ -15,19 +16,16 @@ class InDesignArticleService {
      */
     addOrRenameInDesignArticle (articleName) {
         if (app.documents.length === 0) {
-            const { NoDocumentOpenedError } = require("./Errors.cjs");
-            throw new NoDocumentOpenedError();
+            throw new Errors.NoDocumentOpenedError();
         }
 
         if (app.selection.length === 0) {
-            const { NoFramesSelectedError } = require("./Errors.cjs");
-            throw new NoFramesSelectedError();
+            throw new Errors.NoFramesSelectedError();
         }
 
         const frame = app.selection[0];
         if (!this.isValidArticleComponentFrame(frame)) {
-            const { NoTextOrGraphicalFramesSelectedError } = require("./Errors.cjs");
-            throw new NoTextOrGraphicalFramesSelectedError();
+            throw new Errors.NoTextOrGraphicalFramesSelectedError();
         }
 
         // Add new InDesign Articles.

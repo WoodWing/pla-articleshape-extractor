@@ -1,7 +1,6 @@
 require("./extensions/String.js");
 require("./extensions/globals.js");
 require("./extensions/lodash.min.js");
-require("./modules/Errors.cjs");
 require("./types.d.js");
 const Container = require("./modules/Container.cjs");
 

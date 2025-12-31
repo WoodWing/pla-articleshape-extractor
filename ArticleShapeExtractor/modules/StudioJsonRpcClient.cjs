@@ -1,3 +1,5 @@
+const Errors = require("./Errors.cjs");
+
 /**
  * Understands how to communicate with Studio Server using the JSON-RPC protocol.
  */
@@ -88,8 +90,7 @@ class StudioJsonRpcClient {
             return rpcResponse.result;
         }
         catch (error) {
-            const { StudioServerCommunicationError } = require("./Errors.cjs");
-            throw new StudioServerCommunicationError(`${serviceName} service failed.\n${error.message}`);
+            throw new Errors.StudioServerCommunicationError(`${serviceName} service failed.\n${error.message}`);
         }
 
         // Don't simply use the app.jsonRequest() API provided by SC plugins; That does not seem to work
@@ -172,8 +173,7 @@ class StudioJsonRpcClient {
             }
         } while (response.ListedEntries > 0 && queryCount < maxQueryHit);
         if (queryCount === maxQueryHit) {
-            const { PrintLayoutAutomationError } = require("./Errors.cjs");
-            throw new PrintLayoutAutomationError(`Too many QueryObjects executed: ${maxQueryHit}.`);
+            throw new Errors.PrintLayoutAutomationError(`Too many QueryObjects executed: ${maxQueryHit}.`);
         }
     };
 
@@ -187,8 +187,7 @@ class StudioJsonRpcClient {
     async #queryObjectsOneResultPage (searchParams, resolveProperties, firstEntry) {
         const startsWithProps = ["ID", "Type", "Name"]; // service rule: must start with this sequence of props
         if (!startsWithProps.every((value, index) => resolveProperties[index] === value)) {
-            const { ArgumentError } = require("./Errors.cjs");
-            throw new ArgumentError("The 'resolveProperties' param should start with 'ID', 'Name' and 'Type' values.");
+            throw new Errors.ArgumentError("The 'resolveProperties' param should start with 'ID', 'Name' and 'Type' values.");
         }
         const url = this.#getStudioServerUrl();
         const request = {

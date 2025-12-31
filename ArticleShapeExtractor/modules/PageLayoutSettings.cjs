@@ -2,6 +2,7 @@ const { app } = require("indesign");
 const idd = require("indesign");
 const lfs = require("uxp").storage.localFileSystem;
 const formats = require("uxp").storage.formats;
+const Errors = require("./Errors.cjs");
 
 /**
  * Understands how to get the settings from InDesign as shown in the Margins and Columns dialog.
@@ -38,8 +39,7 @@ class PageLayoutSettings {
         app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
         try {
             if (doc.pages.length === 0) {
-                const { NoDocumentPagesError } = require("./Errors.cjs");
-                throw new NoDocumentPagesError();
+                throw new Errors.NoDocumentPagesError();
             }
             for (let i = 0; i < doc.pages.length; i++) {
                 const pag = doc.pages.item(i);
@@ -53,8 +53,7 @@ class PageLayoutSettings {
             exportedSuccessfully = true;
         }
         catch (error) {
-            const { ConfigurationError } = require("./Errors.cjs");
-            if (error instanceof ConfigurationError) {
+            if (error instanceof Errors.ConfigurationError) {
                 this.#logger.error(error.message);
             }
             else {
@@ -153,23 +152,21 @@ class PageLayoutSettings {
             const settingsJson = JSON.stringify(settings, null, 4);
             const byteCount = await settingsFile.write(settingsJson, { format: formats.utf8 });
             if (!byteCount) {
-                const { ConfigurationError } = require("./Errors.cjs");
                 const message = `Could not write into file "${manifestFoldername}/${settingsFilename}".\nPlease check access rights.`;
-                throw new ConfigurationError(message);
+                throw new Errors.ConfigurationError(message);
             }
         }
         else {
             const settingsOfPrecedingLayout = JSON.parse(await settingsFile.read({ format: formats.utf8 }));
             const diff = this.#diffInDesignPageLayoutGrid(settings, settingsOfPrecedingLayout);
             if (diff != null) {
-                const { ConfigurationError } = require("./Errors.cjs");
                 const message = "\n"
                     + "A page setting for the current layout differs from the preceding layout, processed before.\n"
                     + `The '${diff.propertyPath}' setting for the current layout is '${diff.lhsValue}' but for the preceding layout is '${diff.rhsValue}'.\n`
                     + `Settings of the preceding layout were saved in '${manifestFoldername}/${settingsFilename}'.\n`
                     + "For both layouts, check settings for menu items 'Document Setup' and 'Margins and Columns'.\n"
                     + "After adjusting the settings for any of the two layouts, remove the file and try both again.";
-                throw new ConfigurationError(message);
+                throw new Errors.ConfigurationError(message);
             }
         }
     }

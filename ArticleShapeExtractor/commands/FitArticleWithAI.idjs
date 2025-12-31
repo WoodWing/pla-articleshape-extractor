@@ -2,18 +2,17 @@ await (async function main () {
     const { app } = require("indesign");
     const initBootstrap = require("../bootstrap.js");
     const Container = require("../modules/Container.cjs");
+    const Errors = require("../modules/Errors.cjs");
     try {
         initBootstrap();
 
         if (app.documents.length === 0) {
-            const { NoDocumentOpenedError } = require("../modules/Errors.cjs");
-            throw new NoDocumentOpenedError();
+            throw new Errors.NoDocumentOpenedError();
         }
 
         const doc = app.activeDocument;
         if (doc.articles.length === 0) {
-            const { NoArticlesInDocumentError } = require("../modules/Errors.cjs");
-            throw new NoArticlesInDocumentError();
+            throw new Errors.NoArticlesInDocumentError();
         }
         /** @type {FitArticleWithAIService} */
         const service = /** @type FitArticleWithAIService */(Container.resolve("FitArticleWithAIService"));
