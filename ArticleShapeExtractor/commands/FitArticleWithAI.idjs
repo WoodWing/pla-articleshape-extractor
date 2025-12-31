@@ -15,11 +15,13 @@ await (async function main () {
             const { NoArticlesInDocumentError } = require("../modules/Errors.cjs");
             throw new NoArticlesInDocumentError();
         }
-
-        await Container.resolve("FitArticleWithAIService").run(doc);
+        /** @type {FitArticleWithAIService} */
+        const service = /** @type FitArticleWithAIService */(Container.resolve("FitArticleWithAIService"));
+        await service.run(doc);
     }
     catch (error) {
-        Container.resolve("Logger").logError(error);
+        const logger = /** @type Logger */ (Container.resolve("Logger"));
+        logger.logError(error);
         alert(error.message);
     }
 })();

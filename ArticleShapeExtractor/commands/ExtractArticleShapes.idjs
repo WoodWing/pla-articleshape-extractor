@@ -27,13 +27,16 @@ await (async function main () {
         }
 
         // Resolve the brand and sections and save them to disk.
-        await Container.resolve("BrandSectionMapResolver").run(folder);
+        const mapResolver = /** @type BrandSectionMapResolver */(Container.resolve("BrandSectionMapResolver"));
+        await mapResolver.run(folder);
 
         // Resolve the genres and save them to disk.
-        await Container.resolve("GenreResolver").saveGenesToManifest(folder);
+        const genreResolver = /** @type GenreResolver */(Container.resolve("GenreResolver"));
+        await genreResolver.saveGenesToManifest(folder);
 
         // Export article shapes to disk.
-        let exportCounter = await Container.resolve("ExportInDesignArticlesToFolder").run(doc, folder);
+        const exporter = /** @type ExportInDesignArticlesToFolder */(Container.resolve("ExportInDesignArticlesToFolder"));
+        let exportCounter = await exporter.run(doc, folder);
         if (exportCounter === 0) {
             const { PrintLayoutAutomationError } = require("../modules/Errors.cjs");
             throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.");
@@ -41,7 +44,8 @@ await (async function main () {
         alert(exportCounter + " articles have been exported as Article Shapes.");
     }
     catch (error) {
-        Container.resolve("Logger").logError(error);
+        const logger = /** @type Logger */ (Container.resolve("Logger"));
+        logger.logError(error);
         alert(error.message, "Error");
     }
 })();
