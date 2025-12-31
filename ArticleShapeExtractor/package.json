@@ -6,6 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "npm run lint -- --fix",
+    "typecheck": "tsc -p jsconfig.json --noEmit",
     "generate_types": "node generate.types.mjs",
     "generate_types:check": "npm run generate_types -- --check"
   },
@@ -15,5 +16,8 @@
     "@stylistic/eslint-plugin": "^5.6.1",
     "eslint": "^9.39.2",
     "globals": "^16.5.0"
+  },
+  "dependencies": {
+    "typescript": "^5.9.3"
   }
 }

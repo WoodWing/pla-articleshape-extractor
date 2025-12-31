@@ -2,14 +2,21 @@
   "compilerOptions": {
     "moduleResolution": "node",
     
-    // VS Code only — not runtime
+    // For Node and VS Code. Does not apply to InDesign host.
     "target": "esnext",
 
-    // Let VS Code understand require() AND import
+    // Process JS files. Let VS Code understand require() AND import.
     "allowJs": true,
 
-    // No fake path aliases
+    // Type checking on JS code. Applies to tsc and VS Code.
+    //"checkJs": true, // TODO
+
+    // Strict mode for JS code validation. Applies to tsc and VS Code.
+    //"strict": true, // TODO
+
+    // No fake path aliases.
     "baseUrl": ".", // root folder
+    
     
     "paths": {
       "*": ["./*"]
@@ -20,5 +27,8 @@
     "./**/*.mjs",
     "./**/*.idjs",
     "./**/*.js"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }
