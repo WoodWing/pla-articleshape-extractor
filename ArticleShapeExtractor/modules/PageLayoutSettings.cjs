@@ -70,8 +70,8 @@ class PageLayoutSettings {
     /**
      * @param {Document} doc
      * @param {Page} page
-     * @param {Number} baselineStart
-     * @returns {dimensions: {width: Number, height: Number}, margins: {top: Number, bottom: Number, inside: Number, outside: Number}, columns: {gutter: Number}
+     * @param {number} baselineStart
+     * @returns {dimensions: {width: number, height: number}, margins: {top: number, bottom: number, inside: number, outside: number}, columns: {gutter: number}
      */
     #composeSettings (doc, page, baselineStart) {
         return {
@@ -97,8 +97,8 @@ class PageLayoutSettings {
 
     /**
      * Round a given number to a precision of maximum 3 decimals.
-     * @param {Number} precisionNumber
-     * @returns {Number}
+     * @param {number} precisionNumber
+     * @returns {number}
      */
     #roundTo3Decimals (precisionNumber) {
         return Math.round(precisionNumber * 1000) / 1000;

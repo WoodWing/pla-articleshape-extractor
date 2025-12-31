@@ -68,14 +68,14 @@ class Settings {
     }
 
     /**
-     * @returns {String}
+     * @returns {string}
      */
     getMinimumRequiredInDesignVersion () {
         return this.#configData.minimumRequiredInDesignVersion;
     }
 
     /**
-     * @return {Array<String>}
+     * @return {Array<string>}
      */
     getGenres () {
         return this.#configData.genres;

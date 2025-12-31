@@ -85,7 +85,7 @@ class PlaService {
      * Compose request options for the PLA service.
      * @param {string} accessToken
      * @param {string} method
-     * @param {String|null} body
+     * @param {string|null} body
      * @returns {RequestInit}
      */
     #requestInitForPlaService (accessToken, method, body = null) {

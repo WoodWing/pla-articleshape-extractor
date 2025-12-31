@@ -1,7 +1,8 @@
 /**
  * @description Remove characters or whitespaces from the start of string.
- * @param {String|undefined} characters If given, remove characters, otherwise remove whitespaces.
- * @returns {String}
+ * @this {string}
+ * @param {string|undefined} characters If given, remove characters, otherwise remove whitespaces.
+ * @returns {string}
  */
 String.prototype.ltrim = function (characters) {
     const escaped = characters ? this._escapeRegExChars(characters) : "\\s";
@@ -15,8 +16,9 @@ String.prototype._escapeRegExChars = function (characters) {
 
 /**
  * @description Remove characters or whitespaces from the end of string.
- * @param {String|undefined} characters If given, remove characters, otherwise remove whitespaces.
- * @returns {String}
+ * @this {string}
+ * @param {string|undefined} characters If given, remove characters, otherwise remove whitespaces.
+ * @returns {string}
  */
 String.prototype.rtrim = function (characters) {
     const escaped = characters ? this._escapeRegExChars(characters) : "\\s";

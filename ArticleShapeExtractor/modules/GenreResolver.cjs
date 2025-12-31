@@ -13,13 +13,13 @@ class GenreResolver {
     /** @type {FileUtils} */
     #fileUtils;
 
-    /** @type {Array<String>} */
+    /** @type {Array<string>} */
     #genres;
 
     /**
      * @param {Logger} logger
      * @param {FileUtils} fileUtils
-     * @param {Array<String>} genres
+     * @param {Array<string>} genres
      */
     constructor (logger, fileUtils, genres) {
         this.#logger = logger;
@@ -34,7 +34,7 @@ class GenreResolver {
      * - trimmed, lower-cased and sorted
      * - empty and duplicate genres are removed
      *
-     * @param {Array<String>} genres
+     * @param {Array<string>} genres
      */
     #normalizeGenres (genres) {
         let normalized = genres
@@ -48,8 +48,8 @@ class GenreResolver {
      * Lookup the genre in the article name (case insensitive).
      * When multiple matches found, they are all returned.
      *
-     * @param {String} articleName
-     * @returns {Array<String>}
+     * @param {string} articleName
+     * @returns {Array<string>}
      */
     resolveGenreIds (articleName) {
         let genreIds = [];
@@ -65,7 +65,7 @@ class GenreResolver {
     /**
      * When no genres configured, the Genres feature is disabled.
      *
-     * @returns {Boolean}
+     * @returns {boolean}
      */
     isFeatureEnabled () {
         return this.#genres.length > 0;
@@ -118,9 +118,9 @@ class GenreResolver {
     /**
      * Check whether two sorted arrays of strings are identical.
      *
-     * @param {Array<String>} lhs
-     * @param {Array<String>} rhs
-     * @returns {Boolean}
+     * @param {Array<string>} lhs
+     * @param {Array<string>} rhs
+     * @returns {boolean}
      */
     #compareArraysOfStrings (lhs, rhs) {
         return lhs.length === rhs.length

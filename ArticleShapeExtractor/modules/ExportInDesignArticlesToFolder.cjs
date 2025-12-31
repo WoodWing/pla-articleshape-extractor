@@ -45,7 +45,7 @@ class ExportInDesignArticlesToFolder {
     /**
      * @param {Document} doc
      * @param {Folder} folder
-     * @returns {Number} Count of exported article shapes.
+     * @returns {number} Count of exported article shapes.
      */
     async run (doc, folder) {
         if (!(await this.#pageLayoutSettings.exportSettings(doc, folder))) {
@@ -72,8 +72,8 @@ class ExportInDesignArticlesToFolder {
      * @param {Document} doc
      * @param {Folder} folder
      * @param {Object} article
-     * @param {Number} articleIndex
-     * @returns {Boolean} Whether or not successful.
+     * @param {number} articleIndex
+     * @returns {boolean} Whether or not successful.
      */
     async #exportArticle (doc, folder, article, articleIndex) {
         const elements = article.articleMembers.everyItem().getElements();
@@ -200,7 +200,7 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * @param {String} articleName
+     * @param {string} articleName
      * @returns {Object|null}
      */
     #resolveShapeTypeFromArticleName (articleName) {
@@ -233,9 +233,9 @@ class ExportInDesignArticlesToFolder {
      * Compose a unique name that can be used as a base to compose export filenames.
      * @param {Document} doc
      * @param {Folder} folder
-     * @param {String} shapeTypeName
-     * @param {Number} articleIndex
-     * @returns {String}
+     * @param {string} shapeTypeName
+     * @param {number} articleIndex
+     * @returns {string}
      */
     async #getFileBaseName (doc, folder, shapeTypeName, articleIndex) {
         let fileName = doc.name + " " + shapeTypeName + " " + (articleIndex + 1);
@@ -258,8 +258,8 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Create a data object that describes the geometrical boundaries of a given page item.
-     * @param {Number} topLeftX - Make it relative to this X position.
-     * @param {Number} topLeftY - Make it relative to this Y position.
+     * @param {number} topLeftX - Make it relative to this X position.
+     * @param {number} topLeftY - Make it relative to this Y position.
      * @param {PageItem} pageItem - TextFrame, Rectangle, etc
      * @returns {Object}
      */
@@ -274,8 +274,8 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Round a given number to a precision of maximum 3 decimals.
-     * @param {Number} precisionNumber
-     * @returns {Number}
+     * @param {number} precisionNumber
+     * @returns {number}
      */
     #roundTo3Decimals (precisionNumber) {
         return Math.round(precisionNumber * 1000) / 1000;
@@ -284,7 +284,7 @@ class ExportInDesignArticlesToFolder {
     /**
      *
      * @param {Document} doc
-     * @param {String} articleName
+     * @param {string} articleName
      * @param {Object} outerBounds
      * @returns {Object|null}
      */
@@ -351,11 +351,11 @@ class ExportInDesignArticlesToFolder {
     /**
      * @param {Document} doc
      * @param {Folder} folder
-     * @param {String} shapeTypeName
-     * @param {Number} articleIndex
+     * @param {string} shapeTypeName
+     * @param {number} articleIndex
      * @param {Array} pageItems
      * @param {Object} articleShapeJson
-     * @returns {Boolean} Whether or not successful.
+     * @returns {boolean} Whether or not successful.
      */
     async #exportArticlePageItems (doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
         const lfs = require("uxp").storage.localFileSystem;
@@ -424,7 +424,7 @@ class ExportInDesignArticlesToFolder {
      * Save JSON data to a file on disk.
      * @param {Object} jsonData - The JSON object to save.
      * @param {File} file
-     * @returns {Boolean} Whether or not successful.
+     * @returns {boolean} Whether or not successful.
      */
     async #saveJsonToDisk (jsonData, file) {
         let isSaved = false;
@@ -483,10 +483,10 @@ class ExportInDesignArticlesToFolder {
      *                           The `itemRef` can be a text frame, graphic, or other page item.
      * @returns {Object} - An object representing the outer bounds of the combined elements and their threaded frames:
      *                     {
-     *                         topLeftX: {Number} - The smallest X coordinate of the bounding box's top-left corner.
-     *                         topLeftY: {Number} - The smallest Y coordinate of the bounding box's top-left corner.
-     *                         bottomRightX: {Number} - The largest X coordinate of the bounding box's bottom-right corner.
-     *                         bottomRightY: {Number} - The largest Y coordinate of the bounding box's bottom-right corner.
+     *                         topLeftX: {number} - The smallest X coordinate of the bounding box's top-left corner.
+     *                         topLeftY: {number} - The smallest Y coordinate of the bounding box's top-left corner.
+     *                         bottomRightX: {number} - The largest X coordinate of the bounding box's bottom-right corner.
+     *                         bottomRightY: {number} - The largest Y coordinate of the bounding box's bottom-right corner.
      *                     }
      */
     #getOuterboundOfArticleShape (elements) {
@@ -564,7 +564,7 @@ class ExportInDesignArticlesToFolder {
     /**
      * Get the text wrap settings of a selected frame, including the text wrap mode as a string.
      * @param {PageItem|null} frame - The InDesign frame object (e.g., TextFrame, GraphicFrame).
-     * @returns {String} - Name of the text wrap mode
+     * @returns {string} - Name of the text wrap mode
      */
     #getTextWrapMode (frame) {
         if (!this.#inDesignArticleService.isValidArticleComponentFrame(frame)) {
@@ -597,7 +597,7 @@ class ExportInDesignArticlesToFolder {
     /**
      * Calculate the line height in points.
      * @param {Line} line
-     * @returns {Number}
+     * @returns {number}
      */
     #getLineHeight (line) {
         if (line.characters.length === 0) {

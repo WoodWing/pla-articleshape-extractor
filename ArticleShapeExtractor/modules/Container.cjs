@@ -9,7 +9,7 @@ class Container {
     #registrations = {};
 
     /**
-     * @param {String} service
+     * @param {string} service
      * @param {Function} factoryFunction
      */
     registerFactory (service, factoryFunction) {
@@ -17,7 +17,7 @@ class Container {
     }
 
     /**
-     * @param {String} service
+     * @param {string} service
      * @param {Function} factoryFunction
      */
     registerSingleton (service, factoryFunction) {
@@ -25,9 +25,9 @@ class Container {
     }
 
     /**
-     * @param {String} service
+     * @param {string} service
      * @param {Function} factoryFunction
-     * @param {String} providerType
+     * @param {string} providerType
      */
     #register (service, factoryFunction, providerType) {
         if (typeof factoryFunction !== "function") {
@@ -48,7 +48,7 @@ class Container {
 
     /**
      * @template T
-     * @param {String} service
+     * @param {string} service
      * @returns {T}
      */
     resolve (service) {
@@ -79,7 +79,7 @@ class Container {
 
     /**
      * @param {Object} obj
-     * @returns {String}
+     * @returns {string}
      */
     #getClassname (obj) {
         if (!obj || !obj.constructor) {
