@@ -1,7 +1,7 @@
 /**
  * Make an alert() function available on global level.
- * @param {String} msg
- * @param {String|undefined} caption
+ * @param {string} msg
+ * @param {string|undefined} caption
  * @returns
  */
 globalThis.alert = function (msg, caption) {

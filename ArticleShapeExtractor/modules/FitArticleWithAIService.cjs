@@ -1,3 +1,5 @@
+const Errors = require("./Errors.cjs");
+
 /**
  * Understands how to make a place article fit using the AI fitting service.
  */
@@ -44,8 +46,7 @@ class FitArticleWithAIService {
 
         // Bail out when user is currently not logged in.
         if (!this.#studioJsonRpcClient.hasSession()) {
-            const { NoStudioSessionError } = require("./Errors.cjs");
-            throw new NoStudioSessionError();
+            throw new Errors.NoStudioSessionError();
         }
 
         // Resolve brand and section from layout doc (or use fallback settings).

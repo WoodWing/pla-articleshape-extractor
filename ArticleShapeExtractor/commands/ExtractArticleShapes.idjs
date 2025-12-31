@@ -2,18 +2,17 @@ await (async function main () {
     const { app } = require("indesign");
     const initBootstrap = require("../bootstrap.js");
     const Container = require("../modules/Container.cjs");
+    const Errors = require("../modules/Errors.cjs");
     try {
         initBootstrap();
 
         if (app.documents.length === 0) {
-            const { NoDocumentOpenedError } = require("../modules/Errors.cjs");
-            throw new NoDocumentOpenedError();
+            throw new Errors.NoDocumentOpenedError();
         }
 
         const doc = app.activeDocument;
         if (doc.articles.length === 0) {
-            const { NoArticlesInDocumentError } = require("../modules/Errors.cjs");
-            throw new NoArticlesInDocumentError();
+            throw new Errors.NoArticlesInDocumentError();
         }
 
         // Prompt the user to select the folder for saving the snippets.
@@ -22,26 +21,28 @@ await (async function main () {
         const domains = require("uxp").storage.domains;
         const folder = await lfs.getFolder({ initialDomain: domains.userDocuments });
         if (!folder || !folder.isFolder) {
-            const { NoFolderSelectedError } = require("../modules/Errors.cjs");
-            throw new NoFolderSelectedError();
+            throw new Errors.NoFolderSelectedError();
         }
 
         // Resolve the brand and sections and save them to disk.
-        await Container.resolve("BrandSectionMapResolver").run(folder);
+        const mapResolver = /** @type BrandSectionMapResolver */(Container.resolve("BrandSectionMapResolver"));
+        await mapResolver.run(folder);
 
         // Resolve the genres and save them to disk.
-        await Container.resolve("GenreResolver").saveGenesToManifest(folder);
+        const genreResolver = /** @type GenreResolver */(Container.resolve("GenreResolver"));
+        await genreResolver.saveGenesToManifest(folder);
 
         // Export article shapes to disk.
-        let exportCounter = await Container.resolve("ExportInDesignArticlesToFolder").run(doc, folder);
+        const exporter = /** @type ExportInDesignArticlesToFolder */(Container.resolve("ExportInDesignArticlesToFolder"));
+        let exportCounter = await exporter.run(doc, folder);
         if (exportCounter === 0) {
-            const { PrintLayoutAutomationError } = require("../modules/Errors.cjs");
-            throw new PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.");
+            throw new Errors.PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.");
         }
         alert(exportCounter + " articles have been exported as Article Shapes.");
     }
     catch (error) {
-        Container.resolve("Logger").logError(error);
+        const logger = /** @type Logger */ (Container.resolve("Logger"));
+        logger.logError(error);
         alert(error.message, "Error");
     }
 })();

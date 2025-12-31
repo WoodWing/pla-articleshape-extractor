@@ -1,5 +1,6 @@
 const { app } = require("indesign");
 const idd = require("indesign");
+const Errors = require("./Errors.cjs");
 
 /**
  * Understands the batch wise process of opening layouts to (re)extract all placed article shapes from them.
@@ -55,8 +56,7 @@ class RegenerateArticleShapesService {
 
         // Bail out when user is currently not logged in.
         if (!this.#studioJsonRpcClient.hasSession()) {
-            const { NoStudioSessionError } = require("./Errors.cjs");
-            throw new NoStudioSessionError();
+            throw new Errors.NoStudioSessionError();
         }
 
         // Build a layout id-version map from the JSON files that have been extracted before into the folder.
@@ -157,12 +157,11 @@ class RegenerateArticleShapesService {
      * @param {string} statusName
      */
     #raiseStatusConfigError (statusName) {
-        const { ConfigurationError } = require("./Errors.cjs");
         const message = `\nStatus '${statusName}' seems not configured for `
             + `brand '${this.#settings.filter.brand}'.\n`
             + "Please check the 'regenerateArticleShapesSettings' option "
             + "in your 'config/config.js' or 'config/config-local.js' file.";
-        throw new ConfigurationError(message);
+        throw new Errors.ConfigurationError(message);
     }
 
     /**

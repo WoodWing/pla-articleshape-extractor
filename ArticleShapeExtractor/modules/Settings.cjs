@@ -1,3 +1,5 @@
+const Errors = require("./Errors.cjs");
+
 /**
  * Understands how to merge the local settings into the default settings.
  * Provides a getter function for each individual setting.
@@ -26,26 +28,25 @@ class Settings {
      * @returns {{{brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}}
      */
     getRegenerateArticleShapesSettings () {
-        const { ConfigurationError } = require("./Errors.cjs");
         const settings = this.#configData.regenerateArticleShapesSettings;
         const tip = "Please check your 'config/config.js' and your 'config/config-local.js' files.";
         for (const paramName of ["brand", "issue", "category", "status"]) {
             const settingsFilterHasParam = Object.prototype.hasOwnProperty.call(settings.filter, paramName);
             if (!settingsFilterHasParam || typeof settings.filter[paramName] !== "string") {
-                throw new ConfigurationError(`The regenerateArticleShapesSettings → filter → ${paramName} option is not set.\n${tip}`);
+                throw new Errors.ConfigurationError(`The regenerateArticleShapesSettings → filter → ${paramName} option is not set.\n${tip}`);
             }
             if (!["issue", "category"].includes(paramName) && settings.filter[paramName].length === 0) { // these filters may be left empty
-                throw new ConfigurationError(`The regenerateArticleShapesSettings → filter → ${paramName} option is empty.\n${tip}`);
+                throw new Errors.ConfigurationError(`The regenerateArticleShapesSettings → filter → ${paramName} option is empty.\n${tip}`);
             }
         }
         const layoutStatusFilter = this.#configData.regenerateArticleShapesSettings.filter;
         for (const setting of ["layoutStatusOnSuccess", "layoutStatusOnError"]) {
             const settingsHasSetting = Object.prototype.hasOwnProperty.call(settings, setting);
             if (!settingsHasSetting || typeof settings[setting] !== "string" || settings[setting].length === 0) {
-                throw new ConfigurationError(`The regenerateArticleShapesSettings → ${setting} option is not set.\n${tip}`);
+                throw new Errors.ConfigurationError(`The regenerateArticleShapesSettings → ${setting} option is not set.\n${tip}`);
             }
             if (layoutStatusFilter === settings[setting]) {
-                throw new ConfigurationError(`The status configured for the regenerateArticleShapesSettings → ${setting} `
+                throw new Errors.ConfigurationError(`The status configured for the regenerateArticleShapesSettings → ${setting} `
                     + `option should differ from the regenerateArticleShapesSettings → filter → status option.\n${tip}`);
             }
         }
@@ -67,14 +68,14 @@ class Settings {
     }
 
     /**
-     * @returns {String}
+     * @returns {string}
      */
     getMinimumRequiredInDesignVersion () {
         return this.#configData.minimumRequiredInDesignVersion;
     }
 
     /**
-     * @return {Array<String>}
+     * @return {Array<string>}
      */
     getGenres () {
         return this.#configData.genres;

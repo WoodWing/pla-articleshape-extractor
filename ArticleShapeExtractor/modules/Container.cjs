@@ -1,53 +1,61 @@
-const Container = {
-    _registrations: {},
+class Container {
+    /** @type {Array<{
+            factoryFunction: Function,
+            providerType: string,
+            lastInstance: Object,
+            >}
+        }
+    */
+    #registrations = {};
 
     /**
-     * @param {String} service
+     * @param {string} service
      * @param {Function} factoryFunction
      */
-    registerFactory: function (service, factoryFunction) {
-        this._register(service, factoryFunction, "factory");
-    },
+    registerFactory (service, factoryFunction) {
+        this.#register(service, factoryFunction, "factory");
+    }
 
     /**
-     * @param {String} service
+     * @param {string} service
      * @param {Function} factoryFunction
      */
-    registerSingleton: function (service, factoryFunction) {
-        this._register(service, factoryFunction, "singleton");
-    },
+    registerSingleton (service, factoryFunction) {
+        this.#register(service, factoryFunction, "singleton");
+    }
 
     /**
-     * @param {String} service
+     * @param {string} service
      * @param {Function} factoryFunction
-     * @param {String} providerType
+     * @param {string} providerType
      */
-    _register: function (service, factoryFunction, providerType) {
+    #register (service, factoryFunction, providerType) {
         if (typeof factoryFunction !== "function") {
             throw new Error("Factory '" + typeof factoryFunction + "' is not a function.");
         }
-        if (this._registrations[service]) {
+        if (this.#registrations[service]) {
             throw new Error("Service '" + service + "' is already registered.");
         }
         if (providerType !== "singleton" && providerType !== "factory") {
             throw new Error("Provider type '" + providerType + "' is unknown.");
         }
-        this._registrations[service] = {
+        this.#registrations[service] = {
             factoryFunction: factoryFunction,
             providerType: providerType,
             lastInstance: null,
         };
-    },
+    }
 
     /**
-     * @param {String} service
-     * @returns {Object}
+     * @template T
+     * @param {string} service
+     * @returns {T}
      */
-    resolve: function (service) {
-        if (!this._registrations[service]) {
+    resolve (service) {
+        if (!this.#registrations[service]) {
             throw new Error("Service '" + service + "' not registered.");
         }
-        let registration = this._registrations[service];
+        let registration = this.#registrations[service];
         if (
             (registration.providerType === "singleton" && registration.lastInstance === null)
             || registration.providerType === "factory"
@@ -58,7 +66,7 @@ const Container = {
                     "Factory function for service '" + service + "' created '" + typeof createdInstance + "', "
                     + "but expected an object.");
             }
-            const actualService = this._getClassname(createdInstance);
+            const actualService = this.#getClassname(createdInstance);
             if (actualService !== service) {
                 throw new Error(
                     "Factory function for service '" + service + "' created instance of '" + actualService + "', "
@@ -67,18 +75,18 @@ const Container = {
             registration.lastInstance = createdInstance;
         }
         return registration.lastInstance;
-    },
+    }
 
     /**
      * @param {Object} obj
-     * @returns {String}
+     * @returns {string}
      */
-    _getClassname: function (obj) {
+    #getClassname (obj) {
         if (!obj || !obj.constructor) {
             return "Unknown";
         }
         return obj.constructor.name;
-    },
+    }
 };
 
-module.exports = Container;
+module.exports = new Container(); // singleton

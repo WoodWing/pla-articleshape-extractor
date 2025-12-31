@@ -5,9 +5,9 @@ class VersionUtils {
 
     /**
      * Compare two versions.
-     * @param {String} versionLhs Left Hand Side.
-     * @param {String} versionRhs Right Hand Side.
-     * @returns {Number} Zero when equal, or -1 when versionLhs is smaller or 1 when bigger.
+     * @param {string} versionLhs Left Hand Side.
+     * @param {string} versionRhs Right Hand Side.
+     * @returns {number} Zero when equal, or -1 when versionLhs is smaller or 1 when bigger.
      */
     versionCompare (versionLhs, versionRhs) {
         const digitsLhs = versionLhs.split(".").map(Number);

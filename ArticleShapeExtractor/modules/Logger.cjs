@@ -18,10 +18,10 @@ class Logger {
     #wipe;
 
     /**
-     * @param {String} filePath
-     * @param {String} filename
-     * @param {String} logLevel
-     * @param {Boolean} wipe
+     * @param {string} filePath
+     * @param {string} filename
+     * @param {string} logLevel
+     * @param {boolean} wipe
      */
     constructor (filePath, filename, logLevel, wipe) {
 
@@ -42,8 +42,8 @@ class Logger {
 
     /**
      * Log a debug message, to provide diagnostically helpful information.
-     * @param {String} message
-     * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
+     * @param {string} message
+     * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
      */
     debug () {
         if (!this.isDebug())
@@ -61,8 +61,8 @@ class Logger {
 
     /**
      * Log an info message, in case of an achievement or major state changes.
-     * @param {String} message
-     * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
+     * @param {string} message
+     * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
      */
     info () {
         if (!this.isInfo())
@@ -80,8 +80,8 @@ class Logger {
 
     /**
      * Log a warning message, in case of an unwanted state.
-     * @param {String} message
-     * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
+     * @param {string} message
+     * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
      */
     warning () {
         if (!this.isWarning())
@@ -99,8 +99,8 @@ class Logger {
 
     /**
      * Log an error message, in case the process can not continue.
-     * @param {String} message
-     * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
+     * @param {string} message
+     * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
      */
     error () {
         if (!this.isError())
@@ -118,8 +118,8 @@ class Logger {
 
     /**
      * Log a critical message, in case the application can not continue.
-     * @param {String} message
-     * @param {String|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
+     * @param {string} message
+     * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
      */
     critical () {
         if (!this.isCritical())
@@ -136,8 +136,8 @@ class Logger {
     }
 
     /**
-     * @param {String} logLevel
-     * @param {String} args
+     * @param {string} logLevel
+     * @param {string} args
      */
     #log (logLevel, args) {
         const template = args.shift();
@@ -154,8 +154,8 @@ class Logger {
     };
 
     /**
-     * @param {String} logLevel
-     * @param {String} message
+     * @param {string} logLevel
+     * @param {string} message
      */
     #writeLine (logLevel, message) {
         const logLine = `[${this.#getDateTimeWithMsAsString()}] [${this.LOGLEVEL[logLevel].padEnd(8)}] ${message}\n`;
@@ -174,7 +174,7 @@ class Logger {
     };
 
     /**
-     * @returns {String} UTC date and time with milliseconds in ISO 8601 format.
+     * @returns {string} UTC date and time with milliseconds in ISO 8601 format.
      */
     #getDateTimeWithMsAsString () {
         return new Date().toISOString();

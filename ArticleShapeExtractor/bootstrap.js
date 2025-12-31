@@ -1,7 +1,7 @@
 require("./extensions/String.js");
 require("./extensions/globals.js");
 require("./extensions/lodash.min.js");
-require("./modules/Errors.cjs");
+require("./types.d.js");
 const Container = require("./modules/Container.cjs");
 
 Container.registerSingleton("Settings", function () {
@@ -19,7 +19,8 @@ Container.registerSingleton("Settings", function () {
 
 Container.registerSingleton("Logger", function () {
     const Logger = require("./modules/Logger.cjs");
-    const config = Container.resolve("Settings").getLoggerConfig();
+    const settings = /** @type Settings */ (Container.resolve("Settings"));
+    const config = settings.getLoggerConfig();
     try {
         return new Logger(config.folder, config.filename, config.level, config.wipe);
     }
@@ -43,10 +44,11 @@ Container.registerSingleton("VersionUtils", function () {
 
 // Assure this script is running on a compatible InDesign version.
 function validateHost () {
-    const logger = Container.resolve("Logger");
+    const logger = /** @type {Logger} */ (Container.resolve("Logger"));
     try {
-        const versionUtils = Container.resolve("VersionUtils");
-        const minRequiredVersion = Container.resolve("Settings").getMinimumRequiredInDesignVersion();
+        const versionUtils = /** @type {VersionUtils} */ (Container.resolve("VersionUtils"));
+        const settings = /** @type Settings */ (Container.resolve("Settings"));
+        const minRequiredVersion = settings.getMinimumRequiredInDesignVersion();
         const host = require("uxp").host;
         const os = require("os");
         logger.info(`Started log for host ${host.name} v${host.version} (${host.uiLocale}) `
@@ -81,7 +83,7 @@ Container.registerFactory("PageLayoutSettings", function () {
 
 Container.registerFactory("GenreResolver", function () {
     const GenreResolver = require("./modules/GenreResolver.cjs");
-    const settings = Container.resolve("Settings");
+    const settings = /** @type Settings */ (Container.resolve("Settings"));
     return new GenreResolver(
         Container.resolve("Logger"),
         Container.resolve("FileUtils"),
@@ -91,7 +93,7 @@ Container.registerFactory("GenreResolver", function () {
 
 Container.registerFactory("BrandSectionResolver", function () {
     const BrandSectionResolver = require("./modules/BrandSectionResolver.cjs");
-    const settings = Container.resolve("Settings");
+    const settings = /** @type Settings */ (Container.resolve("Settings"));
     return new BrandSectionResolver(
         Container.resolve("Logger"),
         settings.getOfflineFallbackConfig().brand,

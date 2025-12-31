@@ -4,10 +4,12 @@ await (async function main () {
 
     try {
         initBootstrap();
-        Container.resolve("InDesignArticleService").addOrRenameInDesignArticle("Lead");
+        const articleService = /** @type InDesignArticleService */(Container.resolve("InDesignArticleService"));
+        articleService.addOrRenameInDesignArticle("Lead");
     }
     catch (error) {
-        Container.resolve("Logger").logError(error);
+        const logger = /** @type Logger */ (Container.resolve("Logger"));
+        logger.logError(error);
         alert(error.message, "Error");
     }
 })();

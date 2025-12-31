@@ -6,7 +6,9 @@
         "aila",
         "idms",
         "idjs",
+        "ltrim",
         "malpositioned",
+        "rtrim",
         "stroustrup"
     ],
     "editor.defaultFormatter": "dbaeumer.vscode-eslint",

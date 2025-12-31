@@ -1,4 +1,5 @@
 const formats = require("uxp").storage.formats;
+const Errors = require("./Errors.cjs");
 
 /**
  * Understands genres; How to detect the genre in a given an article name and how
@@ -12,13 +13,13 @@ class GenreResolver {
     /** @type {FileUtils} */
     #fileUtils;
 
-    /** @type {Array<String>} */
+    /** @type {Array<string>} */
     #genres;
 
     /**
      * @param {Logger} logger
      * @param {FileUtils} fileUtils
-     * @param {Array<String>} genres
+     * @param {Array<string>} genres
      */
     constructor (logger, fileUtils, genres) {
         this.#logger = logger;
@@ -33,7 +34,7 @@ class GenreResolver {
      * - trimmed, lower-cased and sorted
      * - empty and duplicate genres are removed
      *
-     * @param {Array<String>} genres
+     * @param {Array<string>} genres
      */
     #normalizeGenres (genres) {
         let normalized = genres
@@ -47,8 +48,8 @@ class GenreResolver {
      * Lookup the genre in the article name (case insensitive).
      * When multiple matches found, they are all returned.
      *
-     * @param {String} articleName
-     * @returns {Array<String>}
+     * @param {string} articleName
+     * @returns {Array<string>}
      */
     resolveGenreIds (articleName) {
         let genreIds = [];
@@ -64,7 +65,7 @@ class GenreResolver {
     /**
      * When no genres configured, the Genres feature is disabled.
      *
-     * @returns {Boolean}
+     * @returns {boolean}
      */
     isFeatureEnabled () {
         return this.#genres.length > 0;
@@ -89,9 +90,8 @@ class GenreResolver {
             const genresJson = JSON.stringify(this.#genres, null, 4);
             const byteCount = await genresFile.write(genresJson, { format: formats.utf8 });
             if (!byteCount) {
-                const { ConfigurationError } = require("./Errors.cjs");
                 const message = `Could not write into file '${genresRelativePath}'.\nPlease check access rights.`;
-                throw new ConfigurationError(message);
+                throw new Errors.ConfigurationError(message);
             }
             this.#logger.info(`Saved the configured genres to "${genresRelativePath}".`);
 
@@ -103,14 +103,13 @@ class GenreResolver {
                     + `1) configured genres: ${JSON.stringify(this.#genres, null, 4)}\n`
                     + `2) genres.json:\n${JSON.stringify(genresOfPrecedingOperation, null, 4)}\n`,
                 );
-                const { ConfigurationError } = require("./Errors.cjs");
                 const message = "\n"
                     + "The genres configured for the current operation differ from the preceding operation.\n"
                     + `Genres configured for the current operation are found in '${configRelativePath}'.\n`
                     + `Genres of the preceding operation were saved in '${genresRelativePath}'.\n`
                     + `Resolve differences by either adjusting '${configRelativePath}' or removing '${genresRelativePath}'.\n`
                     + "See also logging for the differences found.";
-                throw new ConfigurationError(message);
+                throw new Errors.ConfigurationError(message);
             }
             this.#logger.info(`The configured genres already exist in '${configRelativePath}'. No action taken.`);
         }
@@ -119,9 +118,9 @@ class GenreResolver {
     /**
      * Check whether two sorted arrays of strings are identical.
      *
-     * @param {Array<String>} lhs
-     * @param {Array<String>} rhs
-     * @returns {Boolean}
+     * @param {Array<string>} lhs
+     * @param {Array<string>} rhs
+     * @returns {boolean}
      */
     #compareArraysOfStrings (lhs, rhs) {
         return lhs.length === rhs.length

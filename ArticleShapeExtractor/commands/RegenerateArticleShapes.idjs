@@ -3,6 +3,8 @@ await (async function main () {
     const idd = require("indesign");
     const initBootstrap = require("../bootstrap.js");
     const Container = require("../modules/Container.cjs");
+    const Errors = require("../modules/Errors.cjs");
+    const logger = /** @type Logger */ (Container.resolve("Logger"));
     try {
         initBootstrap();
 
@@ -12,30 +14,32 @@ await (async function main () {
         const domains = require("uxp").storage.domains;
         const folder = await lfs.getFolder({ initialDomain: domains.userDocuments });
         if (!folder || !folder.isFolder) {
-            const { NoFolderSelectedError } = require("../modules/Errors.cjs");
-            throw new NoFolderSelectedError();
+            throw new Errors.NoFolderSelectedError();
         }
 
         // Resolve the brand and sections and save them to disk.
-        await Container.resolve("BrandSectionMapResolver").run(folder);
+        const mapResolver = /** @type BrandSectionMapResolver */(Container.resolve("BrandSectionMapResolver"));
+        await mapResolver.run(folder);
 
         // Resolve the genres and save them to disk.
-        await Container.resolve("GenreResolver").saveGenesToManifest(folder);
+        const genreResolver = /** @type GenreResolver */(Container.resolve("GenreResolver"));
+        await genreResolver.saveGenesToManifest(folder);
 
         // Export article shapes to disk.
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
-        const report = await Container.resolve("RegenerateArticleShapesService").run(folder);
+        const regenerator = /** @type RegenerateArticleShapesService */(Container.resolve("RegenerateArticleShapesService"));
+        const report = await regenerator.run(folder);
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
         const completedMessage = "Article Shapes are regenerated.";
         const reportMessage = `Extracted: ${report.extracted}, Skipped: ${report.skipped}, Failed: ${report.failed}.`;
-        Container.resolve("Logger").info(`${completedMessage} => ${reportMessage}`);
+        logger.info(`${completedMessage} => ${reportMessage}`);
         alert(`${completedMessage}\n${reportMessage}`, "Completed");
 
     }
     catch (error) {
         // First enable the user interaction again to able to show the alert.
         app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
-        Container.resolve("Logger").logError(error);
+        logger.logError(error);
         alert(error.message);
     }
 })();

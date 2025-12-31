@@ -9,6 +9,7 @@
 
 /** @typedef {import('./modules/BrandSectionMapResolver.cjs')} BrandSectionMapResolver */
 /** @typedef {import('./modules/BrandSectionResolver.cjs')} BrandSectionResolver */
+/** @typedef {import('./modules/Container.cjs')} Container */
 /** @typedef {import('./modules/ExportInDesignArticlesToFolder.cjs')} ExportInDesignArticlesToFolder */
 /** @typedef {import('./modules/FileUtils.cjs')} FileUtils */
 /** @typedef {import('./modules/FitArticleWithAIService.cjs')} FitArticleWithAIService */
