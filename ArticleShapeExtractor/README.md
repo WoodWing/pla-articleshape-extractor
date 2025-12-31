@@ -24,6 +24,7 @@ Install the tool in your InDesign application:
 5. Restart InDesign to auto install a menu item. To verify:
    1. Open a layout and locate a placed article.
    2. Right mouse click any of its frames to open the context menu.
+      * Note that the frame needs to be part on an InDesign article.
    3. Click the `Fitting` submenu.
    4. The submenu should list a menu item named `Fit Article with AI`.
 
