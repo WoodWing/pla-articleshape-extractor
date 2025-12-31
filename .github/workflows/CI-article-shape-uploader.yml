@@ -3,13 +3,13 @@ name: CI - Article Shape Uploader
 on:
   # Run the tests on pushes to these branches.
   push:
-  #  branches:
-  #    - master
+    branches:
+      - master
 
   # Run the tests on pushes to feature branches (PRs) that are targeting these branches.
   pull_request:
-  #  branches:
-  #    - master
+    branches:
+      - master
 
 jobs:
   test:
