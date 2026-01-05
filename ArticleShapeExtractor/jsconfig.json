@@ -17,6 +17,11 @@
     // No fake path aliases.
     "baseUrl": ".", // root folder
     
+    // JS scripts do not run in a browser (DOM) but in InDesign, hence turn off lib.dom.d.ts.
+    // Note that both web browser DOM and InDesign define e.g. a global Document.
+    // This option excludes the DOM and so the InDesign Document definition is used.
+    // See doc/DEVELOPMENT.md how to manage.
+    "noLib": true,
     
     "paths": {
       "*": ["./*"]
@@ -26,7 +31,9 @@
     "./**/*.cjs",
     "./**/*.mjs",
     "./**/*.idjs",
-    "./**/*.js"
+    "./**/*.js",
+    "types/adobe/InDesign/2023/*.d.ts",
+    "types/adobe/shared/*.d.ts"
   ],
   "exclude": [
     "node_modules"
