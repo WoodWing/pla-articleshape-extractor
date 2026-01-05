@@ -14,6 +14,12 @@
     // Strict mode for JS code validation. Applies to tsc and VS Code.
     //"strict": true, // TODO
 
+    // Make UXP types available for VS Code.
+    "typeRoots": [
+      "node_modules/@types",
+      "node_modules/uxp-types"
+    ],
+
     // No fake path aliases.
     "baseUrl": ".", // root folder
     
