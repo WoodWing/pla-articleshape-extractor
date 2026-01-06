@@ -1,4 +1,3 @@
-const { app } = require("indesign");
 const idd = require("indesign");
 
 /**
@@ -56,7 +55,7 @@ class ExportInDesignArticlesToFolder {
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this.#logger.info("Extracting InDesign Articles for layout document '{}'.", docName);
 
-        app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
+        idd.app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
         let exportCounter = 0;
         for (let articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
             const article = doc.articles.item(articleIndex);
@@ -64,7 +63,7 @@ class ExportInDesignArticlesToFolder {
                 exportCounter++;
             }
         }
-        app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
+        idd.app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
         return exportCounter;
     }
 

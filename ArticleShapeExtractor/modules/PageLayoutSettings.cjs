@@ -1,4 +1,3 @@
-const { app } = require("indesign");
 const idd = require("indesign");
 const lfs = require("uxp").storage.localFileSystem;
 const formats = require("uxp").storage.formats;
@@ -36,7 +35,7 @@ class PageLayoutSettings {
         let exportedSuccessfully = false;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this.#logger.info("Exporting Document Settings for layout '{}'.", docName);
-        app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
+        idd.app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
         try {
             if (doc.pages.length === 0) {
                 throw new Errors.NoDocumentPagesError();
@@ -62,7 +61,7 @@ class PageLayoutSettings {
             alert("An error occurred: " + error.message);
         }
         finally {
-            app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
+            idd.app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
         }
         return exportedSuccessfully;
     }

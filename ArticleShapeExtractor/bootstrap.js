@@ -113,13 +113,13 @@ Container.registerFactory("ExportInDesignArticlesToFolder", function () {
 });
 
 Container.registerFactory("StudioJsonRpcClient", function () {
-    const { app } = require("indesign");
+    const idd = require("indesign");
     const StudioJsonRpcClient = require("./modules/StudioJsonRpcClient.cjs");
     return new StudioJsonRpcClient(
         Container.resolve("Logger"),
         Container.resolve("HttpLogger"),
-        app.entSession?.activeUrl,
-        app.entSession?.activeTicket,
+        idd.app.entSession?.activeUrl,
+        idd.app.entSession?.activeTicket,
     );
 });
 

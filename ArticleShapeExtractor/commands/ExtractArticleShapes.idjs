@@ -1,16 +1,16 @@
 await (async function main () {
-    const { app } = require("indesign");
+    const idd = require("indesign");
     const initBootstrap = require("../bootstrap.js");
     const Container = require("../modules/Container.cjs");
     const Errors = require("../modules/Errors.cjs");
     try {
         initBootstrap();
 
-        if (app.documents.length === 0) {
+        if (idd.app.documents.length === 0) {
             throw new Errors.NoDocumentOpenedError();
         }
 
-        const doc = app.activeDocument;
+        const doc = idd.app.activeDocument;
         if (doc.articles.length === 0) {
             throw new Errors.NoArticlesInDocumentError();
         }

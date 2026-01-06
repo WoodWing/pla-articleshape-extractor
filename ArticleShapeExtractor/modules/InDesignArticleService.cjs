@@ -1,4 +1,3 @@
-const { app } = require("indesign");
 const idd = require("indesign");
 const Errors = require("../modules/Errors.cjs");
 
@@ -15,21 +14,21 @@ class InDesignArticleService {
      * @param {string} articleName
      */
     addOrRenameInDesignArticle (articleName) {
-        if (app.documents.length === 0) {
+        if (idd.app.documents.length === 0) {
             throw new Errors.NoDocumentOpenedError();
         }
 
-        if (app.selection.length === 0) {
+        if (idd.app.selection.length === 0) {
             throw new Errors.NoFramesSelectedError();
         }
 
-        const frame = app.selection[0];
+        const frame = idd.app.selection[0];
         if (!this.isValidArticleComponentFrame(frame)) {
             throw new Errors.NoTextOrGraphicalFramesSelectedError();
         }
 
         // Add new InDesign Articles.
-        const doc = app.activeDocument;
+        const doc = idd.app.activeDocument;
         const articles = this.getInDesignArticles(doc, frame);
         if (articles.length == 0) {
             this.#createNewInDesignArticleWithSelectedFrames(doc, articleName);
@@ -124,8 +123,8 @@ class InDesignArticleService {
         article.name = articleName;
 
         // Add selected frames to the new article.
-        for (let i = 0; i < app.selection.length; i++) {
-            const frame = app.selection[i];
+        for (let i = 0; i < idd.app.selection.length; i++) {
+            const frame = idd.app.selection[i];
             if (this.isValidArticleComponentFrame(frame)) {
                 try {
                     article.articleMembers.add(frame);
