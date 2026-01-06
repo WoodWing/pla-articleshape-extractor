@@ -15,31 +15,38 @@
     //"strict": true, // TODO
 
     // Make UXP types available for VS Code.
+    // Note that typeRoots overrides defaults, so be sure to include the implicit @types as well.
     "typeRoots": [
+      "node_modules/@adobe/cc-ext-uxp-types",
       "node_modules/@types",
-      "node_modules/uxp-types"
     ],
-
+        
     // No fake path aliases.
     "baseUrl": ".", // root folder
     
     // JS scripts do not run in a browser (DOM) but in InDesign, hence turn off lib.dom.d.ts.
     // Note that both web browser DOM and InDesign define e.g. a global Document.
-    // This option excludes the DOM and so the InDesign Document definition is used.
+    // Important is to exclude the DOM and so the InDesign Document definition is used.
+    // By picking "es2018" it includes e.g. Promise (etc) but does NOT include browser DOM.
     // See doc/DEVELOPMENT.md how to manage.
-    "noLib": true,
+    "lib": ["es2018"],
     
     "paths": {
       "*": ["./*"]
     }
   },
   "include": [
+    // NOTE: The "indesign-aliases.d.ts" file is using globalThis, hence must be included BEFORE "uxp-aliases.d.ts"
+    //       otherwise e.g. the Document type definition is taken from UXP rather than InDesign.
+    "types/indesign-aliases.d.ts", // See note above.
+    "types/adobe/InDesign/2023/*.d.ts",
+    "types/adobe/shared/*.d.ts",
+    "types/uxp-aliases.d.ts", // See note above.
+    "types/dto.d.js",
     "./**/*.cjs",
     "./**/*.mjs",
     "./**/*.idjs",
     "./**/*.js",
-    "types/adobe/InDesign/2023/*.d.ts",
-    "types/adobe/shared/*.d.ts"
   ],
   "exclude": [
     "node_modules"

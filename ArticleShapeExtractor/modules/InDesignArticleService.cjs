@@ -76,8 +76,9 @@ class InDesignArticleService {
 
     /**
      * Collect articles the provided frame is part of.
-     * @param {PageItem} Valid text/graphic frame.
-     * @returns {Array<Article>}
+     * @param {IDD.Document} doc
+     * @param {IDD.PageItem} frame Valid text/graphic frame.
+     * @returns {IDD.Article[]}
      */
     getInDesignArticles (doc, frame) {
         const docArticles = doc.articles;
@@ -97,8 +98,8 @@ class InDesignArticleService {
 
     /**
      * Tell whether a given page item is member of a the given InDesign Article.
-     * @param {Article} article - The InDesign article to check.
-     * @param {PageItem} frame - The frame to check for membership.
+     * @param {IDD.Article} article - The InDesign article to check.
+     * @param {IDD.PageItem} frame - The frame to check for membership.
      * @returns {boolean} - True if the frame is already a member of the article, false otherwise.
      */
     #isFrameMemberOfInDesignArticle (article, frame) {
@@ -113,6 +114,7 @@ class InDesignArticleService {
 
     /**
      * Create a new InDesign Article with the given name. Add the selected frames to the article.
+     * @param {IDD.Document} doc
      * @param {string} articleName
      */
     #createNewInDesignArticleWithSelectedFrames (doc, articleName) {
@@ -158,8 +160,8 @@ class InDesignArticleService {
 
     /**
      * Tells whether the given page item is a valid frame and has any of the provided frame types.
-     * @param {Object|null} pageItem
-     * @param {Array<string>} frameTypes
+     * @param {IDD.PageItem|null} pageItem
+     * @param {string[]} frameTypes
      * @returns {boolean}
      */
     #isValidFrameOfType (pageItem, frameTypes) {
@@ -170,7 +172,7 @@ class InDesignArticleService {
 
     /**
      * Tells whether the given page item is a valid text frame (to be part of an article).
-     * @param {Object|null} pageItem
+     * @param {IDD.PageItem|null} pageItem
      * @returns {boolean}
      */
     isValidTextFrame (pageItem) {
@@ -180,7 +182,7 @@ class InDesignArticleService {
 
     /**
      * Tells whether the given page item is a valid graphic frame (to be part of an article).
-     * @param {Object|null} pageItem
+     * @param {IDD.PageItem|null} pageItem
      * @returns {boolean}
      */
     isValidGraphicFrame (pageItem) {
@@ -192,7 +194,7 @@ class InDesignArticleService {
     /**
      * Tells whether the given page item is a Rectangle graphic frame, but very slim, hence
      * should be interpreted as a work-around of the layouter to compose a line (GraphicLine).
-     * @param {Object|null} pageItem
+     * @param {IDD.PageItem|null} pageItem
      * @returns {boolean}
      */
     #isValid1DRectangleFrame (pageItem) {
@@ -212,7 +214,7 @@ class InDesignArticleService {
      * This is either a frame of type GraphicLine or a very slim Rectangle.
      * These frames are included in "article definition" files (IDMS) but they
      * are excluded from "article composition" (JSON) files.
-     * @param {Object|null} pageItem
+     * @param {IDD.PageItem|null} pageItem
      * @returns {boolean}
      */
     isValid1DGraphicFrame (pageItem) {
@@ -226,7 +228,7 @@ class InDesignArticleService {
      * Tells whether the given page item is a valid 2 dimensional graphic frame.
      * This includes Oval and Polygon frames, and Rectangle frames when not too slim.
      * This excludes TextFrame, GraphicLine and very slim Rectangle frames.
-     * @param {Object|null} pageItem
+     * @param {IDD.PageItem|null} pageItem
      * @returns {boolean}
      */
     isValid2DGraphicFrame (pageItem) {
@@ -241,7 +243,7 @@ class InDesignArticleService {
 
     /**
      * Tells whether the given page item is an unassigned frame (InDesign->Object->Content)
-     * @param {Object|null} pageItem
+     * @param {IDD.PageItem|null} pageItem
      * @returns {boolean}
      */
     isUnassignedFrame (pageItem) {
@@ -253,7 +255,7 @@ class InDesignArticleService {
     /**
      * Tells whether the given page item is a valid text- or graphic frame to be part
      * of an "article definition" file (IDMS), also called InDesign Snippet.
-     * @param {Object|null} pageItem
+     * @param {IDD.PageItem|null} pageItem
      * @returns {boolean}
      */
     isValidArticleComponentFrame (pageItem) {

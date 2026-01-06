@@ -75,7 +75,7 @@ class Settings {
     }
 
     /**
-     * @return {Array<string>}
+     * @return {string[]}
      */
     getGenres () {
         return this.#configData.genres;

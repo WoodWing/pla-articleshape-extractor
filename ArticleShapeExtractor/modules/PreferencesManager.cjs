@@ -1,18 +1,18 @@
 class PreferencesManager {
 
-    /** @type {Object} */
+    /** @type {IDD.Preference} */
     #appPreferences;
 
     /**
-     * @param {Object} appPreferences
+     * @param {IDD.Preference} appPreferences
      */
     constructor (appPreferences) {
         this.#appPreferences = appPreferences;
     }
 
     /**
-     * @param {Object} updates Preferences to adjust.
-     * @returns {Object} Original preferences.
+     * @param {IDD.Preference} updates Preferences to adjust.
+     * @returns {IDD.Preference} Original preferences.
      */
     overridePreferences (updates) {
         const originalPreferences = {};
@@ -24,7 +24,7 @@ class PreferencesManager {
     };
 
     /**
-     * @param {Object} originalPreferences
+     * @param {IDD.Preference} originalPreferences
      */
     restoreOriginalPreferences (originalPreferences) {
         for (const key in originalPreferences) {

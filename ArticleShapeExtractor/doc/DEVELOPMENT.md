@@ -39,7 +39,7 @@ The types are included via `jsconfig.json`:
 ```json
 {
   "compilerOptions": {
-    "noLib": true
+    "lib": ["es2018"]
   },
   "include": [
     "types/adobe/InDesign/2023/*.d.ts",
