@@ -12,6 +12,7 @@
   },
   "license": "Copyright 2000-2025 (c) - WoodWing Software",
   "devDependencies": {
+    "@adobe/cc-ext-uxp-types": "^7.3.1",
     "@eslint/js": "^9.39.2",
     "@stylistic/eslint-plugin": "^5.6.1",
     "eslint": "^9.39.2",

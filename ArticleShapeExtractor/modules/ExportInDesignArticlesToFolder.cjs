@@ -1,4 +1,3 @@
-const { app } = require("indesign");
 const idd = require("indesign");
 
 /**
@@ -43,8 +42,8 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * @param {Document} doc
-     * @param {Folder} folder
+     * @param {IDD.Document} doc
+     * @param {UXP.Folder} folder
      * @returns {number} Count of exported article shapes.
      */
     async run (doc, folder) {
@@ -56,7 +55,7 @@ class ExportInDesignArticlesToFolder {
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this.#logger.info("Extracting InDesign Articles for layout document '{}'.", docName);
 
-        app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
+        idd.app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
         let exportCounter = 0;
         for (let articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
             const article = doc.articles.item(articleIndex);
@@ -64,18 +63,19 @@ class ExportInDesignArticlesToFolder {
                 exportCounter++;
             }
         }
-        app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
+        idd.app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
         return exportCounter;
     }
 
     /**
-     * @param {Document} doc
-     * @param {Folder} folder
-     * @param {Object} article
+     * @param {IDD.Document} doc
+     * @param {UXP.Folder} folder
+     * @param {IDD.Article} article
      * @param {number} articleIndex
      * @returns {boolean} Whether or not successful.
      */
     async #exportArticle (doc, folder, article, articleIndex) {
+        /** @type {IDD.ArticleMember[]} */
         const elements = article.articleMembers.everyItem().getElements();
         const outerBounds = this.#getOuterboundOfArticleShape(elements);
         let articleShapeJson = this.#composeArticleShapeJson(doc, article.name, outerBounds);
@@ -119,13 +119,14 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * @param {Object} article
-     * @param {Array<Object>} elements
-     * @param {Object} outerBounds
-     * @param {Object} articleShapeJson
-     * @returns {Array<Object>} Page items.
+     * @param {IDD.Article} article
+     * @param {IDD.Element[]} elements
+     * @param {GeoBounds} outerBounds
+     * @param {ArticleShapeJson} articleShapeJson
+     * @returns {IDD.PageItem[]}
      */
     #collectArticlePageItems (article, elements, outerBounds, articleShapeJson) {
+        /** @type {IDD.PageItem[]} */
         let pageItems = []; // Collect all associated page items for the article.
         for (let elementIndex = 0; elementIndex < elements.length; elementIndex++) {
             const element = elements[elementIndex];
@@ -201,7 +202,7 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * @param {string} articleName
-     * @returns {Object|null}
+     * @returns {ArticleShapeTypeInfo|null}
      */
     #resolveShapeTypeFromArticleName (articleName) {
         let shapeType = { id: null, name: null };
@@ -231,8 +232,8 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Compose a unique name that can be used as a base to compose export filenames.
-     * @param {Document} doc
-     * @param {Folder} folder
+     * @param {IDD.Document} doc
+     * @param {UXP.Folder} folder
      * @param {string} shapeTypeName
      * @param {number} articleIndex
      * @returns {string}
@@ -260,8 +261,8 @@ class ExportInDesignArticlesToFolder {
      * Create a data object that describes the geometrical boundaries of a given page item.
      * @param {number} topLeftX - Make it relative to this X position.
      * @param {number} topLeftY - Make it relative to this Y position.
-     * @param {PageItem} pageItem - TextFrame, Rectangle, etc
-     * @returns {Object}
+     * @param {IDD.PageItem} pageItem - TextFrame, Rectangle, etc
+     * @returns {ArticleShapeGeoBounds}
      */
     #composeGeometricBounds (topLeftX, topLeftY, pageItem) {
         return {
@@ -283,10 +284,10 @@ class ExportInDesignArticlesToFolder {
 
     /**
      *
-     * @param {Document} doc
+     * @param {IDD.Document} doc
      * @param {string} articleName
-     * @param {Object} outerBounds
-     * @returns {Object|null}
+     * @param {GeoBounds} outerBounds
+     * @returns {ArticleShapeJson|null}
      */
     #composeArticleShapeJson (doc, articleName, outerBounds) {
 
@@ -332,7 +333,7 @@ class ExportInDesignArticlesToFolder {
     /**
      * Tells whether all given page items are placed on the same spread. If this is not the case,
      * the items can not be selected nor grouped which is required by _exportArticlePageItems().
-     * @param {Array} pageItems
+     * @param {IDD.PageItem[]} pageItems
      * @returns
      */
     #arePageItemsOnSameSpread (pageItems) {
@@ -349,12 +350,12 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * @param {Document} doc
-     * @param {Folder} folder
+     * @param {IDD.Document} doc
+     * @param {UXP.Folder} folder
      * @param {string} shapeTypeName
      * @param {number} articleIndex
-     * @param {Array} pageItems
-     * @param {Object} articleShapeJson
+     * @param {IDD.PageItem[]} pageItems
+     * @param {ArticleShapeJson} articleShapeJson
      * @returns {boolean} Whether or not successful.
      */
     async #exportArticlePageItems (doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
@@ -376,7 +377,7 @@ class ExportInDesignArticlesToFolder {
 
         // Export JPEG image.
         const PreferencesManager = require("./PreferencesManager.cjs");
-        const preferencesManager = new PreferencesManager(app.jpegExportPreferences);
+        const preferencesManager = new PreferencesManager(idd.app.jpegExportPreferences);
         let originalPreferences = null;
         let group = null;
         let isExported = false;
@@ -422,8 +423,8 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Save JSON data to a file on disk.
-     * @param {Object} jsonData - The JSON object to save.
-     * @param {File} file
+     * @param {ArticleShapeJson} jsonData - The JSON object to save.
+     * @param {UXP.File} file
      * @returns {boolean} Whether or not successful.
      */
     async #saveJsonToDisk (jsonData, file) {
@@ -446,8 +447,8 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Get the word count and character count of a text frame, excluding overset text.
-     * @param {TextFrame} textFrame - The text frame to analyze.
-     * @returns {Object} - An object containing word count, character count and text without overset.
+     * @param {IDD.TextFrame} textFrame - The text frame to analyze.
+     * @returns {{wordCount: number, charCount: number, text: string, totalLineHeight: number}} - An object containing word count, character count and text without overset.
      */
     #getTextStatisticsWithoutOverset (textFrame) {
 
@@ -479,15 +480,10 @@ class ExportInDesignArticlesToFolder {
     /**
      * Calculates the outermost bounding box of a collection of article elements, considering threaded frames if applicable.
      *
-     * @param {Array} elements - An array of article elements. Each element should have an `itemRef` property that represents the InDesign object.
-     *                           The `itemRef` can be a text frame, graphic, or other page item.
-     * @returns {Object} - An object representing the outer bounds of the combined elements and their threaded frames:
-     *                     {
-     *                         topLeftX: {number} - The smallest X coordinate of the bounding box's top-left corner.
-     *                         topLeftY: {number} - The smallest Y coordinate of the bounding box's top-left corner.
-     *                         bottomRightX: {number} - The largest X coordinate of the bounding box's bottom-right corner.
-     *                         bottomRightY: {number} - The largest Y coordinate of the bounding box's bottom-right corner.
-     *                     }
+     * @param {IDD.ArticleMember[]} elements
+     *    An array of article elements. Each element should have an `itemRef` property that represents the InDesign object.
+     *    The `itemRef` can be a text frame, graphic, or other page item.
+     * @returns {GeoBounds} Outer bounds of the combined elements and their threaded frames.
      */
     #getOuterboundOfArticleShape (elements) {
         let topLeftX = 0;
@@ -538,8 +534,8 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Get all threaded text frames for a given text frame.
-     * @param {TextFrame} textFrame - The starting text frame.
-     * @returns {Array} - An array of all threaded text frames, including the starting frame.
+     * @param {IDD.TextFrame} textFrame The starting text frame.
+     * @returns {IDD.TextFrame[]} All threaded text frames, including the starting frame.
      */
     #getThreadedFrames (textFrame) {
         let threadedFrames = [];
@@ -563,8 +559,8 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Get the text wrap settings of a selected frame, including the text wrap mode as a string.
-     * @param {PageItem|null} frame - The InDesign frame object (e.g., TextFrame, GraphicFrame).
-     * @returns {string} - Name of the text wrap mode
+     * @param {IDD.PageItem|null} frame TextFrame, GraphicFrame, etc
+     * @returns {string} Name of the text wrap mode
      */
     #getTextWrapMode (frame) {
         if (!this.#inDesignArticleService.isValidArticleComponentFrame(frame)) {
@@ -596,7 +592,7 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Calculate the line height in points.
-     * @param {Line} line
+     * @param {IDD.Line} line
      * @returns {number}
      */
     #getLineHeight (line) {

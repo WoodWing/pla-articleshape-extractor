@@ -1,4 +1,3 @@
-const { app } = require("indesign");
 const idd = require("indesign");
 const lfs = require("uxp").storage.localFileSystem;
 const formats = require("uxp").storage.formats;
@@ -28,15 +27,15 @@ class PageLayoutSettings {
      * Exports the layout settings of the given layout document to a file named
      * "_manifest/page-layout-settings.json" in the given folder. When this file
      * already exists, the settings are compared instead.
-     * @param {Document} doc
-     * @param {Folder} folder
+     * @param {IDD.Document} doc
+     * @param {UXP.Folder} folder
      * @returns {boolean} True when the settings are matching (or new), false otherwise.
      */
     async exportSettings (doc, folder) {
         let exportedSuccessfully = false;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this.#logger.info("Exporting Document Settings for layout '{}'.", docName);
-        app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
+        idd.app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
         try {
             if (doc.pages.length === 0) {
                 throw new Errors.NoDocumentPagesError();
@@ -62,16 +61,16 @@ class PageLayoutSettings {
             alert("An error occurred: " + error.message);
         }
         finally {
-            app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
+            idd.app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
         }
         return exportedSuccessfully;
     }
 
     /**
-     * @param {Document} doc
+     * @param {IDD.Document} doc
      * @param {Page} page
      * @param {number} baselineStart
-     * @returns {dimensions: {width: number, height: number}, margins: {top: number, bottom: number, inside: number, outside: number}, columns: {gutter: number}
+     * @returns {{dimensions: {width: number, height: number}, margins: {top: number, bottom: number, inside: number, outside: number}, columns: {gutter: number}}
      */
     #composeSettings (doc, page, baselineStart) {
         return {
@@ -107,8 +106,8 @@ class PageLayoutSettings {
     /**
      * Retrieve the baseline start field when set relative to top of page.
      * When set relative to top of margin, the returned value is normalized to top of page.
-     * @param {Document} doc
-     * @param {Page} page
+     * @param {IDD.Document} doc
+     * @param {IDD.Page} page
      * @returns number Baseline start (always relative to top of page).
      */
     #getBaselineStart (doc, page) {
@@ -140,8 +139,8 @@ class PageLayoutSettings {
      * rather unimportant to be the same across all layouts of the section. Reason is that an article taken from source
      * layout A will perfectly be placed on target layout B while their margins/dimensions are not exactly matching.
      *
-     * @param {Object} settings
-     * @param {Folder} exportFolder
+     * @param {{dimensions: {width: number, height: number}, margins: {top: number, bottom: number, inside: number, outside: number}, columns: {gutter: number}} settings
+     * @param {UXP.Folder} exportFolder
      */
     async #saveOrComparePageLayoutSettings (settings, exportFolder) {
         const manifestFoldername = "_manifest";
@@ -195,7 +194,7 @@ class PageLayoutSettings {
 
     /**
      * Resolves the value of a property (path) in a deeply nested DTO (obj).
-     * @param {Object} obj
+     * @param {PageLayoutSettings} obj
      * @param {string} path
      * @returns {Any}
      */

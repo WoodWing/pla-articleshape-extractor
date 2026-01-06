@@ -1,0 +1,3 @@
+[submodule "ArticleShapeExtractor/types/adobe"]
+	path = ArticleShapeExtractor/types/adobe
+	url = https://github.com/docsforadobe/Types-for-Adobe

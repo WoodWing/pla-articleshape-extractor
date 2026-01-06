@@ -13,13 +13,13 @@ class GenreResolver {
     /** @type {FileUtils} */
     #fileUtils;
 
-    /** @type {Array<string>} */
+    /** @type {string[]} */
     #genres;
 
     /**
      * @param {Logger} logger
      * @param {FileUtils} fileUtils
-     * @param {Array<string>} genres
+     * @param {string[]} genres
      */
     constructor (logger, fileUtils, genres) {
         this.#logger = logger;
@@ -34,7 +34,7 @@ class GenreResolver {
      * - trimmed, lower-cased and sorted
      * - empty and duplicate genres are removed
      *
-     * @param {Array<string>} genres
+     * @param {string[]} genres
      */
     #normalizeGenres (genres) {
         let normalized = genres
@@ -49,7 +49,7 @@ class GenreResolver {
      * When multiple matches found, they are all returned.
      *
      * @param {string} articleName
-     * @returns {Array<string>}
+     * @returns {string[]}
      */
     resolveGenreIds (articleName) {
         let genreIds = [];
@@ -77,7 +77,7 @@ class GenreResolver {
      * If the file already exists, it validates whether the genres to save are the same
      * as the genres in the file, which is expected.
      *
-     * @param {Folder} exportFolder
+     * @param {UXP.Folder} exportFolder
      */
     async saveGenesToManifest (exportFolder) {
         const manifestFoldername = "_manifest";
@@ -118,8 +118,8 @@ class GenreResolver {
     /**
      * Check whether two sorted arrays of strings are identical.
      *
-     * @param {Array<string>} lhs
-     * @param {Array<string>} rhs
+     * @param {string[]} lhs
+     * @param {string[]} rhs
      * @returns {boolean}
      */
     #compareArraysOfStrings (lhs, rhs) {

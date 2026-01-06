@@ -2,9 +2,9 @@ class FileUtils {
 
     /**
      * Creates a subfolder under a given parent folder. Returns the subfolder if already exists.
-     * @param {Folder} parentFolder
+     * @param {UXP.Folder} parentFolder
      * @param {string} subfolderName
-     * @returns {{entry: Folder, created: boolean}}
+     * @returns {{entry: UXP.Folder, created: boolean}}
      */
     async getOrCreateSubFolder (parentFolder, subfolderName) {
         try {
@@ -17,9 +17,9 @@ class FileUtils {
 
     /**
      * Creates a file in a given folder. Returns the file if already exists.
-     * @param {Folder} folder
+     * @param {UXP.Folder} folder
      * @param {string} filename
-     * @returns {{entry: File, created: boolean}}
+     * @returns {{entry: UXP.File, created: boolean}}
      */
     async getOrCreateFile (folder, filename) {
         try {

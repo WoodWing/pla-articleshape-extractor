@@ -20,7 +20,7 @@ class HttpLogger {
 
     /**
      * Log the HTTP URL, request headers and JSON body.
-     * @param {Request} httpRequest
+     * @param {UXP.Request} httpRequest
      * @param {Object|null} jsonRequestBody
      */
     debugLogHttpRequest (httpRequest, jsonRequestBody) {
@@ -41,7 +41,7 @@ class HttpLogger {
 
     /**
      * Log the HTTP status, response headers and JSON body.
-     * @param {Response|null} httpResponse
+     * @param {UXP.Response|null} httpResponse
      * @param {Object|null} jsonResponseBody
      */
     debugLogHttpResponse (httpResponse, jsonResponseBody) {
@@ -60,7 +60,7 @@ class HttpLogger {
     }
 
     /**
-     * @param {Headers} headers
+     * @param {UXP.Headers} headers
      * @returns {string}
      */
     #composeHttpHeaders (headers) {

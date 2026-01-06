@@ -40,7 +40,7 @@ class FitArticleWithAIService {
      * - Retrieve fitted shape from AI fitting service.
      * - Update the unfitted article with fitted shape (on the layout).
      *
-     * @param {Document} doc
+     * @param {IDD.Document} doc
      */
     async run (doc) {
 
@@ -66,9 +66,9 @@ class FitArticleWithAIService {
     /**
      * Request for shape suggestions and retrieve the article JSON files into temp folder.
      * @param {string} accessToken
-     * @param {{id: string, name: string}} brand
-     * @param {{id: string, name: string}} section
-     * @returns {Array<File>}
+     * @param {BrandInfo} brand
+     * @param {SectionInfo} section
+     * @returns {UXP.File[]}
      */
     async #retrieveArticleShapeSuggestions (accessToken, brand, section) {
         // TODO: Take values from extracted shape instead (to compose the request body).
@@ -102,8 +102,8 @@ class FitArticleWithAIService {
 
     /**
      * Create a new file in the temp folder and write the provided JSON data into it.
-     * @param {Object} articleJson
-     * @returns {File}
+     * @param {ArticleShapeJson} articleJson
+     * @returns {UXP.File}
      */
     async #writeArticleJsonToTemp (articleJson) {
         const lfs = require("uxp").storage.localFileSystem;

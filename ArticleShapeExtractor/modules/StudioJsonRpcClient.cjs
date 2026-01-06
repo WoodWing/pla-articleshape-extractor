@@ -44,9 +44,9 @@ class StudioJsonRpcClient {
 
     /**
      * Call the GetPublications workflow service provided by Studio Server.
-     * @param {Array<string>|null} brandIds List of ids, or null for all brands.
-     * @param {Array<string>|null} requestInfo Brand setup info to resolve: "FeatureAccessList", "ObjectTypeProperties", "ActionProperties", "States", "CurrentIssue", "PubChannels", "Categories"
-     * @returns {Array<Object>} List of PublicationInfo data objects.
+     * @param {string[]|null} brandIds List of ids, or null for all brands.
+     * @param {string[]|null} requestInfo Brand setup info to resolve: "FeatureAccessList", "ObjectTypeProperties", "ActionProperties", "States", "CurrentIssue", "PubChannels", "Categories"
+     * @returns {Object[]} List of PublicationInfo data objects.
      */
     async getPublicationInfos (brandIds, requestInfo) {
         const url = this.#getStudioServerUrl();
@@ -150,8 +150,8 @@ class StudioJsonRpcClient {
 
     /**
      * Calls the QueryObjects service in paged manner until all objects are retrieved.
-     * @param {Array<Object>} searchParams List of QueryParam objects.
-     * @param {Array<string>} resolveProperties List of workflow object property names to resolve.
+     * @param {Object[]} searchParams List of QueryParam objects.
+     * @param {string[]} resolveProperties List of workflow object property names to resolve.
      * @param {CallableFunction} callbackObjectsResolved This function is called for each page of retrieved objects.
      */
     async queryObjects (searchParams, resolveProperties, callbackObjectsResolved) {
@@ -179,8 +179,8 @@ class StudioJsonRpcClient {
 
     /**
      * Calls the QueryObjects service.
-     * @param {Array<Object>} searchParams List of QueryParam objects.
-     * @param {Array<string>} resolveProperties List of workflow object property names to resolve.
+     * @param {Object[]} searchParams List of QueryParam objects.
+     * @param {string[]} resolveProperties List of workflow object property names to resolve.
      * @param {number} firstEntry Object index to start reading from (in paged results).
      * @returns {Object} QueryObjectsResponse
      */
@@ -205,8 +205,8 @@ class StudioJsonRpcClient {
     /**
      * Build a list of workflow objects from the Columns and Rows of a given QueryObjectsResponse.
      * @param {Object} response
-     * @param {Array<string>} resolveProperties Names of workflow object properties to expect.
-     * @returns {Array<Object>} List of resolved objects, each having the properties assigned.
+     * @param {string[]} resolveProperties Names of workflow object properties to expect.
+     * @returns {Object[]} List of resolved objects, each having the properties assigned.
      */
     #getObjectsFromQueryObjectsResponse (response, resolveProperties) {
         const wflObjects = [];
@@ -229,7 +229,7 @@ class StudioJsonRpcClient {
 
     /**
      * Call the MultiSetObjectProperties service to move objects to another status.
-     * @param {Array<string>} objectIds
+     * @param {string[]} objectIds
      * @param {string} statusId
      */
     async sendObjectsToStatus (objectIds, statusId) {

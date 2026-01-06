@@ -1,4 +1,3 @@
-const { app } = require("indesign");
 const idd = require("indesign");
 const Errors = require("./Errors.cjs");
 
@@ -13,7 +12,7 @@ class RegenerateArticleShapesService {
     /** @type {VersionUtils} */
     #versionUtils;
 
-    /** @type {{{brand: <string>, issue: <string>, category: <string>, status: <string>}, layoutStatusOnSuccess: <string>, layoutStatusOnError: <string>}} */
+    /** @type {{{brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}} */
     #settings;
 
     /** @type {ExportInDesignArticlesToFolder} */
@@ -31,7 +30,7 @@ class RegenerateArticleShapesService {
     /**
      * @param {Logger} logger
      * @param {VersionUtils} versionUtils
-     * @param {{{brand: <string>, issue: <string>, category: <string>, status: <string>}, layoutStatusOnSuccess: <string>, layoutStatusOnError: <string>}} settings
+     * @param {{{brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}} settings
      * @param {ExportInDesignArticlesToFolder} exportInDesignArticlesToFolder
      * @param {StudioJsonRpcClient} studioJsonRpcClient
      */
@@ -50,7 +49,7 @@ class RegenerateArticleShapesService {
      * opened (and closed) one-by-one and the placed article shape files are extracted to the given folder.
      * When a shape files already exist for a certain layout id and version, that layout is skipped for performance
      * optimization. All processed layouts (regardless whether skipped) are sent to their next status in the workflow.
-     * @param {Folder} folder
+     * @param {UXP.Folder} folder
      */
     async run (folder) {
 
@@ -76,9 +75,9 @@ class RegenerateArticleShapesService {
 
     /**
      * Process queried layout objects, compare against disk state, export if needed.
-     * @param {Array<Object>} wflObjects Workflow layout objects.
-     * @param {Map<string,{layoutVersion:string,shapeFiles:Array<File>}>} fileMap Indexed by layout ids.
-     * @param {Folder} folder Target folder for exporting.
+     * @param {Object[]} wflObjects Workflow layout objects.
+     * @param {Map<string,{layoutVersion:string,shapeFiles:File[]}>} fileMap Indexed by layout ids.
+     * @param {UXP.Folder} folder Target folder for exporting.
      * @param {{extracted: number, skipped: number, failed: number}} report
      */
     async #processQueriedLayouts (wflObjects, fileMap, folder, report) {
@@ -100,7 +99,7 @@ class RegenerateArticleShapesService {
                 if (mapItem) for (const oldFile of mapItem.shapeFiles) {
                     await this.#deleteFile(oldFile);
                 }
-                const theOpenDoc = app.openObject(wflObject.ID, false); // false: no checkout
+                const theOpenDoc = idd.app.openObject(wflObject.ID, false); // false: no checkout
                 const shapeCount = await this.#exportInDesignArticlesToFolder.run(theOpenDoc, folder);
                 theOpenDoc.close(idd.SaveOptions.no);
                 if (shapeCount > 0) {
@@ -167,8 +166,8 @@ class RegenerateArticleShapesService {
     /**
      * Collect article shape files from a given folder and build a structure map.
      * Those files assumed to have a postfix "(<layout_id>.v<major>.<minor>).".
-     * @param {Folder} folder
-     * @returns {Promise<Map<string,{layoutVersion:<string>,shapeFiles:Array<File>}>>} Structured map, indexed by layout id.
+     * @param {UXP.Folder} folder
+     * @returns {Promise<Map<string,{layoutVersion:string,shapeFiles:UXP.File[]}>>} Structured map, indexed by layout id.
      */
     async #buildMapOfLayoutIdsVersionsAndFiles (folder) {
         const shapeFiles = await this.#filterArticleShapeFiles(folder);
@@ -204,8 +203,8 @@ class RegenerateArticleShapesService {
 
     /**
      * Return a list of article shape files (from the given folder) having postfix "(<layout_id>.v<major>.<minor>).".
-     * @param {Folder} folder
-     * @returns {Promise<Array<{shapeFile: File, layoutId: string, layoutVersion: string}>>}
+     * @param {UXP.Folder} folder
+     * @returns {Promise<{shapeFile: UXP.File, layoutId: string, layoutVersion: string}[]>}
      */
     async #filterArticleShapeFiles (folder) {
         const entriesInFolder = await folder.getEntries();
@@ -240,7 +239,7 @@ class RegenerateArticleShapesService {
 
     /**
      * Remove a file from disk. Log warning on failure.
-     * @param {File} file
+     * @param {UXP.File} file
      */
     async #deleteFile (file) {
         this.#logger.debug(`Deleting file: ${file.name}`);
@@ -254,7 +253,7 @@ class RegenerateArticleShapesService {
 
     /**
      * Use the local filter settings to compose search params (applicable to the QueryObjects workflow service).
-     * @returns {Array<{Property: string, Operation: string, Value: string, __classname__: string}>} List of QueryParam objects.
+     * @returns {{Property: string, Operation: string, Value: string, __classname__: string}[]} List of QueryParam objects.
      */
     #composeQueryParams () {
         // Map the local filter settings onto the workflow object property names.
