@@ -47,6 +47,5 @@ jobs:
       - name: Validate code and formatting
         run: npm run lint
 
-      # TODO: After solving problems, enable this step.
-      #- name: Type checking for JS code.
-      #  run: npm run typecheck
+      - name: Type checking for JS code.
+        run: npm run typecheck
