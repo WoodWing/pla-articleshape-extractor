@@ -28,7 +28,7 @@ class PageLayoutSettings {
      * Exports the layout settings of the given layout document to a file named
      * "_manifest/page-layout-settings.json" in the given folder. When this file
      * already exists, the settings are compared instead.
-     * @param {IDD.Document} doc
+     * @param {IND.Document} doc
      * @param {UXP.storage.Folder} folder
      * @returns {Promise<boolean>} True when the settings are matching (or new), false otherwise.
      */
@@ -68,7 +68,7 @@ class PageLayoutSettings {
     }
 
     /**
-     * @param {IDD.Document} doc
+     * @param {IND.Document} doc
      * @param {Page} page
      * @param {number} baselineStart
      * @returns {PageLayoutSettingsDto}
@@ -107,8 +107,8 @@ class PageLayoutSettings {
     /**
      * Retrieve the baseline start field when set relative to top of page.
      * When set relative to top of margin, the returned value is normalized to top of page.
-     * @param {IDD.Document} doc
-     * @param {IDD.Page} page
+     * @param {IND.Document} doc
+     * @param {IND.Page} page
      * @returns number Baseline start (always relative to top of page).
      */
     #getBaselineStart (doc, page) {

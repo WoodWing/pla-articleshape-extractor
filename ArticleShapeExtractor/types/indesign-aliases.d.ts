@@ -3,7 +3,7 @@
 export {};
 
 declare global {
-  declare namespace IDD { 
+  declare namespace IND { 
     type Application = globalThis.Application;
     type Article = globalThis.Article;
     type ArticleMember = globalThis.ArticleMember;

@@ -31,7 +31,7 @@ class BrandSectionResolver {
     /**
      * When there is a valid session and the layout is stored in Studio, take the brand and section from
      * the layout, otherwise take the brand- and section fallback settings from the config files.
-     * @param {IDD.Document} doc
+     * @param {IND.Document} doc
      * @returns {{brand: BrandInfo, section: SectionInfo}}
      */
     resolve (doc) {
