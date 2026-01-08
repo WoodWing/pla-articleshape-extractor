@@ -1,3 +1,5 @@
+const idd = require("indesign");
+
 /**
  * Understands how to obtain the id/name info for all brands and their categories
  * and how to provides that information in the _manifest subfolder of the export folder.
@@ -27,7 +29,7 @@ class BrandSectionMapResolver {
     /**
      * Resolves all brand ids/names and their section ids/names from Studio Server.
      * Writes this info into a file named "brand-section-map.json" in the provided folder.
-     * @param {UXP.Folder} exportFolder
+     * @param {UXP.storage.Folder} exportFolder
      */
     async run (exportFolder) {
         if (!this.#studioJsonRpcClient.hasSession()) {
@@ -59,11 +61,12 @@ class BrandSectionMapResolver {
 
     /**
      * @param {Object} brandSectionMap
-     * @param {UXP.Folder} exportFolder
+     * @param {UXP.storage.Folder} exportFolder
      */
     async #saveBrandSectionMapToDisk (brandSectionMap, exportFolder) {
         const filepath = window.path.join(exportFolder, "_manifest", "brand-section-map.json");
         await this.#fileUtils.getOrCreateSubFolder(exportFolder, "_manifest");
+        /** @type {UXP.storage.FileSystemProvider} */
         const lfs = require("uxp").storage.localFileSystem;
         const formats = require("uxp").storage.formats;
         const jsonFile = await lfs.createEntryWithUrl(filepath, { overwrite: true });

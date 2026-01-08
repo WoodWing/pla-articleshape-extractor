@@ -25,41 +25,6 @@ Now your modifications to the scripts are directly reflected to both GitHub and 
 5. IDJS scripts in the `Startup Scripts` folder are not recognized/executed by InDesign.
 6. Bullets 3, 4 and 5 make it impossible to add a menu item or shortcut key for a UXP/IDJS script.
 
-## How are the InDesign script types linked?
-
-> There is ***no*** need for action; This chapter just explains how it was setup for you already.
-
-The `docsforadobe` repo is linked to our repo:
-```bash
-cd ArticleShapeExtractor
-git submodule add https://github.com/docsforadobe/Types-for-Adobe types/adobe
-```
-
-The types are included via `jsconfig.json`:
-```json
-{
-  "compilerOptions": {
-    "lib": ["es2018"]
-  },
-  "include": [
-    "types/adobe/InDesign/2023/*.d.ts",
-    "types/adobe/shared/*.d.ts"
-  ]
-}
-```
-
-> Note that InDesign 2023 types are included while 2024 is supported. Reason is that, at the time writing, types for 2024 were not available.
-
-## How to update the InDesign types?
-
-Adobe may update the DOM or improve the repo. This is how you can reflect their changes into our repo:
-```bash
-cd ArticleShapeExtractor
-git submodule update --remote
-```
-
-VS Code will pick up the new types automatically.
-
 ## Code checker and formatter
 
 ### Installation

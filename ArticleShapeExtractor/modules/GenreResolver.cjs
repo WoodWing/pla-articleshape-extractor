@@ -77,7 +77,7 @@ class GenreResolver {
      * If the file already exists, it validates whether the genres to save are the same
      * as the genres in the file, which is expected.
      *
-     * @param {UXP.Folder} exportFolder
+     * @param {UXP.storage.Folder} exportFolder
      */
     async saveGenesToManifest (exportFolder) {
         const manifestFoldername = "_manifest";

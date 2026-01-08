@@ -18,7 +18,8 @@ class InDesignArticleService {
             throw new Errors.NoDocumentOpenedError();
         }
 
-        if (idd.app.selection.length === 0) {
+        const selection = /** @type {object[]} */(idd.app.selection);
+        if (selection.length === 0) {
             throw new Errors.NoFramesSelectedError();
         }
 
@@ -102,9 +103,11 @@ class InDesignArticleService {
      * @returns {boolean} - True if the frame is already a member of the article, false otherwise.
      */
     #isFrameMemberOfInDesignArticle (article, frame) {
-        const articleMembers = article.articleMembers.everyItem().getElements(); // Get all members as an array
-        for (let i = 0; i < articleMembers.length; i++) {
-            if (articleMembers[i].itemRef.equals(frame)) {
+        const articleMembers = /** @type {IDD.ArticleMember} */
+            (/** @type {unknown} */(article.articleMembers.everyItem()));
+        const elements = articleMembers.getElements();
+        for (let i = 0; i < elements.length; i++) {
+            if (elements[i].itemRef.equals(frame)) {
                 return true; // The frame is already a member of the article
             }
         }
@@ -123,8 +126,9 @@ class InDesignArticleService {
         article.name = articleName;
 
         // Add selected frames to the new article.
-        for (let i = 0; i < idd.app.selection.length; i++) {
-            const frame = idd.app.selection[i];
+        const selection = /** @type {object[]} */(idd.app.selection);
+        for (let i = 0; i < selection.length; i++) {
+            const frame = selection[i];
             if (this.isValidArticleComponentFrame(frame)) {
                 try {
                     article.articleMembers.add(frame);
@@ -172,17 +176,20 @@ class InDesignArticleService {
     /**
      * Tells whether the given page item is a valid text frame (to be part of an article).
      * @param {IDD.PageItem|null} pageItem
-     * @returns {boolean}
+     * @returns {pageItem is IDD.TextFrame}
      */
     isValidTextFrame (pageItem) {
-        return this.#isValidFrameOfType(pageItem, ["TextFrame"])
-            && pageItem.contentType.toString() === idd.ContentType.TEXT_TYPE.toString();
+        if (!this.#isValidFrameOfType(pageItem, ["TextFrame"])) {
+            return false;
+        }
+        const textFrame = /** @type {IDD.TextFrame} */(pageItem);
+        return textFrame.contentType.toString() === idd.ContentType.TEXT_TYPE.toString();
     }
 
     /**
      * Tells whether the given page item is a valid graphic frame (to be part of an article).
      * @param {IDD.PageItem|null} pageItem
-     * @returns {boolean}
+     * @returns {pageItem is IDD.Oval | IDD.Polygon | IDD.Rectangle | IDD.GraphicLine}
      */
     isValidGraphicFrame (pageItem) {
         //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString()
@@ -194,7 +201,7 @@ class InDesignArticleService {
      * Tells whether the given page item is a Rectangle graphic frame, but very slim, hence
      * should be interpreted as a work-around of the layouter to compose a line (GraphicLine).
      * @param {IDD.PageItem|null} pageItem
-     * @returns {boolean}
+     * @returns {pageItem is IDD.Rectangle}
      */
     #isValid1DRectangleFrame (pageItem) {
         //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString()
@@ -202,8 +209,8 @@ class InDesignArticleService {
         if (!this.#isValidFrameOfType(pageItem, ["Rectangle"])) {
             return false;
         }
-        const width = pageItem.geometricBounds[3] - pageItem.geometricBounds[1];
-        const height = pageItem.geometricBounds[2] - pageItem.geometricBounds[0];
+        const width = Number(pageItem.geometricBounds[3]) - Number(pageItem.geometricBounds[1]);
+        const height = Number(pageItem.geometricBounds[2]) - Number(pageItem.geometricBounds[0]);
         const isVerySimilarToGraphicLine = height <= 10 || width <= 10;
         return isVerySimilarToGraphicLine;
     }
@@ -214,7 +221,7 @@ class InDesignArticleService {
      * These frames are included in "article definition" files (IDMS) but they
      * are excluded from "article composition" (JSON) files.
      * @param {IDD.PageItem|null} pageItem
-     * @returns {boolean}
+     * @returns {pageItem is IDD.GraphicLine}
      */
     isValid1DGraphicFrame (pageItem) {
         //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString()
@@ -228,7 +235,7 @@ class InDesignArticleService {
      * This includes Oval and Polygon frames, and Rectangle frames when not too slim.
      * This excludes TextFrame, GraphicLine and very slim Rectangle frames.
      * @param {IDD.PageItem|null} pageItem
-     * @returns {boolean}
+     * @returns {pageItem is IDD.Oval | IDD.Polygon}
      */
     isValid2DGraphicFrame (pageItem) {
         //Note: In the future we might want to extend with idd.ContentType.GRAPHIC_TYPE.toString()

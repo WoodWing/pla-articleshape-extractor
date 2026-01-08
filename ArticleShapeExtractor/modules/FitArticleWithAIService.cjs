@@ -52,7 +52,7 @@ class FitArticleWithAIService {
         // Resolve brand and section from layout doc (or use fallback settings).
         const { brand, section } = this.#brandSectionResolver.resolve(doc);
 
-        /*const pubInfos =*/ await this.#studioJsonRpcClient.getPublicationInfos([brand.id]);
+        /*const pubInfos =*/ await this.#studioJsonRpcClient.getPublicationInfos([brand.id], null);
         const accessToken = await this.#studioJsonRpcClient.getAccessToken(brand.id);
         /*const dimensions =*/ await this.#plaService.getSheetDimensions(accessToken, brand.id);
         // TODO: Error when layout does not occur in any of the dimensions.
@@ -68,7 +68,7 @@ class FitArticleWithAIService {
      * @param {string} accessToken
      * @param {BrandInfo} brand
      * @param {SectionInfo} section
-     * @returns {UXP.File[]}
+     * @returns {Promise<UXP.storage.File[]>}
      */
     async #retrieveArticleShapeSuggestions (accessToken, brand, section) {
         // TODO: Take values from extracted shape instead (to compose the request body).
@@ -92,7 +92,7 @@ class FitArticleWithAIService {
         const articleShapeFiles = [];
         for (const downloadUrl of downloadUrls) {
             const response = await fetch(downloadUrl);
-            const articleShapeJson = await response.json();
+            const articleShapeJson = /** @type {ArticleShapeJson} */(await response.json());
             const articleShapeFile = await this.#writeArticleJsonToTemp(articleShapeJson);
             this.#logger.debug(`Wrote article shape JSON into '${articleShapeFile.nativePath}'.`);
             articleShapeFiles.push(articleShapeFile);
@@ -103,9 +103,10 @@ class FitArticleWithAIService {
     /**
      * Create a new file in the temp folder and write the provided JSON data into it.
      * @param {ArticleShapeJson} articleJson
-     * @returns {UXP.File}
+     * @returns {Promise<UXP.storage.File>}
      */
     async #writeArticleJsonToTemp (articleJson) {
+        /** @type {UXP.storage.FileSystemProvider} */
         const lfs = require("uxp").storage.localFileSystem;
         const formats = require("uxp").storage.formats;
 

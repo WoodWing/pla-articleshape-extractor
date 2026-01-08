@@ -11,7 +11,7 @@ class Logger {
     /** @type {string} */
     #name;
 
-    /** @type {string} */
+    /** @type {number} */
     #level;
 
     /** @type {boolean} */
@@ -45,11 +45,10 @@ class Logger {
      * @param {string} message
      * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
      */
-    debug () {
+    debug (message, ...replacements) {
         if (!this.isDebug())
             return;
-        const args = Array.prototype.slice.call(arguments);
-        this.#log(5, args);
+        this.#log(5, [message, ...replacements]);
     };
 
     /**
@@ -64,11 +63,10 @@ class Logger {
      * @param {string} message
      * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
      */
-    info () {
+    info (message, ...replacements) {
         if (!this.isInfo())
             return;
-        const args = Array.prototype.slice.call(arguments);
-        this.#log(4, args);
+        this.#log(4, [message, ...replacements]);
     };
 
     /**
@@ -83,11 +81,10 @@ class Logger {
      * @param {string} message
      * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
      */
-    warning () {
+    warning (message, ...replacements) {
         if (!this.isWarning())
             return;
-        const args = Array.prototype.slice.call(arguments);
-        this.#log(3, args);
+        this.#log(3, [message, ...replacements]);
     };
 
     /**
@@ -102,11 +99,10 @@ class Logger {
      * @param {string} message
      * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
      */
-    error () {
+    error (message, ...replacements) {
         if (!this.isError())
             return;
-        const args = Array.prototype.slice.call(arguments);
-        this.#log(2, args);
+        this.#log(2, [message, ...replacements]);
     };
 
     /**
@@ -121,11 +117,10 @@ class Logger {
      * @param {string} message
      * @param {string|Object} [replacements] Can take any number of replacements, to be passed along to str.format()
      */
-    critical () {
+    critical (message, ...replacements) {
         if (!this.isCritical())
             return;
-        const args = Array.prototype.slice.call(arguments);
-        this.#log(1, args);
+        this.#log(1, [message, ...replacements]);
     };
 
     /**
@@ -136,8 +131,8 @@ class Logger {
     }
 
     /**
-     * @param {string} logLevel
-     * @param {string} args
+     * @param {number} logLevel
+     * @param {(string|Object|undefined)[]} args
      */
     #log (logLevel, args) {
         const template = args.shift();
@@ -154,7 +149,7 @@ class Logger {
     };
 
     /**
-     * @param {string} logLevel
+     * @param {number} logLevel
      * @param {string} message
      */
     #writeLine (logLevel, message) {

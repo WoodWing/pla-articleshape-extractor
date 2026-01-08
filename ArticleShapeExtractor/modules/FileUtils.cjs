@@ -2,9 +2,9 @@ class FileUtils {
 
     /**
      * Creates a subfolder under a given parent folder. Returns the subfolder if already exists.
-     * @param {UXP.Folder} parentFolder
+     * @param {UXP.storage.Folder} parentFolder
      * @param {string} subfolderName
-     * @returns {{entry: UXP.Folder, created: boolean}}
+     * @returns {Promise<{entry: UXP.storage.Folder, created: boolean}>}
      */
     async getOrCreateSubFolder (parentFolder, subfolderName) {
         try {
@@ -17,9 +17,9 @@ class FileUtils {
 
     /**
      * Creates a file in a given folder. Returns the file if already exists.
-     * @param {UXP.Folder} folder
+     * @param {UXP.storage.Folder} folder
      * @param {string} filename
-     * @returns {{entry: UXP.File, created: boolean}}
+     * @returns {Promise<{entry: UXP.storage.File, created: boolean}>}
      */
     async getOrCreateFile (folder, filename) {
         try {
