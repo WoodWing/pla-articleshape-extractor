@@ -46,3 +46,36 @@
  * @property {string} id
  * @property {string} name
  */
+
+/**
+ * @typedef {Object} PageLayoutSettingsDto
+ * @property {PageLayoutDimensions} dimensions
+ * @property {PageLayoutMargins} margins
+ * @property {PageLayoutColumns} columns
+ * @property {PageLayoutBaselineGrid} baseline-grid
+ */
+
+/**
+ * @typedef {Object} PageLayoutDimensions
+ * @property {number} width
+ * @property {number} height
+ */
+
+/**
+ * @typedef {Object} PageLayoutMargins
+ * @property {number} top
+ * @property {number} bottom
+ * @property {number} inside
+ * @property {number} outside
+ */
+
+/**
+ * @typedef {Object} PageLayoutColumns
+ * @property {number} gutter
+ */
+
+/**
+ * @typedef {Object} PageLayoutBaselineGrid
+ * @property {number} start
+ * @property {number} increment
+ */

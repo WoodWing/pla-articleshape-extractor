@@ -12,7 +12,7 @@ class RegenerateArticleShapesService {
     /** @type {VersionUtils} */
     #versionUtils;
 
-    /** @type {{{brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}} */
+    /** @type {{filter: {brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}} */
     #settings;
 
     /** @type {ExportInDesignArticlesToFolder} */
@@ -30,7 +30,7 @@ class RegenerateArticleShapesService {
     /**
      * @param {Logger} logger
      * @param {VersionUtils} versionUtils
-     * @param {{{brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}} settings
+     * @param {{filter: {brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}} settings
      * @param {ExportInDesignArticlesToFolder} exportInDesignArticlesToFolder
      * @param {StudioJsonRpcClient} studioJsonRpcClient
      */
@@ -49,7 +49,7 @@ class RegenerateArticleShapesService {
      * opened (and closed) one-by-one and the placed article shape files are extracted to the given folder.
      * When a shape files already exist for a certain layout id and version, that layout is skipped for performance
      * optimization. All processed layouts (regardless whether skipped) are sent to their next status in the workflow.
-     * @param {UXP.Folder} folder
+     * @param {UXP.storage.Folder} folder
      */
     async run (folder) {
 
@@ -77,7 +77,7 @@ class RegenerateArticleShapesService {
      * Process queried layout objects, compare against disk state, export if needed.
      * @param {Object[]} wflObjects Workflow layout objects.
      * @param {Map<string,{layoutVersion:string,shapeFiles:File[]}>} fileMap Indexed by layout ids.
-     * @param {UXP.Folder} folder Target folder for exporting.
+     * @param {UXP.storage.Folder} folder Target folder for exporting.
      * @param {{extracted: number, skipped: number, failed: number}} report
      */
     async #processQueriedLayouts (wflObjects, fileMap, folder, report) {
@@ -101,7 +101,7 @@ class RegenerateArticleShapesService {
                 }
                 const theOpenDoc = idd.app.openObject(wflObject.ID, false); // false: no checkout
                 const shapeCount = await this.#exportInDesignArticlesToFolder.run(theOpenDoc, folder);
-                theOpenDoc.close(idd.SaveOptions.no);
+                theOpenDoc.close(idd.SaveOptions.NO);
                 if (shapeCount > 0) {
                     extractedLayoutIds.push(wflObject.ID);
                 }
@@ -166,7 +166,7 @@ class RegenerateArticleShapesService {
     /**
      * Collect article shape files from a given folder and build a structure map.
      * Those files assumed to have a postfix "(<layout_id>.v<major>.<minor>).".
-     * @param {UXP.Folder} folder
+     * @param {UXP.storage.Folder} folder
      * @returns {Promise<Map<string,{layoutVersion:string,shapeFiles:UXP.File[]}>>} Structured map, indexed by layout id.
      */
     async #buildMapOfLayoutIdsVersionsAndFiles (folder) {
@@ -203,8 +203,8 @@ class RegenerateArticleShapesService {
 
     /**
      * Return a list of article shape files (from the given folder) having postfix "(<layout_id>.v<major>.<minor>).".
-     * @param {UXP.Folder} folder
-     * @returns {Promise<{shapeFile: UXP.File, layoutId: string, layoutVersion: string}[]>}
+     * @param {UXP.storage.Folder} folder
+     * @returns {Promise<{shapeFile: UXP.storage.File, layoutId: string, layoutVersion: string}[]>}
      */
     async #filterArticleShapeFiles (folder) {
         const entriesInFolder = await folder.getEntries();
@@ -239,7 +239,7 @@ class RegenerateArticleShapesService {
 
     /**
      * Remove a file from disk. Log warning on failure.
-     * @param {UXP.File} file
+     * @param {UXP.storage.File} file
      */
     async #deleteFile (file) {
         this.#logger.debug(`Deleting file: ${file.name}`);

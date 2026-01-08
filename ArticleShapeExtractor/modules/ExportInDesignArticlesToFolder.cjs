@@ -43,14 +43,15 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * @param {IDD.Document} doc
-     * @param {UXP.Folder} folder
-     * @returns {number} Count of exported article shapes.
+     * @param {UXP.storage.Folder} folder
+     * @returns Promise<{number}> Count of exported article shapes.
      */
     async run (doc, folder) {
         if (!(await this.#pageLayoutSettings.exportSettings(doc, folder))) {
             return 0;
         }
 
+        /** @type {UXP.storage.FileSystemProvider} */
         const lfs = require("uxp").storage.localFileSystem;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this.#logger.info("Extracting InDesign Articles for layout document '{}'.", docName);
@@ -69,14 +70,15 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * @param {IDD.Document} doc
-     * @param {UXP.Folder} folder
+     * @param {UXP.storage.Folder} folder
      * @param {IDD.Article} article
      * @param {number} articleIndex
-     * @returns {boolean} Whether or not successful.
+     * @returns Promise>{boolean}> Whether or not successful.
      */
     async #exportArticle (doc, folder, article, articleIndex) {
-        /** @type {IDD.ArticleMember[]} */
-        const elements = article.articleMembers.everyItem().getElements();
+        const articleMembers = /** @type {IDD.ArticleMember} */
+            (/** @type {unknown} */(article.articleMembers.everyItem()));
+        const elements = articleMembers.getElements();
         const outerBounds = this.#getOuterboundOfArticleShape(elements);
         let articleShapeJson = this.#composeArticleShapeJson(doc, article.name, outerBounds);
         if (articleShapeJson === null) {
@@ -120,7 +122,7 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * @param {IDD.Article} article
-     * @param {IDD.Element[]} elements
+     * @param {IDD.ArticleMember[]} elements
      * @param {GeoBounds} outerBounds
      * @param {ArticleShapeJson} articleShapeJson
      * @returns {IDD.PageItem[]}
@@ -132,9 +134,10 @@ class ExportInDesignArticlesToFolder {
             const element = elements[elementIndex];
             const geometricBounds = this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef);
             if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
-                const threadedFrames = this.#getThreadedFrames(element.itemRef);
+                const textFrame = /** @type {IDD.TextFrame} */(element.itemRef);
+                const threadedFrames = this.#getThreadedFrames(textFrame);
                 let textComponent = {
-                    "type": element.itemRef.elementLabel,
+                    "type": textFrame.elementLabel,
                     "words": 0,
                     "characters": 0,
                     "firstParagraphStyle": "",
@@ -143,7 +146,8 @@ class ExportInDesignArticlesToFolder {
 
                 // Add the name of the first paragraph style used in the chain of threaded frames.
                 if (threadedFrames[0].paragraphs.length > 0) {
-                    textComponent.firstParagraphStyle = threadedFrames[0].paragraphs.item(0).appliedParagraphStyle.name;
+                    const paragraphStyle = /** @type {paragraphStyle} */(threadedFrames[0].paragraphs.item(0).appliedParagraphStyle);
+                    textComponent.firstParagraphStyle = paragraphStyle.name;
                 }
 
                 for (let frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
@@ -233,10 +237,10 @@ class ExportInDesignArticlesToFolder {
     /**
      * Compose a unique name that can be used as a base to compose export filenames.
      * @param {IDD.Document} doc
-     * @param {UXP.Folder} folder
+     * @param {UXP.storage.Folder} folder
      * @param {string} shapeTypeName
      * @param {number} articleIndex
-     * @returns {string}
+     * @returns {Promise<string>}
      */
     async #getFileBaseName (doc, folder, shapeTypeName, articleIndex) {
         let fileName = doc.name + " " + shapeTypeName + " " + (articleIndex + 1);
@@ -266,10 +270,10 @@ class ExportInDesignArticlesToFolder {
      */
     #composeGeometricBounds (topLeftX, topLeftY, pageItem) {
         return {
-            "x": this.#roundTo3Decimals(pageItem.geometricBounds[1] - topLeftX),
-            "y": this.#roundTo3Decimals(pageItem.geometricBounds[0] - topLeftY),
-            "width": this.#roundTo3Decimals(pageItem.geometricBounds[3] - pageItem.geometricBounds[1]),
-            "height": this.#roundTo3Decimals(pageItem.geometricBounds[2] - pageItem.geometricBounds[0]),
+            "x": this.#roundTo3Decimals(Number(pageItem.geometricBounds[1]) - topLeftX),
+            "y": this.#roundTo3Decimals(Number(pageItem.geometricBounds[0]) - topLeftY),
+            "width": this.#roundTo3Decimals(Number(pageItem.geometricBounds[3]) - Number(pageItem.geometricBounds[1])),
+            "height": this.#roundTo3Decimals(Number(pageItem.geometricBounds[2]) - Number(pageItem.geometricBounds[0])),
         };
     }
 
@@ -322,10 +326,10 @@ class ExportInDesignArticlesToFolder {
         // Set the foldLine property when the article shape does crossover the fold line of the spread.
         const geometricBoundsRight = articleShapeJson.geometricBounds.x + articleShapeJson.geometricBounds.width;
         const crossoverFoldLine =
-            articleShapeJson.geometricBounds.x < doc.documentPreferences.pageWidth
-            && doc.documentPreferences.pageWidth < geometricBoundsRight;
+            Number(articleShapeJson.geometricBounds.x) < Number(doc.documentPreferences.pageWidth)
+            && Number(doc.documentPreferences.pageWidth) < geometricBoundsRight;
         if (crossoverFoldLine) {
-            articleShapeJson.foldLine = doc.documentPreferences.pageWidth - articleShapeJson.geometricBounds.x;
+            articleShapeJson.foldLine = Number(doc.documentPreferences.pageWidth) - articleShapeJson.geometricBounds.x;
         }
         return articleShapeJson;
     }
@@ -351,14 +355,15 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * @param {IDD.Document} doc
-     * @param {UXP.Folder} folder
+     * @param {UXP.storage.Folder} folder
      * @param {string} shapeTypeName
      * @param {number} articleIndex
      * @param {IDD.PageItem[]} pageItems
      * @param {ArticleShapeJson} articleShapeJson
-     * @returns {boolean} Whether or not successful.
+     * @returns {Promise<boolean>} Whether or not successful.
      */
     async #exportArticlePageItems (doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
+        /** @type {UXP.storage.FileSystemProvider} */
         const lfs = require("uxp").storage.localFileSystem;
 
         const baseFileName = await this.#getFileBaseName(doc, folder, shapeTypeName, articleIndex);
@@ -424,8 +429,8 @@ class ExportInDesignArticlesToFolder {
     /**
      * Save JSON data to a file on disk.
      * @param {ArticleShapeJson} jsonData - The JSON object to save.
-     * @param {UXP.File} file
-     * @returns {boolean} Whether or not successful.
+     * @param {UXP.storage.File} file
+     * @returns {Promise<boolean>} Whether or not successful.
      */
     async #saveJsonToDisk (jsonData, file) {
         let isSaved = false;
@@ -496,15 +501,16 @@ class ExportInDesignArticlesToFolder {
             let threadedFrames;
 
             if (j == 0) {
-                topLeftX = element.itemRef.geometricBounds[1];
-                topLeftY = element.itemRef.geometricBounds[0];
-                bottomRightX = element.itemRef.geometricBounds[3];
-                bottomRightY = element.itemRef.geometricBounds[2];
+                topLeftX = Number(element.itemRef.geometricBounds[1]);
+                topLeftY = Number(element.itemRef.geometricBounds[0]);
+                bottomRightX = Number(element.itemRef.geometricBounds[3]);
+                bottomRightY = Number(element.itemRef.geometricBounds[2]);
             }
 
-            //Create an array with all thread frames (images dont have threaded frames)
+            //Create an array with all thread frames (images don't have threaded frames)
             if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
-                threadedFrames = this.#getThreadedFrames(element.itemRef);
+                const textFrame = /** @type {IDD.TextFrame} */(element.itemRef);
+                threadedFrames = this.#getThreadedFrames(textFrame);
             }
             else {
                 threadedFrames = [element.itemRef];
@@ -513,17 +519,17 @@ class ExportInDesignArticlesToFolder {
             for (let k = 0; k < threadedFrames.length; k++) {
                 const frame = threadedFrames[k];
 
-                if (frame.geometricBounds[1] < topLeftX) {
-                    topLeftX = frame.geometricBounds[1];
+                if (Number(frame.geometricBounds[1]) < topLeftX) {
+                    topLeftX = Number(frame.geometricBounds[1]);
                 }
-                if (frame.geometricBounds[0] < topLeftY) {
-                    topLeftY = frame.geometricBounds[0];
+                if (Number(frame.geometricBounds[0]) < topLeftY) {
+                    topLeftY = Number(frame.geometricBounds[0]);
                 }
-                if (frame.geometricBounds[3] > bottomRightX) {
-                    bottomRightX = frame.geometricBounds[3];
+                if (Number(frame.geometricBounds[3]) > bottomRightX) {
+                    bottomRightX = Number(frame.geometricBounds[3]);
                 }
-                if (frame.geometricBounds[2] > bottomRightY) {
-                    bottomRightY = frame.geometricBounds[2];
+                if (Number(frame.geometricBounds[2]) > bottomRightY) {
+                    bottomRightY = Number(frame.geometricBounds[2]);
                 }
             }
         }
@@ -538,23 +544,36 @@ class ExportInDesignArticlesToFolder {
      * @returns {IDD.TextFrame[]} All threaded text frames, including the starting frame.
      */
     #getThreadedFrames (textFrame) {
-        let threadedFrames = [];
-        let currentFrame = textFrame;
+        let threadedFrames = [textFrame];
 
         // Traverse forward through the thread chain
-        while (currentFrame) {
-            threadedFrames.push(currentFrame);
-            currentFrame = currentFrame.nextTextFrame;
+        /** @type {TextFrame | TextPath | NothingEnum} */
+        let threadedSibling = textFrame.nextTextFrame;
+        while (this.#isThreadedSiblingValidTextFrame(threadedSibling)) {
+            threadedFrames.push(threadedSibling); // append at end
+            threadedSibling = threadedSibling.nextTextFrame;
         }
 
         // Traverse backward through the thread chain
-        currentFrame = textFrame.previousTextFrame;
-        while (currentFrame) {
-            threadedFrames.unshift(currentFrame);
-            currentFrame = currentFrame.previousTextFrame;
+        threadedSibling = textFrame.previousTextFrame;
+        while (this.#isThreadedSiblingValidTextFrame(threadedSibling)) {
+            threadedFrames.unshift(threadedSibling); // insert at start
+            threadedSibling = threadedSibling.previousTextFrame;
         }
 
         return threadedFrames;
+    }
+
+    /**
+     * @param {TextFrame | TextPath | NothingEnum} threadedSibling
+     * @returns {threadedSibling is IDD.TextFrame}
+     */
+    #isThreadedSiblingValidTextFrame (threadedSibling) {
+        if (!threadedSibling || threadedSibling.constructorName !== "TextFrame") {
+            return false;
+        }
+        const textFrame = /** @type {TextFrame} */(threadedSibling);
+        return this.#inDesignArticleService.isValidTextFrame(textFrame);
     }
 
     /**
@@ -602,11 +621,13 @@ class ExportInDesignArticlesToFolder {
 
         // Calculate line height based on line leading and base shift of first character.
         let leading = line.leading; // line spacing
-        const baselineShift = line.characters.item(0).baselineShift;
+        const baselineShift = Number(line.characters.item(0).baselineShift);
 
         // If leading is set to Auto (value = -1), estimate it as 120% of font size.
-        if (typeof leading === "object" && leading.equals(idd.Leading.AUTO)) {
-            const fontSize = line.characters.item(0).pointSize;
+        if (leading !== null
+            && typeof leading === "object"
+            && (/** @type {object} */(leading)).equals(idd.Leading.AUTO)) {
+            const fontSize = Number(line.characters.item(0).pointSize);
             leading = fontSize * 1.2;
         }
 

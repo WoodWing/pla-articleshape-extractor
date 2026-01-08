@@ -1,11 +1,11 @@
 class Container {
-    /** @type {Array<{
-            factoryFunction: Function,
-            providerType: string,
-            lastInstance: Object,
-            >}
-        }
-    */
+    /**
+     * @type {Record<string, {
+     *   factoryFunction: Function,
+     *   providerType: string,
+     *   lastInstance: Object
+     * }>}
+     */
     #registrations = {};
 
     /**

@@ -30,12 +30,11 @@ class PlaService {
      * Those are set once blueprints are configured.
      * @param {string} accessToken
      * @param {string} brandId
-     * @returns {Object[]} List of sheet dimension DTOs.
+     * @returns {Promise<Object[]>} List of sheet dimension DTOs.
      */
     async getSheetDimensions (accessToken, brandId) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/sheet-dimensions`;
-        /** @type {UXP.Request} */
-        const httpRequest = new Request(url, this.#requestInitForPlaService(accessToken, "GET"));
+        const httpRequest = new globalThis.Request(url, this.#requestInitForPlaService(accessToken, "GET"));
         try {
             const jsonResponseBody = await this.#fetchJson(httpRequest, null);
             this.#logger.info(`Retrieved ${jsonResponseBody.length} sheet dimensions.`);
@@ -49,7 +48,7 @@ class PlaService {
     /**
      * @param {UXP.Request} httpRequest
      * @param {Object|null} jsonRequestBody JSON request body
-     * @returns {Object} JSON response body.
+     * @returns {Promise<Object>} JSON response body.
      */
     async #fetchJson (httpRequest, jsonRequestBody) {
         let httpResponse = null;
@@ -150,7 +149,7 @@ class PlaService {
      * @param {string} brandId
      * @param {string} sectionId
      * @param {Object} jsonRequestBody
-     * @returns {string[]} List of download URLs of the suggested article JSON files.
+     * @returns {Promise<string[]>} List of download URLs of the suggested article JSON files.
      */
     async suggestArticleShapes (accessToken, brandId, sectionId, jsonRequestBody) {
         const url = `${this.#plaServiceUrl}/brands/${brandId}/sections/${sectionId}/suggest-article-shapes`

@@ -25,7 +25,7 @@ class Settings {
     }
 
     /**
-     * @returns {{{brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}}
+     * @returns {{filter: {brand: string, issue: string, category: string, status: string}, layoutStatusOnSuccess: string, layoutStatusOnError: string}}
      */
     getRegenerateArticleShapesSettings () {
         const settings = this.#configData.regenerateArticleShapesSettings;

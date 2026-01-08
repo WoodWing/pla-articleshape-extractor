@@ -2,6 +2,7 @@ require("./extensions/String.js");
 require("./extensions/globals.js");
 require("./extensions/lodash.min.js");
 require("./types.d.js");
+require("./types.dto.d.js");
 const Container = require("./modules/Container.cjs");
 
 Container.registerSingleton("Settings", function () {

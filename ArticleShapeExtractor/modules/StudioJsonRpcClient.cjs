@@ -46,7 +46,7 @@ class StudioJsonRpcClient {
      * Call the GetPublications workflow service provided by Studio Server.
      * @param {string[]|null} brandIds List of ids, or null for all brands.
      * @param {string[]|null} requestInfo Brand setup info to resolve: "FeatureAccessList", "ObjectTypeProperties", "ActionProperties", "States", "CurrentIssue", "PubChannels", "Categories"
-     * @returns {Object[]} List of PublicationInfo data objects.
+     * @returns {Promise<Object[]>} List of PublicationInfo data objects.
      */
     async getPublicationInfos (brandIds, requestInfo) {
         const url = this.#getStudioServerUrl();
@@ -69,7 +69,7 @@ class StudioJsonRpcClient {
      * @param {string} url
      * @param {Object} request
      * @param {string} serviceName
-     * @returns {Object} Response
+     * @returns {Promise<Object>} Response
      */
     async #callWebService (url, request, serviceName) {
         this.#rpcSequenceId += 1;
@@ -111,7 +111,7 @@ class StudioJsonRpcClient {
     /**
      * @param {Request} httpRequest
      * @param {Object} rpcRequestBody JSON RPC request body.
-     * @returns {Object} JSON RPC response body.
+     * @returns {Promise<Object>} JSON RPC response body.
      */
     async #fetchRpc (httpRequest, rpcRequestBody) {
         let httpResponse = null;
@@ -182,7 +182,7 @@ class StudioJsonRpcClient {
      * @param {Object[]} searchParams List of QueryParam objects.
      * @param {string[]} resolveProperties List of workflow object property names to resolve.
      * @param {number} firstEntry Object index to start reading from (in paged results).
-     * @returns {Object} QueryObjectsResponse
+     * @returns {Promise<Object>} QueryObjectsResponse
      */
     async #queryObjectsOneResultPage (searchParams, resolveProperties, firstEntry) {
         const startsWithProps = ["ID", "Type", "Name"]; // service rule: must start with this sequence of props
@@ -252,7 +252,7 @@ class StudioJsonRpcClient {
     /**
      * Retrieve a new access token that can be used for WW cloud services.
      * @param {string} brandId
-     * @returns {string}
+     * @returns {Promise<string>}
      */
     async getAccessToken (brandId) {
         const url = this.#getStudioClientServerPluginUrl();

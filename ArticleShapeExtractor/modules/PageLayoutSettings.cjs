@@ -1,4 +1,5 @@
 const idd = require("indesign");
+/** @type {UXP.storage.FileSystemProvider} */
 const lfs = require("uxp").storage.localFileSystem;
 const formats = require("uxp").storage.formats;
 const Errors = require("./Errors.cjs");
@@ -28,8 +29,8 @@ class PageLayoutSettings {
      * "_manifest/page-layout-settings.json" in the given folder. When this file
      * already exists, the settings are compared instead.
      * @param {IDD.Document} doc
-     * @param {UXP.Folder} folder
-     * @returns {boolean} True when the settings are matching (or new), false otherwise.
+     * @param {UXP.storage.Folder} folder
+     * @returns {Promise<boolean>} True when the settings are matching (or new), false otherwise.
      */
     async exportSettings (doc, folder) {
         let exportedSuccessfully = false;
@@ -70,7 +71,7 @@ class PageLayoutSettings {
      * @param {IDD.Document} doc
      * @param {Page} page
      * @param {number} baselineStart
-     * @returns {{dimensions: {width: number, height: number}, margins: {top: number, bottom: number, inside: number, outside: number}, columns: {gutter: number}}
+     * @returns {PageLayoutSettingsDto}
      */
     #composeSettings (doc, page, baselineStart) {
         return {
@@ -96,11 +97,11 @@ class PageLayoutSettings {
 
     /**
      * Round a given number to a precision of maximum 3 decimals.
-     * @param {number} precisionNumber
+     * @param {number|string} precisionNumber
      * @returns {number}
      */
     #roundTo3Decimals (precisionNumber) {
-        return Math.round(precisionNumber * 1000) / 1000;
+        return Math.round(Number(precisionNumber) * 1000) / 1000;
     }
 
     /**
@@ -111,11 +112,11 @@ class PageLayoutSettings {
      * @returns number Baseline start (always relative to top of page).
      */
     #getBaselineStart (doc, page) {
-        let baselineStart = doc.gridPreferences.baselineStart;
+        let baselineStart = Number(doc.gridPreferences.baselineStart);
         const isGridRelativeToPageMargins = doc.gridPreferences.baselineGridRelativeOption.equals(
             idd.BaselineGridRelativeOption.TOP_OF_MARGIN_OF_BASELINE_GRID_RELATIVE_OPTION);
         if (isGridRelativeToPageMargins) {
-            baselineStart += page.marginPreferences.top;
+            baselineStart += Number(page.marginPreferences.top);
             this.#logger.debug(
                 "Baseline start is configured as relative to top margin, but exported as relative to top of page: "
                 + `${doc.gridPreferences.baselineStart} (=start) + ${page.marginPreferences.top} (=top margin) = ${baselineStart}`,
@@ -139,8 +140,8 @@ class PageLayoutSettings {
      * rather unimportant to be the same across all layouts of the section. Reason is that an article taken from source
      * layout A will perfectly be placed on target layout B while their margins/dimensions are not exactly matching.
      *
-     * @param {{dimensions: {width: number, height: number}, margins: {top: number, bottom: number, inside: number, outside: number}, columns: {gutter: number}} settings
-     * @param {UXP.Folder} exportFolder
+     * @param {PageLayoutSettingsDto} settings
+     * @param {UXP.storage.Folder} exportFolder
      */
     async #saveOrComparePageLayoutSettings (settings, exportFolder) {
         const manifestFoldername = "_manifest";
@@ -172,9 +173,9 @@ class PageLayoutSettings {
 
     /**
      * Compares the columns gutter and baseline grid increments properties of the page layout settings.
-     * @param {PageLayoutSettings} lhsSettings
-     * @param {PageLayoutSettings} rhsSettings
-     * @returns {{propertyPath: string, lhsValue: Any, rhsValue: Any}|null} A property that differs, null otherwise.
+     * @param {PageLayoutSettingsDto} lhsSettings
+     * @param {PageLayoutSettingsDto} rhsSettings
+     * @returns {{propertyPath: string, lhsValue: any, rhsValue: any}|null} A property that differs, null otherwise.
      */
     #diffInDesignPageLayoutGrid (lhsSettings, rhsSettings) {
         const pathsToCompare = [
@@ -194,9 +195,9 @@ class PageLayoutSettings {
 
     /**
      * Resolves the value of a property (path) in a deeply nested DTO (obj).
-     * @param {PageLayoutSettings} obj
+     * @param {PageLayoutSettingsDto} obj
      * @param {string} path
-     * @returns {Any}
+     * @returns {any}
      */
     #getPropertyValueByPath (obj, path) {
         return path.split(".").reduce((acc, key) => acc?.[key], obj);
