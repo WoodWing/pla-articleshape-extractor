@@ -7,10 +7,14 @@
         "idms",
         "idjs",
         "indesign",
+        "layouter",
         "ltrim",
         "malpositioned",
+        "outerbound",
+        "prefs",
         "rtrim",
-        "stroustrup"
+        "stroustrup",
+        "ungroup"
     ],
     "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     "[javascript]": {
