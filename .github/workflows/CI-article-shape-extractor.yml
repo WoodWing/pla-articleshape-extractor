@@ -3,8 +3,8 @@ name: CI - Article Shape Extractor
 on:
   # Run the tests on pushes to these branches.
   push:
-  #  branches:
-  #    - master
+    branches:
+      - master
 
   # Run the tests on pushes to feature branches (PRs) that are targeting these branches.
   pull_request:
@@ -47,6 +47,5 @@ jobs:
       - name: Validate code and formatting
         run: npm run lint
 
-      # TODO: After solving problems, enable this step.
-      #- name: Type checking for JS code.
-      #  run: npm run typecheck
+      - name: Type checking for JS code.
+        run: npm run typecheck

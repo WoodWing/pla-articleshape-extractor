@@ -1,5 +1,3 @@
-const idd = require("indesign");
-
 /**
  * Understands how to obtain the id/name info for all brands and their categories
  * and how to provides that information in the _manifest subfolder of the export folder.

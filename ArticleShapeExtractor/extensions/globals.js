@@ -5,8 +5,8 @@
  * @returns
  */
 globalThis.alert = function (msg, caption) {
-    const idd = require("indesign");
-    const theDialog = idd.app.dialogs.add({ name: caption || "Alert" });
+    const ind = require("indesign");
+    const theDialog = ind.app.dialogs.add({ name: caption || "Alert" });
     const col = theDialog.dialogColumns.add();
     const lines = ("" + msg).split("\n");
     for (const line of lines) {

@@ -1,4 +1,4 @@
-const idd = require("indesign");
+const ind = require("indesign");
 
 /**
  * Understands how to extract article shapes from InDesign Articles.
@@ -42,7 +42,7 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * @param {IDD.Document} doc
+     * @param {IND.Document} doc
      * @param {UXP.storage.Folder} folder
      * @returns Promise<{number}> Count of exported article shapes.
      */
@@ -56,7 +56,7 @@ class ExportInDesignArticlesToFolder {
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this.#logger.info("Extracting InDesign Articles for layout document '{}'.", docName);
 
-        idd.app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
+        ind.app.scriptPreferences.measurementUnit = ind.MeasurementUnits.POINTS;
         let exportCounter = 0;
         for (let articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
             const article = doc.articles.item(articleIndex);
@@ -64,19 +64,19 @@ class ExportInDesignArticlesToFolder {
                 exportCounter++;
             }
         }
-        idd.app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
+        ind.app.scriptPreferences.measurementUnit = ind.AutoEnum.AUTO_VALUE;
         return exportCounter;
     }
 
     /**
-     * @param {IDD.Document} doc
+     * @param {IND.Document} doc
      * @param {UXP.storage.Folder} folder
-     * @param {IDD.Article} article
+     * @param {IND.Article} article
      * @param {number} articleIndex
      * @returns Promise>{boolean}> Whether or not successful.
      */
     async #exportArticle (doc, folder, article, articleIndex) {
-        const articleMembers = /** @type {IDD.ArticleMember} */
+        const articleMembers = /** @type {IND.ArticleMember} */
             (/** @type {unknown} */(article.articleMembers.everyItem()));
         const elements = articleMembers.getElements();
         const outerBounds = this.#getOuterboundOfArticleShape(elements);
@@ -121,20 +121,20 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * @param {IDD.Article} article
-     * @param {IDD.ArticleMember[]} elements
+     * @param {IND.Article} article
+     * @param {IND.ArticleMember[]} elements
      * @param {GeoBounds} outerBounds
      * @param {ArticleShapeJson} articleShapeJson
-     * @returns {IDD.PageItem[]}
+     * @returns {IND.PageItem[]}
      */
     #collectArticlePageItems (article, elements, outerBounds, articleShapeJson) {
-        /** @type {IDD.PageItem[]} */
+        /** @type {IND.PageItem[]} */
         let pageItems = []; // Collect all associated page items for the article.
         for (let elementIndex = 0; elementIndex < elements.length; elementIndex++) {
             const element = elements[elementIndex];
             const geometricBounds = this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef);
             if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
-                const textFrame = /** @type {IDD.TextFrame} */(element.itemRef);
+                const textFrame = /** @type {IND.TextFrame} */(element.itemRef);
                 const threadedFrames = this.#getThreadedFrames(textFrame);
                 let textComponent = {
                     "type": textFrame.elementLabel,
@@ -236,7 +236,7 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Compose a unique name that can be used as a base to compose export filenames.
-     * @param {IDD.Document} doc
+     * @param {IND.Document} doc
      * @param {UXP.storage.Folder} folder
      * @param {string} shapeTypeName
      * @param {number} articleIndex
@@ -265,7 +265,7 @@ class ExportInDesignArticlesToFolder {
      * Create a data object that describes the geometrical boundaries of a given page item.
      * @param {number} topLeftX - Make it relative to this X position.
      * @param {number} topLeftY - Make it relative to this Y position.
-     * @param {IDD.PageItem} pageItem - TextFrame, Rectangle, etc
+     * @param {IND.PageItem} pageItem - TextFrame, Rectangle, etc
      * @returns {ArticleShapeGeoBounds}
      */
     #composeGeometricBounds (topLeftX, topLeftY, pageItem) {
@@ -288,7 +288,7 @@ class ExportInDesignArticlesToFolder {
 
     /**
      *
-     * @param {IDD.Document} doc
+     * @param {IND.Document} doc
      * @param {string} articleName
      * @param {GeoBounds} outerBounds
      * @returns {ArticleShapeJson|null}
@@ -337,7 +337,7 @@ class ExportInDesignArticlesToFolder {
     /**
      * Tells whether all given page items are placed on the same spread. If this is not the case,
      * the items can not be selected nor grouped which is required by _exportArticlePageItems().
-     * @param {IDD.PageItem[]} pageItems
+     * @param {IND.PageItem[]} pageItems
      * @returns
      */
     #arePageItemsOnSameSpread (pageItems) {
@@ -354,11 +354,11 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * @param {IDD.Document} doc
+     * @param {IND.Document} doc
      * @param {UXP.storage.Folder} folder
      * @param {string} shapeTypeName
      * @param {number} articleIndex
-     * @param {IDD.PageItem[]} pageItems
+     * @param {IND.PageItem[]} pageItems
      * @param {ArticleShapeJson} articleShapeJson
      * @returns {Promise<boolean>} Whether or not successful.
      */
@@ -382,7 +382,7 @@ class ExportInDesignArticlesToFolder {
 
         // Export JPEG image.
         const PreferencesManager = require("./PreferencesManager.cjs");
-        const preferencesManager = new PreferencesManager(idd.app.jpegExportPreferences);
+        const preferencesManager = new PreferencesManager(ind.app.jpegExportPreferences);
         let originalPreferences = null;
         let group = null;
         let isExported = false;
@@ -392,17 +392,17 @@ class ExportInDesignArticlesToFolder {
                 antiAlias: true,
                 useDocumentBleeds: false,
                 simulateOverprint: false,
-                jpegQuality: idd.JPEGOptionsQuality.HIGH,
-                jpegRenderingStyle: idd.JPEGOptionsFormat.BASELINE_ENCODING,
+                jpegQuality: ind.JPEGOptionsQuality.HIGH,
+                jpegRenderingStyle: ind.JPEGOptionsFormat.BASELINE_ENCODING,
                 exportResolution: 144, // DPI, screen resolution
-                jpegColorSpace: idd.JpegColorSpaceEnum.RGB,
+                jpegColorSpace: ind.JpegColorSpaceEnum.RGB,
             });
             if (pageItems.length === 1) {
-                pageItems[0].exportFile(idd.ExportFormat.JPG, imgFile);
+                pageItems[0].exportFile(ind.ExportFormat.JPG, imgFile);
             }
             else {
                 group = doc.groups.add(pageItems);
-                group.exportFile(idd.ExportFormat.JPG, imgFile);
+                group.exportFile(ind.ExportFormat.JPG, imgFile);
             }
             isExported = true;
         }
@@ -452,7 +452,7 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Get the word count and character count of a text frame, excluding overset text.
-     * @param {IDD.TextFrame} textFrame - The text frame to analyze.
+     * @param {IND.TextFrame} textFrame - The text frame to analyze.
      * @returns {{wordCount: number, charCount: number, text: string, totalLineHeight: number}} - An object containing word count, character count and text without overset.
      */
     #getTextStatisticsWithoutOverset (textFrame) {
@@ -485,7 +485,7 @@ class ExportInDesignArticlesToFolder {
     /**
      * Calculates the outermost bounding box of a collection of article elements, considering threaded frames if applicable.
      *
-     * @param {IDD.ArticleMember[]} elements
+     * @param {IND.ArticleMember[]} elements
      *    An array of article elements. Each element should have an `itemRef` property that represents the InDesign object.
      *    The `itemRef` can be a text frame, graphic, or other page item.
      * @returns {GeoBounds} Outer bounds of the combined elements and their threaded frames.
@@ -509,7 +509,7 @@ class ExportInDesignArticlesToFolder {
 
             //Create an array with all thread frames (images don't have threaded frames)
             if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
-                const textFrame = /** @type {IDD.TextFrame} */(element.itemRef);
+                const textFrame = /** @type {IND.TextFrame} */(element.itemRef);
                 threadedFrames = this.#getThreadedFrames(textFrame);
             }
             else {
@@ -540,8 +540,8 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Get all threaded text frames for a given text frame.
-     * @param {IDD.TextFrame} textFrame The starting text frame.
-     * @returns {IDD.TextFrame[]} All threaded text frames, including the starting frame.
+     * @param {IND.TextFrame} textFrame The starting text frame.
+     * @returns {IND.TextFrame[]} All threaded text frames, including the starting frame.
      */
     #getThreadedFrames (textFrame) {
         let threadedFrames = [textFrame];
@@ -566,7 +566,7 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * @param {TextFrame | TextPath | NothingEnum} threadedSibling
-     * @returns {threadedSibling is IDD.TextFrame}
+     * @returns {threadedSibling is IND.TextFrame}
      */
     #isThreadedSiblingValidTextFrame (threadedSibling) {
         if (!threadedSibling || threadedSibling.constructorName !== "TextFrame") {
@@ -578,7 +578,7 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Get the text wrap settings of a selected frame, including the text wrap mode as a string.
-     * @param {IDD.PageItem|null} frame TextFrame, GraphicFrame, etc
+     * @param {IND.PageItem|null} frame TextFrame, GraphicFrame, etc
      * @returns {string} Name of the text wrap mode
      */
     #getTextWrapMode (frame) {
@@ -589,19 +589,19 @@ class ExportInDesignArticlesToFolder {
 
         const textWrapPrefs = frame.textWrapPreferences;
 
-        if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.NONE)) {
+        if (textWrapPrefs.textWrapMode.equals(ind.TextWrapModes.NONE)) {
             return "none";
         }
-        else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.BOUNDING_BOX_TEXT_WRAP)) {
+        else if (textWrapPrefs.textWrapMode.equals(ind.TextWrapModes.BOUNDING_BOX_TEXT_WRAP)) {
             return "bounding_box";
         }
-        else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.CONTOUR)) {
+        else if (textWrapPrefs.textWrapMode.equals(ind.TextWrapModes.CONTOUR)) {
             return "contour";
         }
-        else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.JUMP_OBJECT_TEXT_WRAP)) {
+        else if (textWrapPrefs.textWrapMode.equals(ind.TextWrapModes.JUMP_OBJECT_TEXT_WRAP)) {
             return "jump_object";
         }
-        else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.NEXT_COLUMN_TEXT_WRAP)) {
+        else if (textWrapPrefs.textWrapMode.equals(ind.TextWrapModes.NEXT_COLUMN_TEXT_WRAP)) {
             return "jump_to_next_column";
         }
         else {
@@ -611,7 +611,7 @@ class ExportInDesignArticlesToFolder {
 
     /**
      * Calculate the line height in points.
-     * @param {IDD.Line} line
+     * @param {IND.Line} line
      * @returns {number}
      */
     #getLineHeight (line) {
@@ -626,7 +626,7 @@ class ExportInDesignArticlesToFolder {
         // If leading is set to Auto (value = -1), estimate it as 120% of font size.
         if (leading !== null
             && typeof leading === "object"
-            && (/** @type {object} */(leading)).equals(idd.Leading.AUTO)) {
+            && (/** @type {object} */(leading)).equals(ind.Leading.AUTO)) {
             const fontSize = Number(line.characters.item(0).pointSize);
             leading = fontSize * 1.2;
         }

@@ -40,7 +40,7 @@ class FitArticleWithAIService {
      * - Retrieve fitted shape from AI fitting service.
      * - Update the unfitted article with fitted shape (on the layout).
      *
-     * @param {IDD.Document} doc
+     * @param {IND.Document} doc
      */
     async run (doc) {
 

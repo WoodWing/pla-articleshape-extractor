@@ -1,5 +1,5 @@
 await (async function main () {
-    const idd = require("indesign");
+    const ind = require("indesign");
     const initBootstrap = require("../bootstrap.js");
     const Container = require("../modules/Container.cjs");
     const Errors = require("../modules/Errors.cjs");
@@ -26,10 +26,10 @@ await (async function main () {
         await genreResolver.saveGenesToManifest(folder);
 
         // Export article shapes to disk.
-        idd.app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
+        ind.app.scriptPreferences.userInteractionLevel = ind.UserInteractionLevels.neverInteract;
         const regenerator = /** @type RegenerateArticleShapesService */(Container.resolve("RegenerateArticleShapesService"));
         const report = await regenerator.run(folder);
-        idd.app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
+        ind.app.scriptPreferences.userInteractionLevel = ind.UserInteractionLevels.interactWithAll;
         const completedMessage = "Article Shapes are regenerated.";
         const reportMessage = `Extracted: ${report.extracted}, Skipped: ${report.skipped}, Failed: ${report.failed}.`;
         logger.info(`${completedMessage} => ${reportMessage}`);
@@ -38,7 +38,7 @@ await (async function main () {
     }
     catch (error) {
         // First enable the user interaction again to able to show the alert.
-        idd.app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
+        ind.app.scriptPreferences.userInteractionLevel = ind.UserInteractionLevels.interactWithAll;
         logger.logError(error);
         alert(error.message);
     }

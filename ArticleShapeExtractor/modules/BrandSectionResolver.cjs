@@ -1,4 +1,4 @@
-const idd = require("indesign");
+const ind = require("indesign");
 
 /**
  * Understands how to resolve the Brand and Section.
@@ -31,7 +31,7 @@ class BrandSectionResolver {
     /**
      * When there is a valid session and the layout is stored in Studio, take the brand and section from
      * the layout, otherwise take the brand- and section fallback settings from the config files.
-     * @param {IDD.Document} doc
+     * @param {IND.Document} doc
      * @returns {{brand: BrandInfo, section: SectionInfo}}
      */
     resolve (doc) {
@@ -39,10 +39,10 @@ class BrandSectionResolver {
         let section = null;
         let source = null;
         try {
-            brand = idd.app.entSession.getPublication(
+            brand = ind.app.entSession.getPublication(
                 doc.entMetaData.get("Core_Publication"),
             );
-            section = idd.app.entSession.getCategory(
+            section = ind.app.entSession.getCategory(
                 doc.entMetaData.get("Core_Publication"),
                 doc.entMetaData.get("Core_Section"),
                 doc.entMetaData.get("Core_Issue"),

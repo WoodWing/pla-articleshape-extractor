@@ -1,4 +1,4 @@
-const idd = require("indesign");
+const ind = require("indesign");
 const Errors = require("./Errors.cjs");
 
 /**
@@ -99,9 +99,9 @@ class RegenerateArticleShapesService {
                 if (mapItem) for (const oldFile of mapItem.shapeFiles) {
                     await this.#deleteFile(oldFile);
                 }
-                const theOpenDoc = idd.app.openObject(wflObject.ID, false); // false: no checkout
+                const theOpenDoc = ind.app.openObject(wflObject.ID, false); // false: no checkout
                 const shapeCount = await this.#exportInDesignArticlesToFolder.run(theOpenDoc, folder);
-                theOpenDoc.close(idd.SaveOptions.NO);
+                theOpenDoc.close(ind.SaveOptions.NO);
                 if (shapeCount > 0) {
                     extractedLayoutIds.push(wflObject.ID);
                 }

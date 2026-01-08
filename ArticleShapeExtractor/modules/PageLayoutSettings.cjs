@@ -1,4 +1,4 @@
-const idd = require("indesign");
+const ind = require("indesign");
 /** @type {UXP.storage.FileSystemProvider} */
 const lfs = require("uxp").storage.localFileSystem;
 const formats = require("uxp").storage.formats;
@@ -28,7 +28,7 @@ class PageLayoutSettings {
      * Exports the layout settings of the given layout document to a file named
      * "_manifest/page-layout-settings.json" in the given folder. When this file
      * already exists, the settings are compared instead.
-     * @param {IDD.Document} doc
+     * @param {IND.Document} doc
      * @param {UXP.storage.Folder} folder
      * @returns {Promise<boolean>} True when the settings are matching (or new), false otherwise.
      */
@@ -36,14 +36,14 @@ class PageLayoutSettings {
         let exportedSuccessfully = false;
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this.#logger.info("Exporting Document Settings for layout '{}'.", docName);
-        idd.app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
+        ind.app.scriptPreferences.measurementUnit = ind.MeasurementUnits.POINTS;
         try {
             if (doc.pages.length === 0) {
                 throw new Errors.NoDocumentPagesError();
             }
             for (let i = 0; i < doc.pages.length; i++) {
                 const pag = doc.pages.item(i);
-                const side = pag.side.equals(idd.PageSideOptions.LEFT_HAND) ? "left" : "right";
+                const side = pag.side.equals(ind.PageSideOptions.LEFT_HAND) ? "left" : "right";
                 this.#logger.debug(`Page: id=${pag.id}, index=${pag.index}, name=${pag.name}, side=${side}`);
             }
             const page = doc.pages.item(0);
@@ -62,13 +62,13 @@ class PageLayoutSettings {
             alert("An error occurred: " + error.message);
         }
         finally {
-            idd.app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
+            ind.app.scriptPreferences.measurementUnit = ind.AutoEnum.AUTO_VALUE;
         }
         return exportedSuccessfully;
     }
 
     /**
-     * @param {IDD.Document} doc
+     * @param {IND.Document} doc
      * @param {Page} page
      * @param {number} baselineStart
      * @returns {PageLayoutSettingsDto}
@@ -107,14 +107,14 @@ class PageLayoutSettings {
     /**
      * Retrieve the baseline start field when set relative to top of page.
      * When set relative to top of margin, the returned value is normalized to top of page.
-     * @param {IDD.Document} doc
-     * @param {IDD.Page} page
+     * @param {IND.Document} doc
+     * @param {IND.Page} page
      * @returns number Baseline start (always relative to top of page).
      */
     #getBaselineStart (doc, page) {
         let baselineStart = Number(doc.gridPreferences.baselineStart);
         const isGridRelativeToPageMargins = doc.gridPreferences.baselineGridRelativeOption.equals(
-            idd.BaselineGridRelativeOption.TOP_OF_MARGIN_OF_BASELINE_GRID_RELATIVE_OPTION);
+            ind.BaselineGridRelativeOption.TOP_OF_MARGIN_OF_BASELINE_GRID_RELATIVE_OPTION);
         if (isGridRelativeToPageMargins) {
             baselineStart += Number(page.marginPreferences.top);
             this.#logger.debug(
