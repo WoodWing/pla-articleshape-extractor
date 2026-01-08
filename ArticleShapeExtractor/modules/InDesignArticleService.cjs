@@ -1,4 +1,4 @@
-const idd = require("indesign");
+const ind = require("indesign");
 const Errors = require("../modules/Errors.cjs");
 
 class InDesignArticleService {
@@ -14,22 +14,22 @@ class InDesignArticleService {
      * @param {string} articleName
      */
     addOrRenameInDesignArticle (articleName) {
-        if (idd.app.documents.length === 0) {
+        if (ind.app.documents.length === 0) {
             throw new Errors.NoDocumentOpenedError();
         }
 
-        const selection = /** @type {object[]} */(idd.app.selection);
+        const selection = /** @type {object[]} */(ind.app.selection);
         if (selection.length === 0) {
             throw new Errors.NoFramesSelectedError();
         }
 
-        const frame = idd.app.selection[0];
+        const frame = ind.app.selection[0];
         if (!this.isValidArticleComponentFrame(frame)) {
             throw new Errors.NoTextOrGraphicalFramesSelectedError();
         }
 
         // Add new InDesign Articles.
-        const doc = idd.app.activeDocument;
+        const doc = ind.app.activeDocument;
         const articles = this.getInDesignArticles(doc, frame);
         if (articles.length == 0) {
             this.#createNewInDesignArticleWithSelectedFrames(doc, articleName);
@@ -126,7 +126,7 @@ class InDesignArticleService {
         article.name = articleName;
 
         // Add selected frames to the new article.
-        const selection = /** @type {object[]} */(idd.app.selection);
+        const selection = /** @type {object[]} */(ind.app.selection);
         for (let i = 0; i < selection.length; i++) {
             const frame = selection[i];
             if (this.isValidArticleComponentFrame(frame)) {
@@ -183,7 +183,7 @@ class InDesignArticleService {
             return false;
         }
         const textFrame = /** @type {IDD.TextFrame} */(pageItem);
-        return textFrame.contentType.toString() === idd.ContentType.TEXT_TYPE.toString();
+        return textFrame.contentType.toString() === ind.ContentType.TEXT_TYPE.toString();
     }
 
     /**
@@ -255,7 +255,7 @@ class InDesignArticleService {
     isUnassignedFrame (pageItem) {
         return pageItem
             && pageItem.isValid
-            && pageItem.contentType.toString() === idd.ContentType.UNASSIGNED.toString();
+            && pageItem.contentType.toString() === ind.ContentType.UNASSIGNED.toString();
     }
 
     /**

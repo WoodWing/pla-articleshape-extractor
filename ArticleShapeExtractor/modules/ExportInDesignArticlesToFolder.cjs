@@ -1,4 +1,4 @@
-const idd = require("indesign");
+const ind = require("indesign");
 
 /**
  * Understands how to extract article shapes from InDesign Articles.
@@ -56,7 +56,7 @@ class ExportInDesignArticlesToFolder {
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this.#logger.info("Extracting InDesign Articles for layout document '{}'.", docName);
 
-        idd.app.scriptPreferences.measurementUnit = idd.MeasurementUnits.POINTS;
+        ind.app.scriptPreferences.measurementUnit = ind.MeasurementUnits.POINTS;
         let exportCounter = 0;
         for (let articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
             const article = doc.articles.item(articleIndex);
@@ -64,7 +64,7 @@ class ExportInDesignArticlesToFolder {
                 exportCounter++;
             }
         }
-        idd.app.scriptPreferences.measurementUnit = idd.AutoEnum.AUTO_VALUE;
+        ind.app.scriptPreferences.measurementUnit = ind.AutoEnum.AUTO_VALUE;
         return exportCounter;
     }
 
@@ -382,7 +382,7 @@ class ExportInDesignArticlesToFolder {
 
         // Export JPEG image.
         const PreferencesManager = require("./PreferencesManager.cjs");
-        const preferencesManager = new PreferencesManager(idd.app.jpegExportPreferences);
+        const preferencesManager = new PreferencesManager(ind.app.jpegExportPreferences);
         let originalPreferences = null;
         let group = null;
         let isExported = false;
@@ -392,17 +392,17 @@ class ExportInDesignArticlesToFolder {
                 antiAlias: true,
                 useDocumentBleeds: false,
                 simulateOverprint: false,
-                jpegQuality: idd.JPEGOptionsQuality.HIGH,
-                jpegRenderingStyle: idd.JPEGOptionsFormat.BASELINE_ENCODING,
+                jpegQuality: ind.JPEGOptionsQuality.HIGH,
+                jpegRenderingStyle: ind.JPEGOptionsFormat.BASELINE_ENCODING,
                 exportResolution: 144, // DPI, screen resolution
-                jpegColorSpace: idd.JpegColorSpaceEnum.RGB,
+                jpegColorSpace: ind.JpegColorSpaceEnum.RGB,
             });
             if (pageItems.length === 1) {
-                pageItems[0].exportFile(idd.ExportFormat.JPG, imgFile);
+                pageItems[0].exportFile(ind.ExportFormat.JPG, imgFile);
             }
             else {
                 group = doc.groups.add(pageItems);
-                group.exportFile(idd.ExportFormat.JPG, imgFile);
+                group.exportFile(ind.ExportFormat.JPG, imgFile);
             }
             isExported = true;
         }
@@ -589,19 +589,19 @@ class ExportInDesignArticlesToFolder {
 
         const textWrapPrefs = frame.textWrapPreferences;
 
-        if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.NONE)) {
+        if (textWrapPrefs.textWrapMode.equals(ind.TextWrapModes.NONE)) {
             return "none";
         }
-        else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.BOUNDING_BOX_TEXT_WRAP)) {
+        else if (textWrapPrefs.textWrapMode.equals(ind.TextWrapModes.BOUNDING_BOX_TEXT_WRAP)) {
             return "bounding_box";
         }
-        else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.CONTOUR)) {
+        else if (textWrapPrefs.textWrapMode.equals(ind.TextWrapModes.CONTOUR)) {
             return "contour";
         }
-        else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.JUMP_OBJECT_TEXT_WRAP)) {
+        else if (textWrapPrefs.textWrapMode.equals(ind.TextWrapModes.JUMP_OBJECT_TEXT_WRAP)) {
             return "jump_object";
         }
-        else if (textWrapPrefs.textWrapMode.equals(idd.TextWrapModes.NEXT_COLUMN_TEXT_WRAP)) {
+        else if (textWrapPrefs.textWrapMode.equals(ind.TextWrapModes.NEXT_COLUMN_TEXT_WRAP)) {
             return "jump_to_next_column";
         }
         else {
@@ -626,7 +626,7 @@ class ExportInDesignArticlesToFolder {
         // If leading is set to Auto (value = -1), estimate it as 120% of font size.
         if (leading !== null
             && typeof leading === "object"
-            && (/** @type {object} */(leading)).equals(idd.Leading.AUTO)) {
+            && (/** @type {object} */(leading)).equals(ind.Leading.AUTO)) {
             const fontSize = Number(line.characters.item(0).pointSize);
             leading = fontSize * 1.2;
         }
