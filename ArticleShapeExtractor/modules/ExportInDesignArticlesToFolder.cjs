@@ -44,7 +44,7 @@ class ExportInDesignArticlesToFolder {
     /**
      * @param {IND.Document} doc
      * @param {UXP.storage.Folder} folder
-     * @returns Promise<{number}> Count of exported article shapes.
+     * @returns {Promise<number>} Count of exported article shapes.
      */
     async exportArticles (doc, folder) {
         if (!(await this.#pageLayoutSettings.exportSettings(doc, folder))) {
@@ -71,8 +71,6 @@ class ExportInDesignArticlesToFolder {
      * @param {IND.Document} doc
      * @param {UXP.storage.Folder} folder
      * @param {IND.Article} article
-     * @param {number} articleIndex
-     * @returns Promise>{boolean}> Whether or not successful.
      * @param {string} articleSuffix
      * @returns {Promise<boolean>} Whether or not successful.
      */
