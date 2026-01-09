@@ -14,24 +14,12 @@ class InDesignArticleService {
      * @param {string} articleName
      */
     addOrRenameInDesignArticle (articleName) {
-        if (ind.app.documents.length === 0) {
-            throw new Errors.NoDocumentOpenedError();
-        }
-
-        const selection = /** @type {object[]} */(ind.app.selection);
-        if (selection.length === 0) {
-            throw new Errors.NoFramesSelectedError();
-        }
-
-        const frame = ind.app.selection[0];
-        if (!this.isValidArticleComponentFrame(frame)) {
-            throw new Errors.NoTextOrGraphicalFramesSelectedError();
-        }
 
         // Add new InDesign Articles.
-        const doc = ind.app.activeDocument;
-        const articles = this.getInDesignArticles(doc, frame);
+        const doc = this.getActiveDocument();
+        const articles = this.getSelectedInDesignArticles(doc);
         if (articles.length == 0) {
+            const doc = ind.app.activeDocument;
             this.#createNewInDesignArticleWithSelectedFrames(doc, articleName);
             alert("A new article '" + articleName + "' has been created, and selected frames have been added.");
             return;
@@ -64,36 +52,85 @@ class InDesignArticleService {
         }
     }
 
+    /**
+     * @param {IND.Document} doc
+     * @returns {IND.Article[]} The InDesign Articles for the currently selected frames.
+     */
+    getSelectedInDesignArticles (doc) {
+        const selectedObjects = this.#getSelectedObjects(doc);
+        /** @type {IND.PageItem[]} */
+        let articlePageItems = [];
+        for (let i = 0; i < selectedObjects.length; i++) {
+            const selectedObject = selectedObjects[i];
+            if (this.isValidArticleComponentFrame(selectedObject)) {
+                articlePageItems.push(/** @type {IND.PageItem} */(selectedObject));
+            }
+        }
+        if (articlePageItems.length === 0) {
+            throw new Errors.NoTextOrGraphicalFramesSelectedError();
+        }
+        const articles = this.getInDesignArticles(doc, articlePageItems);
+        return articles;
+    }
+
+    /**
+     * @param {IND.Document} doc
+     * @returns {Object[]} The currently selected objects in the active document.
+     */
+    #getSelectedObjects (doc) {
+        const selection = /** @type {Object[]} */(doc.selection);
+        if (selection.length === 0) {
+            throw new Errors.NoFramesSelectedError();
+        }
+        return selection;
+    }
+
+    /**
+     * @returns {IND.Document} The top most document in InDesign.
+     */
+    getActiveDocument () {
+        if (ind.app.documents.length === 0) {
+            throw new Errors.NoDocumentOpenedError();
+        }
+        return ind.app.activeDocument;
+    }
+
+    /**
+     * @param {string} stringValue
+     * @param {string[]} listOfStringValues
+     * @returns
+     */
     #containsCaseInsensitive (stringValue, listOfStringValues) {
         for (let storyTypeIndex = 0; storyTypeIndex < listOfStringValues.length; storyTypeIndex++) {
             if (stringValue.toLowerCase().includes (listOfStringValues[storyTypeIndex].toLowerCase())) {
                 return true;
             }
         }
-
         return false;
     }
 
     /**
      * Collect articles the provided frame is part of.
      * @param {IND.Document} doc
-     * @param {IND.PageItem} frame Valid text/graphic frame.
+     * @param {IND.PageItem[]} pageItems Valid text/graphic frame.
      * @returns {IND.Article[]}
      */
-    getInDesignArticles (doc, frame) {
+    getInDesignArticles (doc, pageItems) {
         const docArticles = doc.articles;
-        let frameArticles = [];
+        let foundArticles = [];
 
         // Loop through all articles to check if the frame is a member
         for (let i = 0; i < docArticles.length; i++) {
             const docArticle = docArticles.item(i);
-
-            // Check if the frame is in the article's members
-            if (this.#isFrameMemberOfInDesignArticle(docArticle, frame)) {
-                frameArticles.push(docArticle);
+            for (let j = 0; j < pageItems.length; j++) {
+                const pageItem = pageItems[j];
+                // Check if the frame is in the article's members
+                if (this.#isFrameMemberOfInDesignArticle(docArticle, pageItem)) {
+                    foundArticles.push(docArticle);
+                }
             }
         }
-        return frameArticles;
+        return foundArticles;
     }
 
     /**
@@ -262,7 +299,7 @@ class InDesignArticleService {
      * Tells whether the given page item is a valid text- or graphic frame to be part
      * of an "article definition" file (IDMS), also called InDesign Snippet.
      * @param {IND.PageItem|null} pageItem
-     * @returns {boolean}
+     * @returns {pageItem is IND.TextFrame | IND.Oval | IND.Polygon | IND.Rectangle | IND.GraphicLine}
      */
     isValidArticleComponentFrame (pageItem) {
         return this.isValidTextFrame(pageItem)
