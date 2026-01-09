@@ -42,9 +42,16 @@ class FileUtils {
     }
 
     /**
+     * Create or retrieve a folder in the temporary files location.
+     * When called for the first time of the current script execution:
+     * - it creates a new structure like 10000/PluginData
+     * When called for succeeding times within the same current script execution:
+     * - it provides the same folder as created before
+     * When called in succeeding script executions:
+     * - it creates a new structure like 10001/PluginData, 10002/PluginData, etc.
      * @returns {Promise<UXP.storage.Folder>}
      */
-    async getTempFolder () {
+    async getOrCreateTempFolder () {
         /** @type {UXP.storage.FileSystemProvider} */
         const lfs = require("uxp").storage.localFileSystem;
         const tempFolder = await lfs.getTemporaryFolder();
