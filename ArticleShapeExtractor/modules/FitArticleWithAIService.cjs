@@ -1,3 +1,4 @@
+const ind = require("indesign");
 const Errors = require("./Errors.cjs");
 
 /**
@@ -17,17 +18,40 @@ class FitArticleWithAIService {
     /** @type {BrandSectionResolver} */
     #brandSectionResolver;
 
+    /** @type {ExportInDesignArticlesToFolder} */
+    #inDesignArticlesExporter;
+
+    /** @type {InDesignArticleService} */
+    #inDesignArticleService;
+
+    /** @type {FileUtils} */
+    #fileUtils;
+
     /**
      * @param {Logger} logger
      * @param {StudioJsonRpcClient} studioJsonRpcClient
      * @param {PlaService} plaService
      * @param {BrandSectionResolver} brandSectionResolver
+     * @param {ExportInDesignArticlesToFolder} exportInDesignArticles
+     * @param {InDesignArticleService} inDesignArticleService
+     * @param {FileUtils} fileUtils
      */
-    constructor (logger, studioJsonRpcClient, plaService, brandSectionResolver) {
+    constructor (
+        logger,
+        studioJsonRpcClient,
+        plaService,
+        brandSectionResolver,
+        exportInDesignArticles,
+        inDesignArticleService,
+        fileUtils,
+    ) {
         this.#logger = logger;
         this.#studioJsonRpcClient = studioJsonRpcClient;
         this.#plaService = plaService;
         this.#brandSectionResolver = brandSectionResolver;
+        this.#inDesignArticlesExporter = exportInDesignArticles;
+        this.#inDesignArticleService = inDesignArticleService;
+        this.#fileUtils = fileUtils;
     }
 
     /**
@@ -39,10 +63,8 @@ class FitArticleWithAIService {
      * - Retrieve suggestions for the article from AILA service.
      * - Retrieve fitted shape from AI fitting service.
      * - Update the unfitted article with fitted shape (on the layout).
-     *
-     * @param {IND.Document} doc
      */
-    async run (doc) {
+    async run () {
 
         // Bail out when user is currently not logged in.
         if (!this.#studioJsonRpcClient.hasSession()) {
@@ -50,17 +72,27 @@ class FitArticleWithAIService {
         }
 
         // Resolve brand and section from layout doc (or use fallback settings).
+        const doc = this.#inDesignArticleService.getActiveDocument();
         const { brand, section } = this.#brandSectionResolver.resolve(doc);
 
+        // Export the contextual article to a temp work folder.
+        const tempFolder = await this.#fileUtils.getTempFolder();
+        const articles = this.#inDesignArticleService.getSelectedInDesignArticles(doc);
+        for (let articleIndex = 0; articleIndex < articles.length; articleIndex++) {
+            const article = articles[articleIndex];
+            const articleSuffix = String(articleIndex + 1);
+            await this.#inDesignArticlesExporter.exportArticle(doc, tempFolder, article, articleSuffix);
+        }
+
+        // Ask AILA for article shape suggestions.
         /*const pubInfos =*/ await this.#studioJsonRpcClient.getPublicationInfos([brand.id], null);
         const accessToken = await this.#studioJsonRpcClient.getAccessToken(brand.id);
         /*const dimensions =*/ await this.#plaService.getSheetDimensions(accessToken, brand.id);
         // TODO: Error when layout does not occur in any of the dimensions.
-        const shapeFiles = await this.#retrieveArticleShapeSuggestions(accessToken, brand, section);
-        for (const shapeFile of shapeFiles) {
-            this.#logger.debug(`Removing article shape JSON '${shapeFile.nativePath}'.`);
-            await shapeFile.delete();
-        }
+        /*const shapeFiles =*/ await this.#retrieveArticleShapeSuggestions(accessToken, brand, section);
+
+        // Clean up temp folder.
+        await this.#fileUtils.deleteFolderRecursively (tempFolder);
     }
 
     /**
@@ -106,12 +138,9 @@ class FitArticleWithAIService {
      * @returns {Promise<UXP.storage.File>}
      */
     async #writeArticleJsonToTemp (articleJson) {
-        /** @type {UXP.storage.FileSystemProvider} */
-        const lfs = require("uxp").storage.localFileSystem;
         const formats = require("uxp").storage.formats;
-
-        const tempFolder = await lfs.getTemporaryFolder();
         const uniqueName = `article_shape_${Date.now()}_${Math.floor(Math.random() * 1000000)}.json`;
+        const tempFolder = await this.#fileUtils.getOrCreateTempFolder();
         const articleShapeFile = await tempFolder.createFile(uniqueName, { overwrite: true });
         const jsonString = JSON.stringify(articleJson, null, 2);
         await articleShapeFile.write(jsonString, { format: formats.utf8 });

@@ -35,7 +35,7 @@ await (async function main () {
 
         // Export article shapes to disk.
         const exporter = /** @type ExportInDesignArticlesToFolder */(Container.resolve("ExportInDesignArticlesToFolder"));
-        let exportCounter = await exporter.run(doc, folder);
+        let exportCounter = await exporter.exportArticles(doc, folder);
         if (exportCounter === 0) {
             throw new Errors.PrintLayoutAutomationError("No articles exported. Check if articles are properly named and have frames defined.");
         }

@@ -39,7 +39,7 @@ class StudioJsonRpcClient {
      * @returns {boolean}
      */
     hasSession () {
-        return this.#serverUrl && this.#ticket;
+        return Boolean(this.#serverUrl && this.#ticket);
     }
 
     /**
@@ -79,7 +79,7 @@ class StudioJsonRpcClient {
             "params": [request],
             "jsonrpc": "2.0",
         };
-        const httpRequest = new Request(url, {
+        const httpRequest = new globalThis.Request(url, {
             mode: "cors",
             withCredentials: false,
             method: "POST",
