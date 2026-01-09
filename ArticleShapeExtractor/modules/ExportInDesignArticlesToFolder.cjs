@@ -59,7 +59,7 @@ class ExportInDesignArticlesToFolder {
         let exportCounter = 0;
         for (let articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
             const article = doc.articles.item(articleIndex);
-            const articleSuffix = String(articleIndex);
+            const articleSuffix = String(articleIndex + 1);
             if (await this.exportArticle(doc, folder, article, articleSuffix)) {
                 exportCounter++;
             }
@@ -261,7 +261,7 @@ class ExportInDesignArticlesToFolder {
      * @returns {Promise<string>}
      */
     async #getFileBaseName (doc, folder, shapeTypeName, articleSuffix) {
-        let fileName = doc.name + " " + shapeTypeName + " " + (articleSuffix + 1);
+        let fileName = doc.name + " " + shapeTypeName + " " + (articleSuffix);
         try {
             // Get workflow object ID and Version from Studio.
             fileName = fileName + " (" + doc.entMetaData.get("Core_ID") + ".v" + doc.entMetaData.get("Version") + ")";

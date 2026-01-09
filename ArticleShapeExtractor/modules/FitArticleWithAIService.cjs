@@ -80,7 +80,7 @@ class FitArticleWithAIService {
         const articles = this.#inDesignArticleService.getSelectedInDesignArticles(doc);
         for (let articleIndex = 0; articleIndex < articles.length; articleIndex++) {
             const article = articles[articleIndex];
-            const articleSuffix = String(articleIndex);
+            const articleSuffix = String(articleIndex + 1);
             await this.#inDesignArticlesExporter.exportArticle(doc, tempFolder, article, articleSuffix);
         }
 
