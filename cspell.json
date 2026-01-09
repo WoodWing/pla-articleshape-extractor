@@ -1,0 +1,31 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "ignorePaths": [
+    "node_modules/**",
+    "dist/**",
+    "*.min.js",
+    "config-local.js",
+  ],
+  "words": [
+    "aila",
+    "articleshape",
+    "articleshapeextractor",
+    "authorise",
+    "dbaeumer",
+    "idms",
+    "idjs",
+    "indesign",
+    "layouter",
+    "ltrim",
+    "malpositioned",
+    "outerbound",
+    "pluginindex",
+    "prefs",
+    "targetengine",
+    "rtrim",
+    "stroustrup",
+    "ungroup",
+    "uxpscript",
+  ]
+}

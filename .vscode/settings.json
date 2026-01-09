@@ -2,20 +2,6 @@
     "files.associations": {
         "*.idjs": "javascript"
     },
-    "cSpell.words": [
-        "aila",
-        "idms",
-        "idjs",
-        "indesign",
-        "layouter",
-        "ltrim",
-        "malpositioned",
-        "outerbound",
-        "prefs",
-        "rtrim",
-        "stroustrup",
-        "ungroup"
-    ],
     "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     "[javascript]": {
         "editor.defaultFormatter": "dbaeumer.vscode-eslint"
