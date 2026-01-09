@@ -100,7 +100,7 @@ class RegenerateArticleShapesService {
                     await this.#deleteFile(oldFile);
                 }
                 const theOpenDoc = ind.app.openObject(wflObject.ID, false); // false: no checkout
-                const shapeCount = await this.#exportInDesignArticlesToFolder.run(theOpenDoc, folder);
+                const shapeCount = await this.#exportInDesignArticlesToFolder.exportArticles(theOpenDoc, folder);
                 theOpenDoc.close(ind.SaveOptions.NO);
                 if (shapeCount > 0) {
                     extractedLayoutIds.push(wflObject.ID);

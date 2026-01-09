@@ -46,7 +46,7 @@ class ExportInDesignArticlesToFolder {
      * @param {UXP.storage.Folder} folder
      * @returns Promise<{number}> Count of exported article shapes.
      */
-    async run (doc, folder) {
+    async exportArticles (doc, folder) {
         if (!(await this.#pageLayoutSettings.exportSettings(doc, folder))) {
             return 0;
         }
@@ -56,15 +56,14 @@ class ExportInDesignArticlesToFolder {
         const docName = doc.saved ? lfs.getNativePath(await doc.fullName) : doc.name;
         this.#logger.info("Extracting InDesign Articles for layout document '{}'.", docName);
 
-        ind.app.scriptPreferences.measurementUnit = ind.MeasurementUnits.POINTS;
         let exportCounter = 0;
         for (let articleIndex = 0; articleIndex < doc.articles.length; articleIndex++) {
             const article = doc.articles.item(articleIndex);
-            if (await this.#exportArticle(doc, folder, article, articleIndex)) {
+            const articleSuffix = String(articleIndex);
+            if (await this.exportArticle(doc, folder, article, articleSuffix)) {
                 exportCounter++;
             }
         }
-        ind.app.scriptPreferences.measurementUnit = ind.AutoEnum.AUTO_VALUE;
         return exportCounter;
     }
 
@@ -74,8 +73,29 @@ class ExportInDesignArticlesToFolder {
      * @param {IND.Article} article
      * @param {number} articleIndex
      * @returns Promise>{boolean}> Whether or not successful.
+     * @param {string} articleSuffix
+     * @returns {Promise<boolean>} Whether or not successful.
      */
-    async #exportArticle (doc, folder, article, articleIndex) {
+    async exportArticle (doc, folder, article, articleSuffix) {
+        ind.app.scriptPreferences.measurementUnit = ind.MeasurementUnits.POINTS;
+        let exported = false;
+        try {
+            exported = await this.#doExportArticle(doc, folder, article, articleSuffix);
+        }
+        finally {
+            ind.app.scriptPreferences.measurementUnit = ind.AutoEnum.AUTO_VALUE;
+        }
+        return exported;
+    }
+
+    /**
+     * @param {IND.Document} doc
+     * @param {UXP.storage.Folder} folder
+     * @param {IND.Article} article
+     * @param {string} articleSuffix
+     * @returns {Promise<boolean>} Whether or not successful.
+     */
+    async #doExportArticle (doc, folder, article, articleSuffix) {
         const articleMembers = /** @type {IND.ArticleMember} */
             (/** @type {unknown} */(article.articleMembers.everyItem()));
         const elements = articleMembers.getElements();
@@ -117,7 +137,7 @@ class ExportInDesignArticlesToFolder {
             return false;
         }
         this.#logger.info("Exporting article '{}'...", article.name);
-        return await this.#exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleIndex, pageItems, articleShapeJson);
+        return await this.#exportArticlePageItems(doc, folder, articleShapeJson.shapeTypeName, articleSuffix, pageItems, articleShapeJson);
     }
 
     /**
@@ -239,11 +259,11 @@ class ExportInDesignArticlesToFolder {
      * @param {IND.Document} doc
      * @param {UXP.storage.Folder} folder
      * @param {string} shapeTypeName
-     * @param {number} articleIndex
+     * @param {string} articleSuffix
      * @returns {Promise<string>}
      */
-    async #getFileBaseName (doc, folder, shapeTypeName, articleIndex) {
-        let fileName = doc.name + " " + shapeTypeName + " " + (articleIndex + 1);
+    async #getFileBaseName (doc, folder, shapeTypeName, articleSuffix) {
+        let fileName = doc.name + " " + shapeTypeName + " " + (articleSuffix + 1);
         try {
             // Get workflow object ID and Version from Studio.
             fileName = fileName + " (" + doc.entMetaData.get("Core_ID") + ".v" + doc.entMetaData.get("Version") + ")";
@@ -357,16 +377,16 @@ class ExportInDesignArticlesToFolder {
      * @param {IND.Document} doc
      * @param {UXP.storage.Folder} folder
      * @param {string} shapeTypeName
-     * @param {number} articleIndex
+     * @param {string} articleSuffix
      * @param {IND.PageItem[]} pageItems
      * @param {ArticleShapeJson} articleShapeJson
      * @returns {Promise<boolean>} Whether or not successful.
      */
-    async #exportArticlePageItems (doc, folder, shapeTypeName, articleIndex, pageItems, articleShapeJson) {
+    async #exportArticlePageItems (doc, folder, shapeTypeName, articleSuffix, pageItems, articleShapeJson) {
         /** @type {UXP.storage.FileSystemProvider} */
         const lfs = require("uxp").storage.localFileSystem;
 
-        const baseFileName = await this.#getFileBaseName(doc, folder, shapeTypeName, articleIndex);
+        const baseFileName = await this.#getFileBaseName(doc, folder, shapeTypeName, articleSuffix);
         const snippetFile = await lfs.createEntryWithUrl(baseFileName + ".idms", { overwrite: true });
         const imgFile = await lfs.createEntryWithUrl(baseFileName + ".jpg", { overwrite: true });
         const jsonFile = await lfs.createEntryWithUrl(baseFileName + ".json", { overwrite: true });

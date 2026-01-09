@@ -71,7 +71,9 @@ Container.registerFactory("InDesignArticleService", function () {
 
 Container.registerFactory("FileUtils", function () {
     const FileUtils = require("./modules/FileUtils.cjs");
-    return new FileUtils();
+    return new FileUtils(
+        Container.resolve("Logger"),
+    );
 });
 
 Container.registerFactory("PageLayoutSettings", function () {
@@ -160,6 +162,9 @@ Container.registerFactory("FitArticleWithAIService", function () {
         Container.resolve("StudioJsonRpcClient"),
         Container.resolve("PlaService"),
         Container.resolve("BrandSectionResolver"),
+        Container.resolve("ExportInDesignArticlesToFolder"),
+        Container.resolve("InDesignArticleService"),
+        Container.resolve("FileUtils"),
     );
 });
 
