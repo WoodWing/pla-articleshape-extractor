@@ -127,6 +127,7 @@ class InDesignArticleService {
                 // Check if the frame is in the article's members
                 if (this.#isFrameMemberOfInDesignArticle(docArticle, pageItem)) {
                     foundArticles.push(docArticle);
+                    break; // take next article (prevent duplicates)
                 }
             }
         }
