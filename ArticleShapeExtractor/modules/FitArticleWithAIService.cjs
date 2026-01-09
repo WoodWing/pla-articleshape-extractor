@@ -80,7 +80,7 @@ class FitArticleWithAIService {
         const articles = this.#inDesignArticleService.getSelectedInDesignArticles(doc);
         for (let articleIndex = 0; articleIndex < articles.length; articleIndex++) {
             const article = articles[articleIndex];
-            const articleSuffix = String(articleIndex);
+            const articleSuffix = String(articleIndex + 1);
             await this.#inDesignArticlesExporter.exportArticle(doc, tempFolder, article, articleSuffix);
         }
 
@@ -140,7 +140,7 @@ class FitArticleWithAIService {
     async #writeArticleJsonToTemp (articleJson) {
         const formats = require("uxp").storage.formats;
         const uniqueName = `article_shape_${Date.now()}_${Math.floor(Math.random() * 1000000)}.json`;
-        const tempFolder = await this.#fileUtils.getTempFolder();
+        const tempFolder = await this.#fileUtils.getOrCreateTempFolder();
         const articleShapeFile = await tempFolder.createFile(uniqueName, { overwrite: true });
         const jsonString = JSON.stringify(articleJson, null, 2);
         await articleShapeFile.write(jsonString, { format: formats.utf8 });
