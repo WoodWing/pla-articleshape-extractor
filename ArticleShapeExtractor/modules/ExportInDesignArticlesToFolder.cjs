@@ -412,7 +412,9 @@ class ExportInDesignArticlesToFolder {
         }
         finally {
             if (group) {
+                const currentSelection = doc.selection;
                 group.ungroup();
+                doc.selection = currentSelection;
             }
             if (originalPreferences) {
                 preferencesManager.restoreOriginalPreferences(originalPreferences);
