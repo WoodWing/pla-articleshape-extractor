@@ -9,6 +9,10 @@
   ],
   "words": [
     "aila",
+    "articleshape",
+    "articleshapeextractor",
+    "authorise",
+    "dbaeumer",
     "idms",
     "idjs",
     "indesign",
@@ -16,9 +20,12 @@
     "ltrim",
     "malpositioned",
     "outerbound",
+    "pluginindex",
     "prefs",
+    "targetengine",
     "rtrim",
     "stroustrup",
-    "ungroup"
+    "ungroup",
+    "uxpscript",
   ]
 }
