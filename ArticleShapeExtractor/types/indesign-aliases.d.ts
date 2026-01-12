@@ -19,6 +19,7 @@ declare global {
     type Preference = globalThis.Preference;
     type Rectangle = globalThis.Rectangle;
     type TextFrame = globalThis.TextFrame;
+    type TextPath = globalThis.TextPath;
 
     // enums/constants
     type AutoEnum = typeof AutoEnum;
@@ -30,6 +31,7 @@ declare global {
     type JpegColorSpaceEnum = typeof JpegColorSpaceEnum;
     type Leading = typeof Leading;
     type MeasurementUnits = typeof MeasurementUnits;
+    type NothingEnum = typeof NothingEnum;
     type PageSideOptions = typeof PageSideOptions;
     type SaveOptions = typeof SaveOptions;
     type TextWrapModes = typeof TextWrapModes;

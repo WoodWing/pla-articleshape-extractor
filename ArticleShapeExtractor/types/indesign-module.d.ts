@@ -13,6 +13,7 @@ declare module "indesign" {
   export const JpegColorSpaceEnum: IND.JpegColorSpaceEnum;
   export const Leading: IND.Leading;
   export const MeasurementUnits: IND.MeasurementUnits;
+  export const NothingEnum: IND.NothingEnum;
   export const PageSideOptions: IND.PageSideOptions
   export const SaveOptions: IND.SaveOptions;
   export const TextWrapModes: IND.TextWrapModes;

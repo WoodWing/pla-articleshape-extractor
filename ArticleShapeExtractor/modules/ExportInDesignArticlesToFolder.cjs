@@ -153,7 +153,7 @@ class ExportInDesignArticlesToFolder {
             const geometricBounds = this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, element.itemRef);
             if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
                 const textFrame = /** @type {IND.TextFrame} */(element.itemRef);
-                const threadedFrames = this.#getThreadedFrames(textFrame);
+                const threadedFrames = this.#inDesignArticleService.getThreadedFrames(textFrame);
                 let textComponent = {
                     "type": textFrame.elementLabel,
                     "words": 0,
@@ -530,7 +530,7 @@ class ExportInDesignArticlesToFolder {
             //Create an array with all thread frames (images don't have threaded frames)
             if (this.#inDesignArticleService.isValidTextFrame(element.itemRef)) {
                 const textFrame = /** @type {IND.TextFrame} */(element.itemRef);
-                threadedFrames = this.#getThreadedFrames(textFrame);
+                threadedFrames = this.#inDesignArticleService.getThreadedFrames(textFrame);
             }
             else {
                 threadedFrames = [element.itemRef];
@@ -555,45 +555,6 @@ class ExportInDesignArticlesToFolder {
         }
 
         return { topLeftX: topLeftX, topLeftY: topLeftY, bottomRightX: bottomRightX, bottomRightY: bottomRightY };
-    }
-
-
-    /**
-     * Get all threaded text frames for a given text frame.
-     * @param {IND.TextFrame} textFrame The starting text frame.
-     * @returns {IND.TextFrame[]} All threaded text frames, including the starting frame.
-     */
-    #getThreadedFrames (textFrame) {
-        let threadedFrames = [textFrame];
-
-        // Traverse forward through the thread chain
-        /** @type {TextFrame | TextPath | NothingEnum} */
-        let threadedSibling = textFrame.nextTextFrame;
-        while (this.#isThreadedSiblingValidTextFrame(threadedSibling)) {
-            threadedFrames.push(threadedSibling); // append at end
-            threadedSibling = threadedSibling.nextTextFrame;
-        }
-
-        // Traverse backward through the thread chain
-        threadedSibling = textFrame.previousTextFrame;
-        while (this.#isThreadedSiblingValidTextFrame(threadedSibling)) {
-            threadedFrames.unshift(threadedSibling); // insert at start
-            threadedSibling = threadedSibling.previousTextFrame;
-        }
-
-        return threadedFrames;
-    }
-
-    /**
-     * @param {TextFrame | TextPath | NothingEnum} threadedSibling
-     * @returns {threadedSibling is IND.TextFrame}
-     */
-    #isThreadedSiblingValidTextFrame (threadedSibling) {
-        if (!threadedSibling || threadedSibling.constructorName !== "TextFrame") {
-            return false;
-        }
-        const textFrame = /** @type {TextFrame} */(threadedSibling);
-        return this.#inDesignArticleService.isValidTextFrame(textFrame);
     }
 
     /**
