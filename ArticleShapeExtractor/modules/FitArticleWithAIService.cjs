@@ -76,8 +76,12 @@ class FitArticleWithAIService {
         const { brand, section } = this.#brandSectionResolver.resolve(doc);
 
         // Export the contextual article to a temp work folder.
-        const tempFolder = await this.#fileUtils.getTempFolder();
-        const articles = this.#inDesignArticleService.getSelectedInDesignArticles(doc);
+        const articleFrames = this.#inDesignArticleService.getSelectedArticleFrames(doc);
+        if (articleFrames.length === 0) {
+            throw new Errors.NoTextOrGraphicalFramesSelectedError();
+        }
+        const tempFolder = await this.#fileUtils.getOrCreateTempFolder();
+        const articles = this.#inDesignArticleService.getInDesignArticlesForArticleFrames(doc, articleFrames);
         for (let articleIndex = 0; articleIndex < articles.length; articleIndex++) {
             const article = articles[articleIndex];
             const articleSuffix = String(articleIndex + 1);
