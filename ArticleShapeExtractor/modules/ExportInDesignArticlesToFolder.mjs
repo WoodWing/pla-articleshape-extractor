@@ -528,22 +528,13 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
-     * Adjust frame height until text fits .
+     * Adjust frame height until text fits
      */
     #adjustFrameHeightToFit(textFrame, oversetStatus, alignToGrid, gridStep, step, minHeight, maxHeight) {
         let bottom = textFrame.geometricBounds[2];
         let minBottom = textFrame.geometricBounds[0] + minHeight;
         let maxBottom = bottom + maxHeight;
-
         const snap = (val, up) => alignToGrid ? this.#snapToBaseline(val, gridStep, up) : val;
-
-        // Underset: decrease size untill overset
-        if (oversetStatus < 0) {
-            while (!textFrame.overflows && bottom >= minBottom) {
-                textFrame.geometricBounds = [textFrame.geometricBounds[0], textFrame.geometricBounds[1], bottom, textFrame.geometricBounds[3]];
-                bottom = snap(bottom - step, false);
-            }
-        }
 
         //Increase to fit
         while (textFrame.overflows && bottom <= maxBottom) {
@@ -751,6 +742,7 @@ class ExportInDesignArticlesToFolder {
 
             const sortedItems = this.#getItemsByZOrder(spreadItems);
             const selectedIndex = this.#getItemIndex(sortedItems, textFrame);
+            const doc = textFrame.parentStory.parent;
 
             let remainingPolygons = [targetPolygon];
 
@@ -779,6 +771,14 @@ class ExportInDesignArticlesToFolder {
                 remainingArea += this.#polygonArea(remainingPolygons[i]);
             }
 
+            //Substract the underset
+            let undersetLines = this.#getOversetLines(textFrame) * -1;
+            if (undersetLines > 0) {            
+                const columnWidth = textFrame.textFramePreferences.textColumnFixedWidth;
+                const baselineDivision = doc.gridPreferences.baselineDivision
+                remainingArea -= columnWidth * undersetLines * baselineDivision                
+            }
+            
             return remainingArea;
         } catch (err) {
             alert("Error in getRequiredVisibleArea: " + err);
