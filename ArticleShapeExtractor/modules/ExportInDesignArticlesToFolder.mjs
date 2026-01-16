@@ -397,6 +397,7 @@ class ExportInDesignArticlesToFolder {
         const preferencesManager = new PreferencesManager(app.jpegExportPreferences);
         let originalPreferences = null;
         let group = null;
+        let tempItems = [];
         let isExported = false;
         try {
             originalPreferences = preferencesManager.overridePreferences({
@@ -409,23 +410,32 @@ class ExportInDesignArticlesToFolder {
                 exportResolution: 144, // DPI, screen resolution
                 jpegColorSpace: idd.JpegColorSpaceEnum.RGB,
             });
-            if (pageItems.length === 1) {
-                pageItems[0].exportFile(idd.ExportFormat.JPG, imgFile);
+
+            //---- CLONE ITEMS (to prevent no z-order damage) ----
+            app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
+            for (let i = 0; i < pageItems.length; i++) {
+                tempItems.push(pageItems[i].duplicate());
+            }
+            if (tempItems.length === 1) {
+                tempItems[0].exportFile(idd.ExportFormat.JPG, imgFile);
             } else {
-                group = doc.groups.add(pageItems);
+                group = doc.groups.add(tempItems);
                 group.exportFile(idd.ExportFormat.JPG, imgFile);
             }
+
             isExported = true;
         } catch (error) {
             this.#logger.logError(error);
             alert("Error exporting the snippet: " + error.message);
         } finally {
-            if (group) {
-                group.ungroup();
+            if (group && group.isValid) group.remove();
+            for (let i = 0; i < tempItems.length; i++) {
+                if (tempItems[i].isValid) tempItems[i].remove();
             }
             if (originalPreferences) {
                 preferencesManager.restoreOriginalPreferences(originalPreferences);
             }
+            app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
         }
 
         // Export JSON.
@@ -749,7 +759,11 @@ class ExportInDesignArticlesToFolder {
             // Collect overlapping polygons ABOVE the selected frame
             for (let i = selectedIndex + 1; i < sortedItems.length; i++) {
                 const item = sortedItems[i];
-                if (item.id != textFrame.id && item.visible && item.constructor.name !== "Guide") {
+                if (item.id != textFrame.id && 
+                    item.visible && 
+                    item.constructor.name !== "Guide" &&            
+                    !item.textWrapPreferences.textWrapMode.equals(idd.TextWrapModes.NONE)
+                ) {                     
                     const b = item.geometricBounds;                    
                     if (this.#rectsOverlap(bounds, b)) {
                         const overlapPolygon = this.#rectToPolygon(b);
@@ -758,7 +772,7 @@ class ExportInDesignArticlesToFolder {
                             const pieces = this.#subtractPolygon(remainingPolygons[k], overlapPolygon);
                             newPolygons = newPolygons.concat(pieces);
                         }
-                        remainingPolygons = newPolygons;
+                        remainingPolygons = newPolygons;                        
                     }
                 }                    
 
