@@ -397,7 +397,6 @@ class ExportInDesignArticlesToFolder {
         const preferencesManager = new PreferencesManager(app.jpegExportPreferences);
         let originalPreferences = null;
         let group = null;
-        let tempItems = [];
         let isExported = false;
         try {
             originalPreferences = preferencesManager.overridePreferences({
@@ -411,15 +410,10 @@ class ExportInDesignArticlesToFolder {
                 jpegColorSpace: idd.JpegColorSpaceEnum.RGB,
             });
 
-            //---- CLONE ITEMS (to prevent no z-order damage) ----
-            app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.neverInteract;
-            for (let i = 0; i < pageItems.length; i++) {
-                tempItems.push(pageItems[i].duplicate());
-            }
-            if (tempItems.length === 1) {
-                tempItems[0].exportFile(idd.ExportFormat.JPG, imgFile);
+            if (pageItems.length === 1) {
+                pageItems[0].exportFile(idd.ExportFormat.JPG, imgFile);
             } else {
-                group = doc.groups.add(tempItems);
+                group = doc.groups.add(pageItems);
                 group.exportFile(idd.ExportFormat.JPG, imgFile);
             }
 
@@ -428,14 +422,12 @@ class ExportInDesignArticlesToFolder {
             this.#logger.logError(error);
             alert("Error exporting the snippet: " + error.message);
         } finally {
-            if (group && group.isValid) group.remove();
-            for (let i = 0; i < tempItems.length; i++) {
-                if (tempItems[i].isValid) tempItems[i].remove();
+            if (group) {
+                group.ungroup();
             }
             if (originalPreferences) {
                 preferencesManager.restoreOriginalPreferences(originalPreferences);
             }
-            app.scriptPreferences.userInteractionLevel = idd.UserInteractionLevels.interactWithAll;
         }
 
         // Export JSON.
