@@ -165,6 +165,7 @@ class ExportInDesignArticlesToFolder {
                             "words": textStats.wordCount,
                             "characters": textStats.charCount,
                             "textWrapMode": this.#getTextWrapMode(frame),
+                            "textWrapOffset": this.#getTextWrapOffset(frame),
                             "visibleLineHeight": this.#roundTo3Decimals(textStats.visibleLineHeight),
                             "text": textStats.text
                         });
@@ -272,6 +273,34 @@ class ExportInDesignArticlesToFolder {
             "width": this.#roundTo3Decimals(pageItem.geometricBounds[3] - pageItem.geometricBounds[1]),
             "height": this.#roundTo3Decimals(pageItem.geometricBounds[2] - pageItem.geometricBounds[0])
         }
+    }
+
+    /**
+     * Create a data object that describes the text wrap of the given page item.
+     * @param {PageItem} pageItem - TextFrame, Rectangle, etc
+     * @returns {Object}
+     */    
+    #getTextWrapOffset (pageItem) {
+        var top = 0, left = 0, bottom = 0, right = 0;
+
+        if (pageItem.textWrapPreferences) {
+            var w = pageItem.textWrapPreferences.textWrapOffset;
+            if (w[0] != null)
+                top    += w[0];
+            if (w[1] != null)
+                left   += w[1];
+            if (w[2] != null)
+                bottom += w[2];
+            if (w[3] != null)
+                right  += w[3];
+        }
+
+        return {
+            top: top,
+            left: left,
+            bottom: bottom,
+            right: right
+        };
     }
 
     /**
