@@ -297,10 +297,10 @@ class ExportInDesignArticlesToFolder {
         }
 
         return {
-            top: top,
-            left: left,
-            bottom: bottom,
-            right: right
+            top: this.#roundTo3Decimals(top),
+            left: this.#roundTo3Decimals(left),
+            bottom: this.#roundTo3Decimals(bottom),
+            right: this.#roundTo3Decimals(right)
         };
     }
 
