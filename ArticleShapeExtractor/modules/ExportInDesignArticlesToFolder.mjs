@@ -187,7 +187,8 @@ class ExportInDesignArticlesToFolder {
                 pageItems.push(element.itemRef);
                 articleShapeJson.imageComponents.push({
                     "geometricBounds": geometricBounds,
-                    "textWrapMode": this.#getTextWrapMode(element.itemRef)
+                    "textWrapMode": this.#getTextWrapMode(element.itemRef),
+                    "textWrapOffset": this.#getTextWrapOffset(element.itemRef),
                 });
             } else if (this.#inDesignArticleService.isValid1DGraphicFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
