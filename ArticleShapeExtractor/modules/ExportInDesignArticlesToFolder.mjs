@@ -786,7 +786,7 @@ class ExportInDesignArticlesToFolder {
                     item.constructor.name !== "Guide" &&            
                     !item.textWrapPreferences.textWrapMode.equals(idd.TextWrapModes.NONE)
                 ) {                     
-                    const b = item.geometricBounds;                    
+                    const b = this.#getWrappedBounds(item);                    
                     if (this.#rectsOverlap(bounds, b)) {
                         const overlapPolygon = this.#rectToPolygon(b);
                         let newPolygons = [];
@@ -806,13 +806,13 @@ class ExportInDesignArticlesToFolder {
             for (let i = 0; i < remainingPolygons.length; i++) {
                 remainingArea += this.#polygonArea(remainingPolygons[i]);
             }
-
+            
             //Substract the underset
             let undersetLines = this.#getOversetLines(textFrame) * -1;
-            if (undersetLines > 0) {            
+            if (undersetLines > 0 && textFrame.nextTextFrame === null) {            
                 const columnWidth = textFrame.textFramePreferences.textColumnFixedWidth;
                 const baselineDivision = doc.gridPreferences.baselineDivision
-                remainingArea -= columnWidth * undersetLines * baselineDivision                
+                remainingArea -= columnWidth * undersetLines * baselineDivision    
             }
             
             return remainingArea;
@@ -822,6 +822,17 @@ class ExportInDesignArticlesToFolder {
         }
     }
 
+    #getWrappedBounds(pageItem) {
+        const b = pageItem.geometricBounds; // [y1, x1, y2, x2]
+        const o = this.#getTextWrapOffset(pageItem);
+
+        return [
+            b[0] - o.top,     // y1
+            b[1] - o.left,    // x1
+            b[2] + o.bottom,  // y2
+            b[3] + o.right    // x2
+        ];
+    }
 
     #rectToPolygon(bounds) {
         return [
