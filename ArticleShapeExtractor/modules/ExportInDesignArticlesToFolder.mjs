@@ -151,8 +151,7 @@ class ExportInDesignArticlesToFolder {
                     "firstParagraphStyle": "",
                     "overSetLines": this.#getOversetLines(threadedFrames[0]),
                     "visibleArea": 0,
-                    "requiredVisibleArea": 0,
-                    "zIndex": this.#getZIndex(element.itemRef),
+                    "requiredVisibleArea": 0,                    
                     "frames": []
                 };
 
@@ -175,7 +174,8 @@ class ExportInDesignArticlesToFolder {
                             "characters": textStats.charCount,
                             "textWrapMode": this.#getTextWrapMode(frame),
                             "textWrapOffset": this.#getTextWrapOffset(frame),
-                            "visibleLineHeight": this.#roundTo3Decimals(textStats.visibleLineHeight),                            
+                            "visibleLineHeight": this.#roundTo3Decimals(textStats.visibleLineHeight),        
+                            "zIndex": this.#getZIndex(frame),                    
                             "text": textStats.text
                         });
                         textComponent.words += textStats.wordCount;
