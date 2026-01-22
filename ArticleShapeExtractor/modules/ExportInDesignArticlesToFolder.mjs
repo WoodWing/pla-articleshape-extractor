@@ -24,6 +24,9 @@ class ExportInDesignArticlesToFolder {
     /** @type {Object} */
     #fallbackCategory;
 
+    /** @type {Array} */
+    #pageItemsByZOrderCache = null;
+
     /**
      * @param {Logger} logger
      * @param {InDesignArticleService} inDesignArticleService
@@ -82,14 +85,16 @@ class ExportInDesignArticlesToFolder {
      * @returns {Boolean} Whether or not successful.
      */
     async #exportArticle(doc, folder, article, articleIndex) {
+        this.#getPageItemsByZOrder(doc);
         const elements = article.articleMembers.everyItem().getElements();
-        const outerBounds = this.#getOuterboundOfArticleShape(elements);
-        let articleShapeJson = this.#composeArticleShapeJson(doc, article.name, outerBounds);
+        const outerBounds = this.#getOuterboundOfArticleShape(elements);        
+        let articleShapeJson = this.#composeArticleShapeJson(doc, article.name, outerBounds);        
         if (articleShapeJson === null) {
             this.#logger.warning("Excluded article '{}' from export because conversion to JSON failed.", article.name);
             return false;
         }
-        const pageItems = await this.#collectArticlePageItems(article, elements, outerBounds, articleShapeJson);
+        const pageItems = await this.#collectArticlePageItems(doc, article, elements, outerBounds, articleShapeJson);
+
         if (pageItems.length === 0) {
             this.#logger.warning("Excluded article '{}' from export because it has no page items.", article.name);
             return false;
@@ -124,13 +129,14 @@ class ExportInDesignArticlesToFolder {
     }
 
     /**
+     * @param {Document} doc 
      * @param {Object} article
      * @param {Array<Object>} elements
      * @param {Object} outerBounds
      * @param {Object} articleShapeJson
      * @returns {Array<Object>} Page items.
      */
-    #collectArticlePageItems(article, elements, outerBounds, articleShapeJson) {
+    #collectArticlePageItems(doc, article, elements, outerBounds, articleShapeJson) {
         let pageItems = []; // Collect all associated page items for the article.
         for (let elementIndex = 0; elementIndex < elements.length; elementIndex++) {
             const element = elements[elementIndex];
@@ -144,7 +150,9 @@ class ExportInDesignArticlesToFolder {
                     "characters": 0,
                     "firstParagraphStyle": "",
                     "overSetLines": this.#getOversetLines(threadedFrames[0]),
+                    "visibleArea": 0,
                     "requiredVisibleArea": 0,
+                    "zIndex": this.#getZIndex(element.itemRef),
                     "frames": []
                 };
 
@@ -156,8 +164,9 @@ class ExportInDesignArticlesToFolder {
                 for (let frameIndex = 0; frameIndex < threadedFrames.length; frameIndex++) {
                     const frame = threadedFrames[frameIndex];
                     pageItems.push(frame);
-                    if (this.#inDesignArticleService.isValidTextFrame(frame)) {
-                        const textStats = this.#getTextStatistics(frame);
+                    if (this.#inDesignArticleService.isValidTextFrame(frame)) {                        
+                        const textStats = this.#getTextStatistics(doc, frame);
+                        textComponent.visibleArea += textStats.visibleArea;
                         textComponent.requiredVisibleArea += textStats.requiredVisibleArea;
                         textComponent.frames.push({
                             "geometricBounds": this.#composeGeometricBounds(outerBounds.topLeftX, outerBounds.topLeftY, frame),
@@ -166,7 +175,7 @@ class ExportInDesignArticlesToFolder {
                             "characters": textStats.charCount,
                             "textWrapMode": this.#getTextWrapMode(frame),
                             "textWrapOffset": this.#getTextWrapOffset(frame),
-                            "visibleLineHeight": this.#roundTo3Decimals(textStats.visibleLineHeight),
+                            "visibleLineHeight": this.#roundTo3Decimals(textStats.visibleLineHeight),                            
                             "text": textStats.text
                         });
                         textComponent.words += textStats.wordCount;
@@ -174,7 +183,9 @@ class ExportInDesignArticlesToFolder {
                     }
                 }
 
+                textComponent.visibleArea = this.#roundTo3Decimals(textComponent.visibleArea);
                 textComponent.requiredVisibleArea = this.#roundTo3Decimals(textComponent.requiredVisibleArea);
+                                
                 articleShapeJson.textComponents.push(textComponent);
             } else if (this.#inDesignArticleService.isUnassignedFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
@@ -189,6 +200,7 @@ class ExportInDesignArticlesToFolder {
                     "geometricBounds": geometricBounds,
                     "textWrapMode": this.#getTextWrapMode(element.itemRef),
                     "textWrapOffset": this.#getTextWrapOffset(element.itemRef),
+                    "zIndex": this.#getZIndex (element.itemRef)
                 });
             } else if (this.#inDesignArticleService.isValid1DGraphicFrame(element.itemRef)) {
                 pageItems.push(element.itemRef);
@@ -462,7 +474,7 @@ class ExportInDesignArticlesToFolder {
 
         // Export JSON.
         if (isExported) {
-            return this.#saveJsonToDisk(articleShapeJson, jsonFile);
+            return await this.#saveJsonToDisk(articleShapeJson, jsonFile);
         }
         return false;
     }
@@ -473,7 +485,7 @@ class ExportInDesignArticlesToFolder {
      * @param {File} file
      * @returns {Boolean} Whether or not successful.
      */
-    #saveJsonToDisk(jsonData, file) {
+    async #saveJsonToDisk(jsonData, file) {
         let isSaved = false;
         try {
             // Convert JSON object to a string
@@ -481,7 +493,7 @@ class ExportInDesignArticlesToFolder {
 
             // Write the JSON string to the file
             const formats = require('uxp').storage.formats;
-            file.write(jsonString, { format: formats.utf8 });
+            await file.write(jsonString, { format: formats.utf8 });
             isSaved = true;
         } catch (error) {
             this.#logger.logError(error);
@@ -494,6 +506,7 @@ class ExportInDesignArticlesToFolder {
     * Get text statistics for a text frame.
     * Returns both visible and full-fit (overset-inclusive) line heights.
     *
+    * @param {Document} doc 
     * @param {TextFrame} textFrame
     * @returns {{
     *   wordCount: number,
@@ -502,7 +515,7 @@ class ExportInDesignArticlesToFolder {
     *   visibleLineHeight: number,
     * }}
     */
-    #getTextStatistics(textFrame) {
+    #getTextStatistics(doc, textFrame) {
         if (!textFrame || !textFrame.isValid) {
             return { wordCount: 0, charCount: 0, text: "", visibleLineHeight: 0};
         }
@@ -517,6 +530,7 @@ class ExportInDesignArticlesToFolder {
         const MAX_HEIGHT = 20000;
 
         let visibleLineHeight = 0;
+        let visibleArea = 0;
         let requiredVisibleArea = 0;
 
         try {
@@ -526,12 +540,12 @@ class ExportInDesignArticlesToFolder {
                 visibleLineHeight += this.#getLineHeight(lines.item(i)) || 0;
             }
 
+            //visibleArea   
+            visibleArea = this.#getVisibleArea(textFrame);
+
             // --- Overset Handling ---
             const oversetStatus = this.#getOversetLines(textFrame);
             const originalBounds = textFrame.geometricBounds.slice(); // [y1, x1, y2, x2]
-            const textFrameWidth = originalBounds[3] - originalBounds[1];
-
-            const doc = textFrame.parentStory.parent;
             const gridStep = doc.gridPreferences.baselineDivision;
             const alignToGrid = this.#storyUsesBaselineGrid(story);
             let minHeight = alignToGrid ? gridStep : MIN_HEIGHT
@@ -542,7 +556,15 @@ class ExportInDesignArticlesToFolder {
             }
 
             // Calculate requiredVisibleArea
-            requiredVisibleArea = this.#getRequiredVisibleArea(textFrame);            
+            requiredVisibleArea = this.#getVisibleArea(textFrame);     
+            
+            //Substract the underset
+            let undersetLines = this.#getOversetLines(textFrame) * -1;
+            if (undersetLines > 0 && textFrame.nextTextFrame === null) {            
+                const columnWidth = textFrame.textFramePreferences.textColumnFixedWidth;
+                const baselineDivision = doc.gridPreferences.baselineDivision
+                requiredVisibleArea -= columnWidth * undersetLines * baselineDivision    
+            }            
 
             // Restore original size
             textFrame.geometricBounds = originalBounds;
@@ -555,6 +577,7 @@ class ExportInDesignArticlesToFolder {
             charCount,
             text,
             visibleLineHeight: this.#roundTo3Decimals(visibleLineHeight),
+            visibleArea:  this.#roundTo3Decimals(visibleArea),
             requiredVisibleArea: this.#roundTo3Decimals(requiredVisibleArea)
         };
     }
@@ -763,26 +786,21 @@ class ExportInDesignArticlesToFolder {
         return frameData[frameData.length - 1].OversetLines;
     }
 
-    #getRequiredVisibleArea(textFrame) {
+    #getVisibleArea(textFrame) {
         try {
             const bounds = textFrame.geometricBounds;
             const targetPolygon = this.#rectToPolygon(bounds);
             const fullArea = (bounds[2] - bounds[0]) * (bounds[3] - bounds[1]);
-
-            const spread = (textFrame.parent instanceof idd.Page) ? textFrame.parent.parent : textFrame.parent;
-            const spreadItems = spread.pageItems;
-
-            const sortedItems = this.#getItemsByZOrder(spreadItems);
+            const spread = (textFrame.parent instanceof idd.Page) ? textFrame.parent.parent : textFrame.parent;   
+            const sortedItems = this.#pageItemsByZOrderCache;
             const selectedIndex = this.#getItemIndex(sortedItems, textFrame);
-            const doc = textFrame.parentStory.parent;
-
+            
             let remainingPolygons = [targetPolygon];
 
             // Collect overlapping polygons ABOVE the selected frame
-            for (let i = selectedIndex + 1; i < sortedItems.length; i++) {
+            for (let i = selectedIndex - 1; i >= 0; i--) {
                 const item = sortedItems[i];
-                if (item.id != textFrame.id && 
-                    item.visible && 
+                if (item.visible && 
                     item.constructor.name !== "Guide" &&            
                     !item.textWrapPreferences.textWrapMode.equals(idd.TextWrapModes.NONE)
                 ) {                     
@@ -797,8 +815,6 @@ class ExportInDesignArticlesToFolder {
                         remainingPolygons = newPolygons;                        
                     }
                 }                    
-
-
             }
 
             // Sum remaining area
@@ -806,18 +822,10 @@ class ExportInDesignArticlesToFolder {
             for (let i = 0; i < remainingPolygons.length; i++) {
                 remainingArea += this.#polygonArea(remainingPolygons[i]);
             }
-            
-            //Substract the underset
-            let undersetLines = this.#getOversetLines(textFrame) * -1;
-            if (undersetLines > 0 && textFrame.nextTextFrame === null) {            
-                const columnWidth = textFrame.textFramePreferences.textColumnFixedWidth;
-                const baselineDivision = doc.gridPreferences.baselineDivision
-                remainingArea -= columnWidth * undersetLines * baselineDivision    
-            }
-            
+                        
             return remainingArea;
         } catch (err) {
-            alert("Error in getRequiredVisibleArea: " + err);
+            alert("Error in getVisibleArea: " + err);
             return 0;
         }
     }
@@ -847,14 +855,38 @@ class ExportInDesignArticlesToFolder {
         return !(a[3] < b[1] || a[1] > b[3] || a[2] < b[0] || a[0] > b[2]);
     }
 
-    //Reverse the order, highest on top
-    #getItemsByZOrder(items) {
-        var arr = [];
-        for (var i = items.length - 1; i >= 0; i--) {
-            arr.push(items.item(i));
-        }    
-        return arr; // DOM order reflects z-order
+
+    // Returns items ordered by visual stacking (z-order), top-most first.
+    #getPageItemsByZOrder(doc) {    
+        if (this.#pageItemsByZOrderCache != null) {
+            return this.#pageItemsByZOrderCache;
+        }   
+        this.#pageItemsByZOrderCache = [];
+
+        for (var s = 0; s < doc.spreads.length; s++) {
+            var spread = doc.spreads.item(s);         
+            var items = spread.allPageItems;
+            for (var i = 0; i < items.length; i++) {
+                  this.#pageItemsByZOrderCache.push(items[i]);  
+            }
+        }                    
+        this.#pageItemsByZOrderCache.reverse();
+        
+        return this.#pageItemsByZOrderCache;
     }
+
+    #getZIndex(item) {
+        var items = this.#pageItemsByZOrderCache;
+        var id = item.id;
+
+        for (var i = 0; i < this.#pageItemsByZOrderCache.length; i++) {
+            if (items[i].id === id) {
+                return i;
+            }
+        }
+
+        return localIndex;
+    } 
 
     #getItemIndex(array, item) {
         for (let i = 0; i < array.length; i++) {
