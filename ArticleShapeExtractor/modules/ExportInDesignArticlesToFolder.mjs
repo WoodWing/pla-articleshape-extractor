@@ -25,7 +25,7 @@ class ExportInDesignArticlesToFolder {
     #fallbackCategory;
 
     /** @type {Array} */
-    #pageItemsByZOrderCache = null;
+    #pageItemsByZOrder = null;
 
     /**
      * @param {Logger} logger
@@ -790,22 +790,20 @@ class ExportInDesignArticlesToFolder {
         try {
             const bounds = textFrame.geometricBounds;
             const targetPolygon = this.#rectToPolygon(bounds);
-            const fullArea = (bounds[2] - bounds[0]) * (bounds[3] - bounds[1]);
-            const spread = (textFrame.parent instanceof idd.Page) ? textFrame.parent.parent : textFrame.parent;   
-            const sortedItems = this.#pageItemsByZOrderCache;
-            const selectedIndex = this.#getItemIndex(sortedItems, textFrame);
-            
+            const zOrdedItems = this.#pageItemsByZOrder;
+            const selectedIndex = this.#getItemIndex(zOrdedItems, textFrame);           
             let remainingPolygons = [targetPolygon];
 
             // Collect overlapping polygons ABOVE the selected frame
-            for (let i = selectedIndex - 1; i >= 0; i--) {
-                const item = sortedItems[i];
+            for (let i = selectedIndex + 1; i < zOrdedItems.length; i++) {
+                const item = zOrdedItems[i];
                 if (item.visible && 
                     item.constructor.name !== "Guide" &&            
                     !item.textWrapPreferences.textWrapMode.equals(idd.TextWrapModes.NONE)
                 ) {                     
                     const b = this.#getWrappedBounds(item);                    
-                    if (this.#rectsOverlap(bounds, b)) {
+
+                    if (this.#rectsOverlap(bounds, b)) {                        
                         const overlapPolygon = this.#rectToPolygon(b);
                         let newPolygons = [];
                         for (let k = 0; k < remainingPolygons.length; k++) {
@@ -856,30 +854,30 @@ class ExportInDesignArticlesToFolder {
     }
 
 
-    // Returns items ordered by visual stacking (z-order), top-most first.
+    // Returns items ordered by visual stacking (z-order), top last.
     #getPageItemsByZOrder(doc) {    
-        if (this.#pageItemsByZOrderCache != null) {
-            return this.#pageItemsByZOrderCache;
+        if (this.#pageItemsByZOrder != null) {
+            return this.#pageItemsByZOrder;
         }   
-        this.#pageItemsByZOrderCache = [];
+        this.#pageItemsByZOrder = [];
 
         for (var s = 0; s < doc.spreads.length; s++) {
             var spread = doc.spreads.item(s);         
             var items = spread.allPageItems;
             for (var i = 0; i < items.length; i++) {
-                  this.#pageItemsByZOrderCache.push(items[i]);  
+                  this.#pageItemsByZOrder.push(items[i]);  
             }
         }                    
-        this.#pageItemsByZOrderCache.reverse();
+        this.#pageItemsByZOrder.reverse();
         
-        return this.#pageItemsByZOrderCache;
+        return this.#pageItemsByZOrder;
     }
 
     #getZIndex(item) {
-        var items = this.#pageItemsByZOrderCache;
+        var items = this.#pageItemsByZOrder;
         var id = item.id;
 
-        for (var i = 0; i < this.#pageItemsByZOrderCache.length; i++) {
+        for (var i = 0; i < this.#pageItemsByZOrder.length; i++) {
             if (items[i].id === id) {
                 return i;
             }
