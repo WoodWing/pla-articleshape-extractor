@@ -559,12 +559,9 @@ class ExportInDesignArticlesToFolder {
             requiredVisibleArea = this.#getVisibleArea(textFrame);     
             
             //Substract the underset
-            let undersetLines = this.#getOversetLines(textFrame) * -1;
-            if (undersetLines > 0 && textFrame.nextTextFrame === null) {            
-                const columnWidth = textFrame.textFramePreferences.textColumnFixedWidth;
-                const baselineDivision = doc.gridPreferences.baselineDivision
-                requiredVisibleArea -= columnWidth * undersetLines * baselineDivision    
-            }            
+            const columnWidth = textFrame.textFramePreferences.textColumnFixedWidth;
+            var heightBelowText = textFrame.geometricBounds[2] - textFrame.lines.lastItem().baseline;                
+            requiredVisibleArea -= columnWidth * heightBelowText;                
 
             // Restore original size
             textFrame.geometricBounds = originalBounds;
