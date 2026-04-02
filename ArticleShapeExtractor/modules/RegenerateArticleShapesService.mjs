@@ -87,7 +87,7 @@ class RegenerateArticleShapesService {
         const failedLayoutIds = [];
         for (const wflObject of wflObjects) {
             //this.#logger.debug('QueryObjects resolved object: {}', JSON.stringify(wflObject, null, 4));
-            this.#resolveLayoutStatusIds(wflObject.PublicationId);
+            await this.#resolveLayoutStatusIds(wflObject.PublicationId);
             const mapItem = fileMap.get(wflObject.ID);
             if (mapItem && mapItem.layoutVersion === wflObject.Version) {
                 this.#logger.info(`Skipped extracting InDesign Articles for layout '${wflObject.Name}'; ` + 
@@ -114,10 +114,10 @@ class RegenerateArticleShapesService {
         }
         const handledLayoutIds = [...extractedLayoutIds, ...skippedLayoutIds];
         if (handledLayoutIds.length > 0) {
-            this.#studioJsonRpcClient.sendObjectsToStatus(handledLayoutIds, this.#layoutStatusIdOnSuccess);
+            await this.#studioJsonRpcClient.sendObjectsToStatus(handledLayoutIds, this.#layoutStatusIdOnSuccess);
         }
         if (failedLayoutIds.length > 0) {
-            this.#studioJsonRpcClient.sendObjectsToStatus(failedLayoutIds, this.#layoutStatusIdOnError);
+            await this.#studioJsonRpcClient.sendObjectsToStatus(failedLayoutIds, this.#layoutStatusIdOnError);
         }
         report.extracted += extractedLayoutIds.length;
         report.skipped += skippedLayoutIds.length;
@@ -127,11 +127,11 @@ class RegenerateArticleShapesService {
     /**
      * @param {string} brandId 
      */
-    #resolveLayoutStatusIds(brandId) {
+    async #resolveLayoutStatusIds(brandId) {
         if (this.#layoutStatusIdOnSuccess !== null && this.#layoutStatusIdOnError !== null) {
             return;
         }
-        const publicationInfos = this.#studioJsonRpcClient.getPublicationInfos([brandId], ["States"]);
+        const publicationInfos = await this.#studioJsonRpcClient.getPublicationInfos([brandId], ["States"]);
         const publicationInfo = publicationInfos.find(pub => pub.Id === brandId);
         const layoutStatuses = publicationInfo.States.filter(state => state.Type === "Layout");
         for (const layoutStatus of layoutStatuses) {

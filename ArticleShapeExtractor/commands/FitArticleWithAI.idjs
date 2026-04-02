@@ -1,0 +1,11 @@
+await (async function main() {
+    const initBootstrap = require('../bootstrap.js');
+    const Container = require("../modules/Container.mjs");
+    try {
+        initBootstrap();
+        await Container.resolve("FitArticleWithAIService").run(); 
+    } catch(error) {
+        Container.resolve("Logger").logError(error);
+        alert(error.message);
+    }
+})();

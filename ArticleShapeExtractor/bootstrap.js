@@ -25,6 +25,14 @@ Container.registerSingleton("Logger", function() {
     }
 });
 
+Container.registerSingleton("HttpLogger", function() {
+    const HttpLogger = require("./modules/HttpLogger.mjs");
+    return new HttpLogger(
+        Container.resolve("Logger"),
+        Container.resolve("Settings").getLogNetworkTraffic(),
+    );
+});
+
 Container.registerSingleton("VersionUtils", function() {
     const VersionUtils = require("./modules/VersionUtils.mjs");
     return new VersionUtils();
@@ -95,7 +103,7 @@ Container.registerFactory("StudioJsonRpcClient", function() {
     const StudioJsonRpcClient = require("./modules/StudioJsonRpcClient.mjs");
     return new StudioJsonRpcClient(
         Container.resolve("Logger"),
-        Container.resolve("Settings").getLogNetworkTraffic(),
+        Container.resolve("HttpLogger"),
         app.entSession?.activeUrl, 
         app.entSession?.activeTicket,
     );
@@ -118,6 +126,25 @@ Container.registerFactory("BrandSectionMapResolver", function() {
         Container.resolve("Logger"),
         Container.resolve("StudioJsonRpcClient"),
         Container.resolve("FileUtils"),
+    );
+});
+
+Container.registerFactory("PlaService", function() {
+    const PlaService = require("./modules/PlaService.mjs");
+    return new PlaService(
+        Container.resolve("Logger"), 
+        Container.resolve("HttpLogger"), 
+        Container.resolve("Settings").getPlaServiceUrl(),
+    );
+});
+
+Container.registerFactory("FitArticleWithAIService", function() {
+    const FitArticleWithAIService = require("./modules/FitArticleWithAIService.mjs");
+    return new FitArticleWithAIService(
+        Container.resolve("Logger"), 
+        Container.resolve("Settings"),
+        Container.resolve("StudioJsonRpcClient"),
+        Container.resolve("PlaService"),
     );
 });
 

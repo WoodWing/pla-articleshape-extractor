@@ -19,13 +19,6 @@ class NoStudioSessionError extends Error {
     }
 }
 
-class StudioServerCommunicationError extends Error {
-    constructor() {
-        super("Communication error with WoodWing Studio Server.");
-        this.name = this.constructor.name;
-    }
-}
-
 class NoDocumentOpenedError extends Error {
     constructor() {
         super("No document opened.");
@@ -68,6 +61,34 @@ class NoFolderSelectedError extends Error {
     }
 }
 
+class StudioServerCommunicationError extends Error {
+    /**
+     * @param {string|null} details 
+     */
+    constructor(details=null) {
+        let message = "Communication error with WoodWing Studio Server.";
+        if (details) {
+            message += `\n${details}`;
+        }
+        super(message);
+        this.name = this.constructor.name;
+    }
+}
+
+class PlaServiceCommunicationError extends Error {
+    /**
+     * @param {string|null} details 
+     */
+    constructor(details=null) {
+        let message = "Communication error with AI Layout Automation service.";
+        if (details) {
+            message += `\n${details}`;
+        }
+        super(message);
+        this.name = this.constructor.name;
+    }
+}
+
 class PrintLayoutAutomationError extends Error {
     constructor(message) {
         super(message);
@@ -86,13 +107,14 @@ module.exports = {
     ArgumentError,
     ConfigurationError,
     NoStudioSessionError,
-    StudioServerCommunicationError,
     NoDocumentOpenedError,
     NoDocumentPagesError,
     NoFramesSelectedError,
     NoTextOrGraphicalFramesSelectedError,
     NoArticlesInDocumentError,
     NoFolderSelectedError,
+    StudioServerCommunicationError,
+    PlaServiceCommunicationError,
     PrintLayoutAutomationError,
     UnexpectedPageSetupError,
 }
